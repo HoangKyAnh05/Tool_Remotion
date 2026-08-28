@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/ensure-render-entry.mjs",
     "preview": "vite preview",
     "electron:start": "electron dist-electron/main.js",
     "remotion:preview": "remotion preview src/remotion/index.ts",
