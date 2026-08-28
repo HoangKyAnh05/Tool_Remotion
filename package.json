@@ -2,14 +2,14 @@
   "name": "remotion-video-auto-editor",
   "version": "1.0.0",
   "description": "Desktop AI Video Editor powered by Remotion, Electron & Edge-TTS",
-  "main": "dist-electron/main.js",
+  "main": "server.mjs",
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "electron:start": "electron .",
+    "electron:start": "electron dist-electron/main.js",
     "remotion:preview": "remotion preview src/remotion/index.ts",
     "remotion:render": "remotion render src/remotion/index.ts MainComposition out/video.mp4"
   },
