@@ -1,0 +1,214 @@
+export type AspectRatio = '9:16' | '16:9' | '1:1';
+
+export type TransitionType =
+  | 'fade'
+  | 'slide_left'
+  | 'slide_right'
+  | 'slide_up'
+  | 'whip_pan'
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'flash_white'
+  | 'digital_glitch'
+  | 'cube_flip'
+  | 'none';
+
+export type KenBurnsEffect =
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'pan_left'
+  | 'pan_right'
+  | 'tilt_up'
+  | 'tilt_down'
+  | 'crash_zoom'
+  | 'dutch_angle'
+  | 'rack_focus'
+  | 'spiral_zoom'
+  | 'handheld'
+  | 'subtle_float'
+  | 'none';
+
+export interface WordTimestamp {
+  word: string;
+  start: number; // in seconds
+  end: number;   // in seconds
+}
+
+export interface SubtitleStyle {
+  fontFamily: string;
+  fontSize: number;
+  textColor: string;
+  highlightColor: string;
+  strokeColor: string;
+  strokeWidth: number;
+  backgroundColor?: string;
+  positionY: number; // percentage from top (e.g. 75)
+  animationStyle: 'pop' | 'glow' | 'bounce' | 'karaoke' | 'box';
+  maxWordsPerLine: number;
+  uppercase: boolean;
+}
+
+export interface WatermarkConfig {
+  enabled: boolean;
+  text: string;
+  logoUrl?: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  opacity: number;
+}
+
+export interface SoundFxConfig {
+  enableWhoosh: boolean;
+  enablePop: boolean;
+  volume: number;
+}
+
+export type VisualType =
+  | 'media'
+  | 'chat_bubble'
+  | 'orbital_glow'
+  | 'math_grid'
+  | 'radar_tech'
+  | 'night_highway'
+  | 'airplane_takeoff'
+  | 'stock_chart'
+  | 'rolling_counter'
+  | 'google_search'
+  | 'bank_notification'
+  | 'tweet_card'
+  | 'code_terminal'
+  | 'vs_battle'
+  | 'dna_helix'
+  | 'breaking_news';
+
+export interface ChatMessage {
+  sender: 'left' | 'right';
+  text: string;
+}
+
+export interface Scene {
+  id: string;
+  order: number;
+  narration: string;
+  searchKeyword: string;
+  imagePrompt?: string;
+  mediaType: 'image' | 'video';
+  mediaUrl: string;
+  localMediaPath?: string;
+  audioUrl?: string;
+  audioDuration: number; // in seconds
+  words: WordTimestamp[];
+  transition: TransitionType;
+  kenBurns: KenBurnsEffect;
+  // Transition Custom Audio
+  transitionAudioUrl?: string;
+  transitionAudioName?: string;
+  // Motion Graphics & Visual Layout
+  visualType?: VisualType;
+  visualScale?: number; // scale multiplier e.g. 1.0, 1.3, 1.6
+  headerBadge?: string;
+  chatMessages?: ChatMessage[];
+  orbitTitle?: string;
+  orbitIcon?: string;
+}
+
+export interface VideoProject {
+  id: string;
+  title: string;
+  topic: string;
+  aspectRatio: AspectRatio;
+  fps: number;
+  scenes: Scene[];
+  totalDuration: number; // in seconds
+  voice: {
+    name: string;
+    rate: string; // e.g. "+0%", "+10%"
+    pitch: string; // e.g. "+0Hz"
+  };
+  subtitleStyle: SubtitleStyle;
+  watermark: WatermarkConfig;
+  showProgressBar: boolean;
+  showAudioVisualizer?: boolean;
+  showCinematicParticles?: boolean;
+  showCameraShake?: boolean;
+  enableDynamicEmojis?: boolean;
+  soundFx: SoundFxConfig;
+  bgm: {
+    url?: string;
+    localPath?: string;
+    volume: number; // 0 to 1
+    duckingVolume: number; // volume during narration (e.g. 0.15)
+  };
+  status: 'idle' | 'generating' | 'rendering' | 'completed' | 'error';
+}
+
+export interface RenderProgress {
+  progress: number; // 0 to 100
+  status: string;
+  outputPath?: string;
+  error?: string;
+}
+
+export interface VoiceOption {
+  id: string;
+  name: string;
+  locale: string;
+  gender: 'Female' | 'Male';
+  description: string;
+}
+
+export const VIETNAMESE_VOICES: VoiceOption[] = [
+  {
+    id: 'vi-VN-HoaiMyNeural',
+    name: 'Hoài My (Nữ - Truyền cảm, chuẩn giọng Bắc)',
+    locale: 'vi-VN',
+    gender: 'Female',
+    description: 'Giọng nữ chuẩn Hà Nội, mượt mà, phù hợp tin tức, recap, truyện.'
+  },
+  {
+    id: 'vi-VN-NamMinhNeural',
+    name: 'Nam Minh (Nam - Trầm ấm, cuốn hút)',
+    locale: 'vi-VN',
+    gender: 'Male',
+    description: 'Giọng nam ấm, uy lực, phù hợp video kiến thức, tài chính, top bí ẩn.'
+  },
+  {
+    id: 'en-US-JennyNeural',
+    name: 'Jenny (English US - Natural Female)',
+    locale: 'en-US',
+    gender: 'Female',
+    description: 'Natural American female voice for global content.'
+  },
+  {
+    id: 'en-US-GuyNeural',
+    name: 'Guy (English US - Dynamic Male)',
+    locale: 'en-US',
+    gender: 'Male',
+    description: 'Energetic American male voice.'
+  }
+];
+
+export const DEFAULT_SUBTITLE_STYLE: SubtitleStyle = {
+  fontFamily: 'Montserrat, Inter, sans-serif',
+  fontSize: 48,
+  textColor: '#FFFFFF',
+  highlightColor: '#FACC15', // Vibrant Gold/Yellow
+  strokeColor: '#000000',
+  strokeWidth: 6,
+  positionY: 78,
+  animationStyle: 'pop',
+  maxWordsPerLine: 4,
+  uppercase: true
+};
+
+export const DEFAULT_WATERMARK: WatermarkConfig = {
+  enabled: true,
+  text: '@KenhKienThuc',
+  position: 'top-right',
+  opacity: 0.85
+};
+
+export const DEFAULT_SOUND_FX: SoundFxConfig = {
+  enableWhoosh: true,
+  enablePop: true,
+  volume: 0.4
+};
