@@ -9,13 +9,15 @@ interface MotionTypographyModalProps {
   onClose: () => void;
   scene: Scene | null;
   onApply: (sceneId: string, layoutId: string, effectId: string) => void;
+  onApplyAll?: (layoutId: string, effectId: string) => void;
 }
 
 export const MotionTypographyModal: React.FC<MotionTypographyModalProps> = ({
   isOpen,
   onClose,
   scene,
-  onApply
+  onApply,
+  onApplyAll
 }) => {
   if (!isOpen || !scene) return null;
 
@@ -51,6 +53,13 @@ export const MotionTypographyModal: React.FC<MotionTypographyModalProps> = ({
   const handleConfirm = () => {
     onApply(scene.id, selectedLayoutId, selectedEffectId);
     onClose();
+  };
+
+  const handleConfirmAll = () => {
+    if (onApplyAll) {
+      onApplyAll(selectedLayoutId, selectedEffectId);
+    }
+    handleConfirm();
   };
 
   const currentLayout = TYPOGRAPHY_LAYOUT_PRESETS.find((l) => l.id === selectedLayoutId);
@@ -281,14 +290,27 @@ export const MotionTypographyModal: React.FC<MotionTypographyModalProps> = ({
             Hủy
           </button>
 
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white text-xs font-black shadow-lg shadow-emerald-500/25 transition active:scale-95 cursor-pointer"
-          >
-            <Check className="w-4 h-4" />
-            <span>Áp Dụng Cho Phân Cảnh Này</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {onApplyAll && (
+              <button
+                type="button"
+                onClick={handleConfirmAll}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/50 text-purple-200 hover:text-white text-xs font-black transition active:scale-95 cursor-pointer shadow-md"
+                title="Đồng bộ kiểu xếp chữ và hiệu ứng này cho toàn bộ các phân cảnh trong video"
+              >
+                <span>✨ Áp Dụng Cho TẤT CẢ Phân Cảnh</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white text-xs font-black shadow-lg shadow-emerald-500/25 transition active:scale-95 cursor-pointer"
+            >
+              <Check className="w-4 h-4" />
+              <span>Áp Dụng Cho Cảnh Này</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

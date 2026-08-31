@@ -1745,6 +1745,28 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     <span>100 Kiểu Xếp Chữ & Hiệu Ứng FX</span>
                   </button>
 
+                  {/* Nút Áp Dụng Kiểu Chữ Cảnh Này Cho Tất Cả Cảnh (Quick Sync) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      project.scenes.forEach((sc) => {
+                        updateScene(sc.id, {
+                          motionTypographyLayout: scene.motionTypographyLayout,
+                          motionTypographyEffect: scene.motionTypographyEffect,
+                          textLayerMode: scene.textLayerMode || 'front',
+                          tiktokTextEffect: scene.tiktokTextEffect,
+                          tiktokTextTemplate: scene.tiktokTextTemplate,
+                          textEffectsMix: scene.textEffectsMix
+                        });
+                      });
+                    }}
+                    className="w-full py-1 px-2 rounded-xl flex items-center justify-center gap-1 text-[10px] font-black transition-all border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 hover:text-white cursor-pointer active:scale-95 shadow-sm"
+                    title="Sao chép toàn bộ kiểu chạy chữ, hiệu ứng và mẫu chữ của cảnh này cho tất cả các phân cảnh còn lại trong video"
+                  >
+                    <span>✨</span>
+                    <span>Áp Dụng Kiểu Chữ Cho Tất Cả Cảnh</span>
+                  </button>
+
                   {/* Nút Mở Kho TikTok & CapCut Studio (Text, Sticker, FX) */}
                   <button
                     type="button"
@@ -2631,6 +2653,15 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             motionTypographyLayout: layoutId,
             motionTypographyEffect: effectId,
             textLayerMode: currentSc?.textLayerMode || 'front'
+          });
+        }}
+        onApplyAll={(layoutId, effectId) => {
+          project.scenes.forEach((sc) => {
+            updateScene(sc.id, {
+              motionTypographyLayout: layoutId,
+              motionTypographyEffect: effectId,
+              textLayerMode: sc.textLayerMode || 'front'
+            });
           });
         }}
       />
