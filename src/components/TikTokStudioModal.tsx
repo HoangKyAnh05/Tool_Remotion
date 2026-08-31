@@ -304,6 +304,7 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                     : selectedTextEffect === eff.id;
 
                   const handleClick = () => {
+                    setSelectedTemplate(''); // Bỏ chọn Text Template khi chọn Text Effect
                     if (isMixMode) {
                       setSelectedMixEffects((prev) =>
                         prev.includes(eff.id) ? prev.filter((id) => id !== eff.id) : [...prev, eff.id]
@@ -374,7 +375,13 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                   return (
                     <div
                       key={tpl.id}
-                      onClick={() => setSelectedTemplate(tpl.id)}
+                      onClick={() => {
+                        setSelectedTemplate(tpl.id);
+                        // Khi chọn Text Template thì tự động xóa Text Effect để không bị chạy đè
+                        setSelectedTextEffect('');
+                        setSelectedMixEffects([]);
+                        setIsMixMode(false);
+                      }}
                       className={`h-36 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
                         isSelected
                           ? 'bg-[#242938] border-cyan-400 shadow-xl shadow-cyan-500/20 ring-2 ring-cyan-400/40'
