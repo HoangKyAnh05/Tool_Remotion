@@ -78,6 +78,7 @@ export type VisualType =
   | 'code_terminal'
   | 'vs_battle'
   | 'dna_helix'
+  | 'green_screen_depth'
   | 'breaking_news';
 
 export interface ChatMessage {
@@ -127,7 +128,7 @@ export interface Scene {
   mediaType: 'image' | 'video';
   mediaUrl: string;
   localMediaPath?: string;
-  videoCutoutMode?: 'none' | 'transparent' | 'blur_bg' | 'green_key' | 'black_key';
+  isGreenScreenMotion?: boolean; // Bật chế độ Video Phông Xanh & Chữ Motion 3D (Trước & Sau Vật Thể)
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];

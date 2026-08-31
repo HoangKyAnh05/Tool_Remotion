@@ -192,102 +192,27 @@ export const SceneMedia: React.FC<SceneMediaProps> = ({
   };
 
   const isVideo = scene.mediaType === 'video';
-  const cutout = scene.videoCutoutMode || 'none';
-
-  let customFilter = mediaStyle.filter;
-  let customBlendMode: React.CSSProperties['mixBlendMode'] = undefined;
-
-  if (cutout === 'black_key') {
-    customBlendMode = 'screen';
-  } else if (cutout === 'green_key') {
-    customFilter = customFilter ? `${customFilter} url(#greenScreenKey)` : 'url(#greenScreenKey)';
-  }
-
-  const enhancedMediaStyle: React.CSSProperties = {
-    ...mediaStyle,
-    filter: customFilter,
-    mixBlendMode: customBlendMode
-  };
 
   return (
     <div className="w-full h-full overflow-hidden relative bg-black">
-      {/* SVG Chroma Key Filter for Green Screen Video/Image */}
-      <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
-        <filter id="greenScreenKey">
-          <feColorMatrix
-            type="matrix"
-            values="1.0  0.0  0.0  0.0  0.0
-                    0.0  1.0  0.0  0.0  0.0
-                    0.0  0.0  1.0  0.0  0.0
-                    1.4 -2.2  1.4  1.0  0.0"
-          />
-        </filter>
-      </svg>
-
-      {/* CHẾ ĐỘ 1: LÀM MỜ NỀN SÂU VIDEO (BOKEH BLUR 2 LAYERS) */}
-      {cutout === 'blur_bg' ? (
-        <div className="w-full h-full relative">
-          {/* Layer 1: Nền video phía sau bị làm mờ sâu */}
-          <div className="absolute inset-0 overflow-hidden">
-            {isVideo ? (
-              <Video
-                src={mediaSource}
-                className="w-full h-full object-cover scale-125 filter blur-2xl brightness-50"
-                startFrom={0}
-                volume={0}
-              />
-            ) : (
-              <Img
-                src={mediaSource}
-                className="w-full h-full object-cover scale-125 filter blur-2xl brightness-50"
-              />
-            )}
-          </div>
-
-          {/* Layer 2: Chủ thể video ở giữa sắc nét chuẩn điện ảnh */}
-          <div className="absolute inset-4 sm:inset-10 z-10 flex items-center justify-center pointer-events-none">
-            <div className="w-full h-full rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)] border border-white/20">
-              {isVideo ? (
-                <Video
-                  src={mediaSource}
-                  className="w-full h-full object-cover"
-                  style={mediaStyle}
-                  startFrom={0}
-                  volume={0}
-                />
-              ) : (
-                <Img
-                  src={mediaSource}
-                  className="w-full h-full object-cover"
-                  style={mediaStyle}
-                />
-              )}
-            </div>
-          </div>
-        </div>
+      {isVideo ? (
+        <Video
+          src={mediaSource}
+          className="w-full h-full object-cover"
+          style={mediaStyle}
+          startFrom={0}
+          volume={0}
+        />
       ) : (
-        /* CHẾ ĐỘ THÔNG THƯỜNG / GREEN KEY / BLACK KEY */
-        isVideo ? (
-          <Video
-            src={mediaSource}
-            className="w-full h-full object-cover"
-            style={enhancedMediaStyle}
-            startFrom={0}
-            volume={0}
-          />
-        ) : (
-          <Img
-            src={mediaSource}
-            className="w-full h-full object-cover"
-            style={enhancedMediaStyle}
-          />
-        )
+        <Img
+          src={mediaSource}
+          className="w-full h-full object-cover"
+          style={mediaStyle}
+        />
       )}
 
       {/* Cinematic Vignette */}
-      {cutout !== 'black_key' && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
-      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
 
       {/* White Flash Transition Overlay */}
       {whiteFlashOpacity > 0 && (

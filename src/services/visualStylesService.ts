@@ -11,6 +11,7 @@ export interface CustomVisualItem {
 
 export const DEFAULT_VISUAL_STYLES: CustomVisualItem[] = [
   { id: 'media', name: 'Media Thường (Ảnh/Video)', icon: '🖼️', badgeText: '', layoutType: 'custom_card' },
+  { id: 'green_screen_depth', name: '🟩 Phông Xanh & Chữ Motion 3D (Trước & Sau Vật Thể)', icon: '🟩', badgeText: '🟩 3D DEPTH MOTION', layoutType: 'custom_card', primaryColor: '#22c55e' },
   { id: 'crown_youtube', name: 'Vương Miện YouTube (MrBeast 3D)', icon: '👑', badgeText: '👑 HOÀNG GIA NỔI BẬT', layoutType: 'crown_prop', primaryColor: '#facc15' },
   { id: 'floating_clocks', name: 'Đồng Hồ Thời Gian 3D Bay', icon: '⏰', badgeText: '⏰ TẬP TRUNG THỜI GIAN', layoutType: 'floating_props', primaryColor: '#22c55e' },
   { id: 'frosted_glass_pro', name: 'Hộp Kính Mờ Phim Tài Liệu', icon: '📺', badgeText: '🎬 PHIM ĐIỆN ẢNH', layoutType: 'frosted_glass', primaryColor: '#06b6d4' },

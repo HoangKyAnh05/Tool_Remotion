@@ -19,6 +19,7 @@ import {
   CodeTerminalScene
 } from './visuals/AdvancedVisuals';
 import { ExtendedVisualOverlay } from './visuals/ExtendedVisualOverlay';
+import { GreenScreenDepthMotion } from './GreenScreenDepthMotion';
 
 interface SceneItemProps {
   scene: Scene;
@@ -112,14 +113,22 @@ export const SceneItem: React.FC<SceneItemProps> = ({
             punchline={scene.narration}
           />
         );
-      case 'code_terminal':
+      case 'green_screen_depth':
         return (
-          <CodeTerminalScene
-            badgeText={scene.headerBadge || '💻 TỰ ĐỘNG HÓA BẰNG CODE'}
-            punchline={scene.narration}
+          <GreenScreenDepthMotion
+            scene={scene}
+            durationInFrames={durationInFrames}
           />
         );
       default:
+        if (scene.isGreenScreenMotion) {
+          return (
+            <GreenScreenDepthMotion
+              scene={scene}
+              durationInFrames={durationInFrames}
+            />
+          );
+        }
         return (
           <SceneMedia
             scene={scene}

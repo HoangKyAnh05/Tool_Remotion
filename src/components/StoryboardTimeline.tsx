@@ -5,7 +5,6 @@ import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideo
 import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import { CreateCustomVisualModal } from './CreateCustomVisualModal';
-import { RemoveBackgroundModal } from './RemoveBackgroundModal';
 import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
 import {
   Film,
@@ -131,7 +130,6 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
   const [visualStylesList, setVisualStylesList] = useState<CustomVisualItem[]>(() => visualStylesService.getAll());
   const [isCreateVisualModalOpen, setIsCreateVisualModalOpen] = useState(false);
-  const [activeRemoveBgScene, setActiveRemoveBgScene] = useState<Scene | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1660,21 +1658,27 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     </button>
                   </div>
 
-                  {/* Nút Quét Xóa Phông Vật Thể AI */}
+                  {/* Nút Bật / Tắt Video Phông Xanh & Chữ Motion 3D (Trước & Sau Vật Thể) */}
                   <button
                     type="button"
                     onClick={() => {
-                      if (!scene.mediaUrl) {
-                        alert('Phân cảnh này chưa có ảnh hoặc video để xóa phông! Hãy chọn ảnh trước.');
-                        return;
-                      }
-                      setActiveRemoveBgScene(scene);
+                      updateScene(scene.id, {
+                        isGreenScreenMotion: !scene.isGreenScreenMotion
+                      });
                     }}
-                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-600/50 hover:to-blue-600/50 border-cyan-500/50 text-cyan-200 hover:text-white cursor-pointer active:scale-95"
-                    title="Mở bảng quét xóa phông nền AI, xem trước và bóc tách vật thể / người"
+                    className={`w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-black transition-all border shadow-sm cursor-pointer active:scale-95 ${
+                      scene.isGreenScreenMotion
+                        ? 'bg-gradient-to-r from-emerald-600 to-green-500 border-green-300 text-white shadow-lg shadow-green-500/30'
+                        : 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-500/50 text-emerald-300 hover:text-white'
+                    }`}
+                    title="Khử sạch nền xanh lá của video và tự động ghép chữ Motion 3D xếp loạn xạ ở trước và sau người"
                   >
-                    <Scissors className="w-3.5 h-3.5 text-cyan-300" />
-                    <span>✂️ Quét Xóa Phông Vật Thể</span>
+                    <span className="text-sm">{scene.isGreenScreenMotion ? '✓' : '🟩'}</span>
+                    <span>
+                      {scene.isGreenScreenMotion
+                        ? 'Đang Chạy Chữ 3D (Trước/Sau)'
+                        : '🟩 Bật Chữ Motion 3D (Phông Xanh)'}
+                    </span>
                   </button>
                 </div>
 
@@ -2535,23 +2539,6 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         onCreated={(newVisual) => {
           const updated = visualStylesService.getAll();
           setVisualStylesList(updated);
-        }}
-      />
-
-      {/* Modal Quét Xóa Phông Vật Thể AI (Hỗ trợ cả Video lẫn Ảnh) */}
-      <RemoveBackgroundModal
-        isOpen={Boolean(activeRemoveBgScene)}
-        onClose={() => setActiveRemoveBgScene(null)}
-        scene={activeRemoveBgScene}
-        onApply={(sceneId, cutoutMode, newMediaUrl) => {
-          const updates: Partial<Scene> = {
-            videoCutoutMode: cutoutMode
-          };
-          if (newMediaUrl) {
-            updates.mediaUrl = newMediaUrl;
-            updates.mediaType = 'image';
-          }
-          updateScene(sceneId, updates);
         }}
       />
     </div>
