@@ -172,13 +172,75 @@ export const SceneItem: React.FC<SceneItemProps> = ({
     }
   }, [scene.id, scene.tiktokSfx, scene.words, frame, fps]);
 
+  // =========================================================================
+  // ENTRANCE TRANSITIONS (Chuyển Cảnh Toàn Cảnh: Fade, Zoom, Slide, Glitch, Flash...)
+  // =========================================================================
+  let transOpacity = 1;
+  let transTranslateX = 0;
+  let transTranslateY = 0;
+  let transScale = 1;
+  let whiteFlashOpacity = 0;
+  let glitchOffsetX = 0;
+
+  const transFrames = 15; // 0.5s ở 30fps
+  if (frame <= transFrames && scene.transition && scene.transition !== 'none') {
+    const progress = Math.min(1, Math.max(0, frame / transFrames));
+
+    switch (scene.transition) {
+      case 'fade':
+        transOpacity = progress;
+        break;
+
+      case 'slide_left':
+        transTranslateX = (1 - progress) * 100; // Trượt từ phải sang trái
+        break;
+
+      case 'slide_right':
+        transTranslateX = (progress - 1) * 100; // Trượt từ trái sang phải
+        break;
+
+      case 'zoom_in':
+        transScale = 0.3 + progress * 0.7; // Thu nhỏ rồi phóng to vào
+        transOpacity = Math.min(1, progress * 1.5);
+        break;
+
+      case 'zoom_out':
+        transScale = 1.7 - progress * 0.7; // Phóng đại rồi thu về chuẩn
+        transOpacity = Math.min(1, progress * 1.5);
+        break;
+
+      case 'flash_white':
+        whiteFlashOpacity = Math.max(0, 1 - progress * 1.5);
+        break;
+
+      case 'digital_glitch':
+        if (frame % 3 === 0) {
+          glitchOffsetX = (Math.random() - 0.5) * 40;
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
   return (
     <AbsoluteFill
       className="bg-black overflow-hidden"
       style={{
-        filter: currentFilter?.cssFilter && currentFilter.cssFilter !== 'none' ? currentFilter.cssFilter : undefined
+        filter: currentFilter?.cssFilter && currentFilter.cssFilter !== 'none' ? currentFilter.cssFilter : undefined,
+        transform: `scale(${transScale}) translate(${transTranslateX + glitchOffsetX}px, ${transTranslateY}px)`,
+        opacity: transOpacity
       }}
     >
+      {/* White Flash Transition Overlay */}
+      {whiteFlashOpacity > 0 && (
+        <div
+          className="absolute inset-0 bg-white pointer-events-none z-50 transition-opacity"
+          style={{ opacity: whiteFlashOpacity }}
+        />
+      )}
+
       {/* Cinematic Color Overlay */}
       {currentFilter?.overlayStyle && (
         <div
