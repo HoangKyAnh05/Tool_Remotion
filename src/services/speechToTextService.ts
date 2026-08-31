@@ -27,6 +27,120 @@ export function dataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
   return bytes.buffer;
 }
 
+// Chuyển đổi AudioBuffer thành định dạng WAV chuẩn (Blob & DataURL) để dùng cho Player và AI STT
+export function audioBufferToWav(buffer: AudioBuffer): Blob {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
+
+  let result: Float32Array;
+  if (numChannels === 2) {
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+    result = new Float32Array(left.length + right.length);
+    let index = 0;
+    let inputIndex = 0;
+    while (index < result.length) {
+      result[index++] = left[inputIndex];
+      result[index++] = right[inputIndex];
+      inputIndex++;
+    }
+  } else {
+    result = buffer.getChannelData(0);
+  }
+
+  const dataLength = result.length * (bitDepth / 8);
+  const bufferLength = 44 + dataLength;
+  const arrayBuffer = new ArrayBuffer(bufferLength);
+  const view = new DataView(arrayBuffer);
+
+  function writeString(offset: number, string: string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+
+  // RIFF identifier
+  writeString(0, 'RIFF');
+  // file length
+  view.setUint32(4, 36 + dataLength, true);
+  // RIFF type
+  writeString(8, 'WAVE');
+  // format chunk identifier
+  writeString(12, 'fmt ');
+  // format chunk length
+  view.setUint32(16, 16, true);
+  // sample format (raw)
+  view.setUint16(20, format, true);
+  // channel count
+  view.setUint16(22, numChannels, true);
+  // sample rate
+  view.setUint32(24, sampleRate, true);
+  // byte rate (sample rate * block align)
+  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+  // block align (channel count * bytes per sample)
+  view.setUint16(32, numChannels * (bitDepth / 8), true);
+  // bits per sample
+  view.setUint16(34, bitDepth, true);
+  // data chunk identifier
+  writeString(36, 'data');
+  // data chunk length
+  view.setUint32(40, dataLength, true);
+
+  // Write PCM audio data
+  let offset = 44;
+  for (let i = 0; i < result.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, result[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+
+  return new Blob([view], { type: 'audio/wav' });
+}
+
+// Tự động tách âm thanh (sound track) từ video MP4/MOV/WebM/MKV ra file WAV
+export async function extractAudioFromVideoData(
+  videoData: string | ArrayBuffer
+): Promise<{ dataUrl: string; base64: string; mimeType: string; duration: number } | null> {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    const audioCtx = new AudioContextClass();
+    let arrayBuffer: ArrayBuffer;
+    if (typeof videoData === 'string') {
+      arrayBuffer = dataUrlToArrayBuffer(videoData);
+    } else {
+      arrayBuffer = videoData;
+    }
+
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    const duration = Number(decoded.duration.toFixed(2));
+    const wavBlob = audioBufferToWav(decoded);
+
+    audioCtx.close().catch(() => {});
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = (e.target?.result as string) || '';
+        const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+        resolve({
+          dataUrl,
+          base64,
+          mimeType: 'audio/wav',
+          duration
+        });
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(wavBlob);
+    });
+  } catch (err) {
+    console.error('Error extracting audio from video:', err);
+    return null;
+  }
+}
+
 // Phân tích waveform âm thanh bằng Web Audio API để đo độ dài chuẩn xác và phát hiện nhịp tiếng nói
 export async function analyzeAudioWaveform(
   audioData: string | ArrayBuffer

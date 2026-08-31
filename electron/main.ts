@@ -361,7 +361,7 @@ function setupIpcHandlers() {
     return res.filePaths[0] || null;
   });
 
-  // Read audio file to base64 Data URL for Speech-To-Text processing
+  // Read audio/video file to base64 Data URL for Speech-To-Text processing
   ipcMain.handle('audio:read-file-base64', async (_, filePath: string) => {
     try {
       if (!filePath || !fs.existsSync(filePath)) return null;
@@ -372,6 +372,10 @@ function setupIpcHandlers() {
       else if (ext === 'm4a') mimeType = 'audio/m4a';
       else if (ext === 'aac') mimeType = 'audio/aac';
       else if (ext === 'ogg') mimeType = 'audio/ogg';
+      else if (ext === 'mp4') mimeType = 'video/mp4';
+      else if (ext === 'mov') mimeType = 'video/quicktime';
+      else if (ext === 'webm') mimeType = 'video/webm';
+      else if (ext === 'mkv') mimeType = 'video/x-matroska';
 
       const base64 = buffer.toString('base64');
       return {
@@ -381,7 +385,7 @@ function setupIpcHandlers() {
         sizeBytes: buffer.length
       };
     } catch (err: any) {
-      console.error('Error reading audio file base64:', err);
+      console.error('Error reading audio/video file base64:', err);
       return null;
     }
   });

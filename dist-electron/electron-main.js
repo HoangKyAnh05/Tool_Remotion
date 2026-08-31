@@ -1,18 +1,18 @@
-import { app as R, BrowserWindow as W, ipcMain as C, shell as E, dialog as U, session as P } from "electron";
+import { app as R, BrowserWindow as W, ipcMain as C, shell as D, dialog as U, session as E } from "electron";
 import T from "node:path";
-import { fileURLToPath as q } from "node:url";
+import { fileURLToPath as P } from "node:url";
 import K from "node:https";
 import L from "node:http";
 import A from "node:fs";
 import { Communicate as V } from "edge-tts-universal";
 import { bundle as F } from "@remotion/bundler";
 import { selectComposition as j, renderMedia as H } from "@remotion/renderer";
-const G = q(import.meta.url), S = T.dirname(G);
+const G = P(import.meta.url), S = T.dirname(G);
 process.env.DIST = T.join(S, "../dist");
 process.env.VITE_PUBLIC = R.isPackaged ? process.env.DIST : T.join(process.env.DIST, "../public");
 let s, _ = null;
 const B = process.env.VITE_DEV_SERVER_URL;
-function D() {
+function q() {
   s = new W({
     width: 1440,
     height: 900,
@@ -29,7 +29,7 @@ function D() {
       webSecurity: !1
       // Allow loading local files and media preview
     }
-  }), P.defaultSession.setPermissionRequestHandler((M, b, n) => {
+  }), E.defaultSession.setPermissionRequestHandler((M, b, n) => {
     n(!0);
   }), s.show(), s.focus(), s.webContents.on("did-finish-load", () => {
     s == null || s.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
@@ -39,10 +39,10 @@ R.on("window-all-closed", () => {
   process.platform !== "darwin" && (R.quit(), s = null);
 });
 R.on("activate", () => {
-  W.getAllWindows().length === 0 && D();
+  W.getAllWindows().length === 0 && q();
 });
 R.whenReady().then(() => {
-  D(), J();
+  q(), J();
 });
 function z(M) {
   return new Promise((b, n) => {
@@ -54,78 +54,78 @@ function z(M) {
           Referer: "https://translate.google.com/"
         }
       },
-      (t) => {
-        if (t.statusCode && t.statusCode >= 400)
-          return n(new Error(`HTTP error ${t.statusCode}`));
-        const c = [];
-        t.on("data", (e) => c.push(Buffer.isBuffer(e) ? e : Buffer.from(e))), t.on("end", () => b(Buffer.concat(c)));
+      (e) => {
+        if (e.statusCode && e.statusCode >= 400)
+          return n(new Error(`HTTP error ${e.statusCode}`));
+        const r = [];
+        e.on("data", (t) => r.push(Buffer.isBuffer(t) ? t : Buffer.from(t))), e.on("end", () => b(Buffer.concat(r)));
       }
     ).on("error", n);
   });
 }
 async function O(M, b) {
   try {
-    const r = M.trim().split(/\s+/).filter(Boolean), c = !b.startsWith("en-") ? "vi" : "en", e = [];
+    const i = M.trim().split(/\s+/).filter(Boolean), r = !b.startsWith("en-") ? "vi" : "en", t = [];
     let h = "";
-    for (const g of r)
-      (h + " " + g).length > 80 ? (e.push(h.trim()), h = g) : h += " " + g;
-    h.trim() && e.push(h.trim());
-    const i = [];
-    for (const g of e) {
+    for (const g of i)
+      (h + " " + g).length > 80 ? (t.push(h.trim()), h = g) : h += " " + g;
+    h.trim() && t.push(h.trim());
+    const a = [];
+    for (const g of t) {
       const k = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(
         g
-      )}&tl=${c}&client=tw-ob`, x = await z(k);
-      i.push(x);
+      )}&tl=${r}&client=tw-ob`, x = await z(k);
+      a.push(x);
     }
-    const o = Buffer.concat(i), d = `data:audio/mp3;base64,${o.toString("base64")}`, l = Math.max(3, o.length / 3800), m = [], v = (l - 0.4) / Math.max(r.length, 1);
-    let a = 0.2;
-    for (const g of r) {
+    const o = Buffer.concat(a), d = `data:audio/mp3;base64,${o.toString("base64")}`, l = Math.max(3, o.length / 3800), m = [], v = (l - 0.4) / Math.max(i.length, 1);
+    let c = 0.2;
+    for (const g of i) {
       const k = Math.max(0.2, Math.min(0.7, v));
       m.push({
         word: g,
-        start: Number(a.toFixed(2)),
-        end: Number((a + k).toFixed(2))
-      }), a += k;
+        start: Number(c.toFixed(2)),
+        end: Number((c + k).toFixed(2))
+      }), c += k;
     }
     return {
       audioUrl: d,
-      duration: Number((a + 0.3).toFixed(2)),
+      duration: Number((c + 0.3).toFixed(2)),
       words: m
     };
   } catch {
-    const r = M.trim().split(/\s+/).filter(Boolean), t = r.map((c, e) => ({
-      word: c,
-      start: Number((e * 0.35 + 0.2).toFixed(2)),
-      end: Number(((e + 1) * 0.35 + 0.2).toFixed(2))
+    const i = M.trim().split(/\s+/).filter(Boolean), e = i.map((r, t) => ({
+      word: r,
+      start: Number((t * 0.35 + 0.2).toFixed(2)),
+      end: Number(((t + 1) * 0.35 + 0.2).toFixed(2))
     }));
     return {
       audioUrl: "",
-      duration: Math.max(3.5, r.length * 0.35 + 0.5),
-      words: t
+      duration: Math.max(3.5, i.length * 0.35 + 0.5),
+      words: e
     };
   }
 }
 function J() {
   C.handle(
     "tts:synthesize",
-    async (b, { text: n, voice: r = "vi-VN-HoaiMyNeural", rate: t = "+0%", pitch: c = "+0Hz" }) => {
+    async (b, { text: n, voice: i = "vi-VN-HoaiMyNeural", rate: e = "+0%", pitch: r = "+0Hz" }) => {
       try {
-        const e = n.trim();
-        if (!e)
+        const t = n.trim();
+        if (!t)
           return { audioUrl: "", duration: 1, words: [] };
-        const h = new V(e, {
-          voice: r,
-          rate: t,
-          pitch: c
-        }), i = [], o = [];
+        const h = new V(t, {
+          voice: i,
+          rate: e,
+          pitch: r
+        }), a = [], o = [];
         for await (const v of h.stream()) {
-          const a = v;
-          if (a.type === "audio" && a.data)
-            o.push(Buffer.isBuffer(a.data) ? a.data : Buffer.from(a.data));
-          else if (a.type === "WordBoundary" && a.text) {
-            const g = Number(((a.offset || 0) / 1e7).toFixed(2)), k = Number(((a.duration || 0) / 1e7).toFixed(2));
-            i.push({
-              word: String(a.text),
+          const c = v;
+          if (c.type === "audio" && c.data)
+            o.push(Buffer.isBuffer(c.data) ? c.data : Buffer.from(c.data));
+          else if (c.type === "WordBoundary" && c.text) {
+            const g = Number(((c.offset || 0) / 1e7).toFixed(2)), k = Number(((c.duration || 0) / 1e7).toFixed(2));
+            a.push({
+              word: String(c.text),
               start: g,
               end: Number((g + k).toFixed(2))
             });
@@ -136,33 +136,33 @@ function J() {
           throw new Error("Empty audio received from Edge-TTS");
         const l = `data:audio/mp3;base64,${u.toString("base64")}`;
         let m = 3;
-        return i.length > 0 ? m = Number((i[i.length - 1].end + 0.3).toFixed(2)) : m = Number(Math.max(2.5, u.length / 5500).toFixed(2)), {
+        return a.length > 0 ? m = Number((a[a.length - 1].end + 0.3).toFixed(2)) : m = Number(Math.max(2.5, u.length / 5500).toFixed(2)), {
           audioUrl: l,
           duration: m,
-          words: i
+          words: a
         };
-      } catch (e) {
-        return console.warn("Edge-TTS direct synthesis error, falling back:", (e == null ? void 0 : e.message) || e), O(n, r);
+      } catch (t) {
+        return console.warn("Edge-TTS direct synthesis error, falling back:", (t == null ? void 0 : t.message) || t), O(n, i);
       }
     }
-  ), C.handle("render:video", async (b, { project: n, resolution: r = "1080p" }) => {
+  ), C.handle("render:video", async (b, { project: n, resolution: i = "1080p" }) => {
     try {
-      const t = T.resolve("out");
-      A.existsSync(t) || A.mkdirSync(t, { recursive: !0 });
-      const e = `${(n.title || "Video").replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 40)}_${Date.now()}.mp4`, h = T.join(t, e);
+      const e = T.resolve("out");
+      A.existsSync(e) || A.mkdirSync(e, { recursive: !0 });
+      const t = `${(n.title || "Video").replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 40)}_${Date.now()}.mp4`, h = T.join(e, t);
       s == null || s.webContents.send("render:progress", {
         progress: 5,
         stage: "bundle",
         message: "Đang chuẩn bị và đóng gói bundle Remotion..."
       });
-      const i = T.resolve("src/remotion/index.ts");
+      const a = T.resolve("src/remotion/index.ts");
       _ = await F({
-        entryPoint: i,
-        onProgress: (a) => {
+        entryPoint: a,
+        onProgress: (c) => {
           s == null || s.webContents.send("render:progress", {
-            progress: Math.min(25, Math.round(5 + a * 20 / 100)),
+            progress: Math.min(25, Math.round(5 + c * 20 / 100)),
             stage: "bundle",
-            message: `Đang biên dịch mã nguồn Remotion (${a}%)...`
+            message: `Đang biên dịch mã nguồn Remotion (${c}%)...`
           });
         }
       }), s == null || s.webContents.send("render:progress", {
@@ -176,13 +176,13 @@ function J() {
         inputProps: { project: n }
       }), d = n.fps || 30, l = Math.max(
         (n.scenes || []).reduce(
-          (a, g) => a + Math.max(Math.round((g.audioDuration || 4) * d), Math.round(2 * d)),
+          (c, g) => c + Math.max(Math.round((g.audioDuration || 4) * d), Math.round(2 * d)),
           0
         ),
         30
       );
       let m = n.aspectRatio === "9:16" ? 1080 : 1920, v = n.aspectRatio === "9:16" ? 1920 : 1080;
-      return r === "4k" && (m = n.aspectRatio === "9:16" ? 2160 : 3840, v = n.aspectRatio === "9:16" ? 3840 : 2160), s == null || s.webContents.send("render:progress", {
+      return i === "4k" && (m = n.aspectRatio === "9:16" ? 2160 : 3840, v = n.aspectRatio === "9:16" ? 3840 : 2160), s == null || s.webContents.send("render:progress", {
         progress: 32,
         stage: "rendering",
         message: `Bắt đầu render ${l} khung hình (${m}x${v})...`
@@ -198,12 +198,12 @@ function J() {
         codec: "h264",
         outputLocation: h,
         inputProps: { project: n },
-        onProgress: ({ progress: a }) => {
-          const g = Math.min(99, Math.round(32 + a * 66));
+        onProgress: ({ progress: c }) => {
+          const g = Math.min(99, Math.round(32 + c * 66));
           s == null || s.webContents.send("render:progress", {
             progress: g,
             stage: "rendering",
-            message: `Đang xử lý hình ảnh, phụ đề & âm thanh (${Math.round(a * 100)}%)...`
+            message: `Đang xử lý hình ảnh, phụ đề & âm thanh (${Math.round(c * 100)}%)...`
           });
         }
       }), s == null || s.webContents.send("render:progress", {
@@ -214,34 +214,34 @@ function J() {
         success: !0,
         filePath: h
       };
-    } catch (t) {
-      throw console.error("Render media error in main process:", t), new Error(t.message || "Render video thất bại");
+    } catch (e) {
+      throw console.error("Render media error in main process:", e), new Error(e.message || "Render video thất bại");
     }
-  }), C.handle("shell:open-path", async (b, n) => E.openPath(n)), C.handle("dialog:select-file", async (b, n) => s ? (await U.showOpenDialog(s, n)).filePaths : null), C.handle("dialog:select-folder", async () => s && (await U.showOpenDialog(s, {
+  }), C.handle("shell:open-path", async (b, n) => D.openPath(n)), C.handle("dialog:select-file", async (b, n) => s ? (await U.showOpenDialog(s, n)).filePaths : null), C.handle("dialog:select-folder", async () => s && (await U.showOpenDialog(s, {
     properties: ["openDirectory"]
   })).filePaths[0] || null), C.handle("audio:read-file-base64", async (b, n) => {
     try {
       if (!n || !A.existsSync(n)) return null;
-      const r = await A.promises.readFile(n), t = T.extname(n).toLowerCase().replace(".", "");
-      let c = "audio/mp3";
-      t === "wav" ? c = "audio/wav" : t === "m4a" ? c = "audio/m4a" : t === "aac" ? c = "audio/aac" : t === "ogg" && (c = "audio/ogg");
-      const e = r.toString("base64");
+      const i = await A.promises.readFile(n), e = T.extname(n).toLowerCase().replace(".", "");
+      let r = "audio/mp3";
+      e === "wav" ? r = "audio/wav" : e === "m4a" ? r = "audio/m4a" : e === "aac" ? r = "audio/aac" : e === "ogg" ? r = "audio/ogg" : e === "mp4" ? r = "video/mp4" : e === "mov" ? r = "video/quicktime" : e === "webm" ? r = "video/webm" : e === "mkv" && (r = "video/x-matroska");
+      const t = i.toString("base64");
       return {
-        dataUrl: `data:${c};base64,${e}`,
-        base64: e,
-        mimeType: c,
-        sizeBytes: r.length
+        dataUrl: `data:${r};base64,${t}`,
+        base64: t,
+        mimeType: r,
+        sizeBytes: i.length
       };
-    } catch (r) {
-      return console.error("Error reading audio file base64:", r), null;
+    } catch (i) {
+      return console.error("Error reading audio/video file base64:", i), null;
     }
   }), C.handle("audio:transcribe", async (b, n) => {
-    var i, o, u, d, l, m, v;
-    const { audioBase64: r, mimeType: t = "audio/mp3", apiKey: c } = n;
-    if (!r) return { error: "Không tìm thấy dữ liệu âm thanh" };
-    const e = (t || "audio/mp3").split(";")[0].trim().toLowerCase(), h = e.includes("webm") ? "audio/webm" : e.includes("wav") ? "audio/wav" : e.includes("ogg") ? "audio/ogg" : e.includes("mp4") || e.includes("m4a") || e.includes("aac") ? "audio/mp4" : "audio/mp3";
-    if (c && c.trim()) {
-      const a = `Bạn là hệ thống chuyển âm thanh thành văn bản (Speech-to-Text) và đồng bộ phụ đề Karaoke.
+    var a, o, u, d, l, m, v;
+    const { audioBase64: i, mimeType: e = "audio/mp3", apiKey: r } = n;
+    if (!i) return { error: "Không tìm thấy dữ liệu âm thanh" };
+    const t = (e || "audio/mp3").split(";")[0].trim().toLowerCase(), h = t.includes("webm") ? "audio/webm" : t.includes("wav") ? "audio/wav" : t.includes("ogg") ? "audio/ogg" : t.includes("mp4") || t.includes("m4a") || t.includes("aac") ? "audio/mp4" : "audio/mp3";
+    if (r && r.trim()) {
+      const c = `Bạn là hệ thống chuyển âm thanh thành văn bản (Speech-to-Text) và đồng bộ phụ đề Karaoke.
 Nhiệm vụ: Nghe kỹ file âm thanh đính kèm và nhận diện chính xác toàn bộ câu từ được phát âm (tiếng Việt hoặc tiếng Anh).
 
 Yêu cầu BẮT BUỘC:
@@ -270,7 +270,7 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
         "gemini-1.5-pro"
       ];
       try {
-        const x = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${c.trim()}`);
+        const x = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${r.trim()}`);
         if (x.ok) {
           const w = await x.json();
           if (Array.isArray(w.models)) {
@@ -282,7 +282,7 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
           }
         } else {
           const w = await x.json().catch(() => ({}));
-          if ((i = w == null ? void 0 : w.error) != null && i.message)
+          if ((a = w == null ? void 0 : w.error) != null && a.message)
             return { error: `Gemini API Key lỗi: ${w.error.message}` };
         }
       } catch (x) {
@@ -291,7 +291,7 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
       let k = "";
       for (const x of g)
         try {
-          const w = `https://generativelanguage.googleapis.com/v1beta/models/${x}:generateContent?key=${c.trim()}`, p = await fetch(w, {
+          const w = `https://generativelanguage.googleapis.com/v1beta/models/${x}:generateContent?key=${r.trim()}`, p = await fetch(w, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -301,10 +301,10 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
                     {
                       inline_data: {
                         mime_type: h,
-                        data: r
+                        data: i
                       }
                     },
-                    { text: a }
+                    { text: c }
                   ]
                 }
               ],
@@ -341,11 +341,11 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
     return { error: "Chưa có Gemini API Key. Vui lòng nhập API Key trong Cài đặt (Settings) trên thanh menu để AI tự động nghe và chuyển thành chữ." };
   }), C.handle("media:search-web", async (b, n) => {
     try {
-      const r = (n || "").trim();
-      if (!r) return [];
+      const i = (n || "").trim();
+      if (!i) return [];
       try {
         const h = await fetch(
-          `https://www.bing.com/images/async?q=${encodeURIComponent(r)}&count=25&first=0`,
+          `https://www.bing.com/images/async?q=${encodeURIComponent(i)}&count=25&first=0`,
           {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -362,24 +362,24 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
               type: "image",
               url: d,
               thumbnail: d,
-              title: r,
+              title: i,
               source: "web"
             }));
         }
       } catch (h) {
         console.warn("Bing search attempt failed, trying DuckDuckGo fallback:", h);
       }
-      const e = (await (await fetch(
-        `https://duckduckgo.com/?q=${encodeURIComponent(r)}&iax=images&ia=images`,
+      const t = (await (await fetch(
+        `https://duckduckgo.com/?q=${encodeURIComponent(i)}&iax=images&ia=images`,
         {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
           }
         }
       )).text()).match(/vqd=([\d-]+)/);
-      if (e) {
-        const h = e[1], o = await (await fetch(
-          `https://duckduckgo.com/i.js?l=wt-wt&o=json&q=${encodeURIComponent(r)}&vqd=${h}&f=,,,`,
+      if (t) {
+        const h = t[1], o = await (await fetch(
+          `https://duckduckgo.com/i.js?l=wt-wt&o=json&q=${encodeURIComponent(i)}&vqd=${h}&f=,,,`,
           {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -393,65 +393,65 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
             type: "image",
             url: u.image,
             thumbnail: u.thumbnail || u.image,
-            title: u.title || r,
+            title: u.title || i,
             source: "web"
           }));
       }
       return [];
-    } catch (r) {
-      return console.warn("Web image search error:", r), [];
+    } catch (i) {
+      return console.warn("Web image search error:", i), [];
     }
   });
   const M = /* @__PURE__ */ new Map();
-  C.handle("media:search-videos", async (b, n, r = 1) => {
+  C.handle("media:search-videos", async (b, n, i = 1) => {
     try {
-      const t = (n || "").trim();
-      if (!t) return [];
-      const c = Math.max(1, Number(r) || 1), e = `${t.toLowerCase()}_p${c}`;
-      if (M.has(e))
-        return M.get(e);
-      const h = (l) => l.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D"), i = t.toLowerCase();
+      const e = (n || "").trim();
+      if (!e) return [];
+      const r = Math.max(1, Number(i) || 1), t = `${e.toLowerCase()}_p${r}`;
+      if (M.has(t))
+        return M.get(t);
+      const h = (l) => l.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D"), a = e.toLowerCase();
       let o = [];
-      if (/đi học|trường học|lớp học|học sinh|sinh viên|school|student|classroom/i.test(i))
+      if (/đi học|trường học|lớp học|học sinh|sinh viên|school|student|classroom/i.test(a))
         o = ["school", "student", "classroom", "campus", "studying"];
-      else if (/tắm|đi tắm|gội đầu|ngâm mình|bơi|hồ bơi|bãi biển|nước mát/i.test(i))
+      else if (/tắm|đi tắm|gội đầu|ngâm mình|bơi|hồ bơi|bãi biển|nước mát/i.test(a))
         o = ["shower", "bath", "swimming pool", "relaxing water"];
-      else if (/vũ trụ|thiên hà|ngân hà|galaxy|không gian|hành tinh|sao|cosmos|nebula|space/i.test(i))
+      else if (/vũ trụ|thiên hà|ngân hà|galaxy|không gian|hành tinh|sao|cosmos|nebula|space/i.test(a))
         o = ["galaxy", "space", "nebula", "stars"];
-      else if (/bún|cá|phở|món|ẩm thực|nước dùng|ăn|nấu|chiên|nướng|nhà hàng|quán|chế biến|tô|bát|thực khách|food|uống|cafe|cà phê|trà/i.test(i))
-        o = /cá/i.test(i) ? ["fish cooking", "cooking", "food"] : ["cooking", "delicious food", "kitchen"];
-      else if (/ngủ|thức dậy|buổi sáng|bình minh|giường|phòng ngủ/i.test(i))
+      else if (/bún|cá|phở|món|ẩm thực|nước dùng|ăn|nấu|chiên|nướng|nhà hàng|quán|chế biến|tô|bát|thực khách|food|uống|cafe|cà phê|trà/i.test(a))
+        o = /cá/i.test(a) ? ["fish cooking", "cooking", "food"] : ["cooking", "delicious food", "kitchen"];
+      else if (/ngủ|thức dậy|buổi sáng|bình minh|giường|phòng ngủ/i.test(a))
         o = ["waking up", "morning", "bed", "sunrise"];
-      else if (/mua sắm|shopping|siêu thị|thời trang|quần áo|váy|cửa hàng/i.test(i))
+      else if (/mua sắm|shopping|siêu thị|thời trang|quần áo|váy|cửa hàng/i.test(a))
         o = ["shopping", "fashion", "store", "clothes"];
-      else if (/tiền|tài chính|chứng khoán|cổ phiếu|doanh thu|lợi nhuận|ngân hàng|giàu|đầu tư|tỷ đồng|triệu|money|finance/i.test(i))
+      else if (/tiền|tài chính|chứng khoán|cổ phiếu|doanh thu|lợi nhuận|ngân hàng|giàu|đầu tư|tỷ đồng|triệu|money|finance/i.test(a))
         o = ["money", "finance", "business", "growth"];
-      else if (/code|lập trình|ai|trí tuệ nhân tạo|phần mềm|công nghệ|máy tính|developer|robot|thuật toán|tech/i.test(i))
+      else if (/code|lập trình|ai|trí tuệ nhân tạo|phần mềm|công nghệ|máy tính|developer|robot|thuật toán|tech/i.test(a))
         o = ["technology", "coding", "artificial intelligence", "programming"];
-      else if (/máy bay|chuyến bay|sân bay|cất cánh|hàng không|airplane|flight/i.test(i))
+      else if (/máy bay|chuyến bay|sân bay|cất cánh|hàng không|airplane|flight/i.test(a))
         o = ["airplane", "flight", "clouds", "travel"];
-      else if (/đua xe|cao tốc|lái xe|xe hơi|ô tô|đường cao tốc|highway|driving/i.test(i))
+      else if (/đua xe|cao tốc|lái xe|xe hơi|ô tô|đường cao tốc|highway|driving/i.test(a))
         o = ["highway", "driving", "night drive", "cars"];
-      else if (/du lịch|biển|núi|khám phá|bãi biển|travel|nature|phong cảnh/i.test(i))
+      else if (/du lịch|biển|núi|khám phá|bãi biển|travel|nature|phong cảnh/i.test(a))
         o = ["travel", "nature", "ocean", "landscape"];
-      else if (/thành phố|đô thị|tòa nhà|đường phố|city|urban/i.test(i))
+      else if (/thành phố|đô thị|tòa nhà|đường phố|city|urban/i.test(a))
         o = ["city", "urban", "skyline", "traffic"];
-      else if (/thể thao|gym|chạy bộ|sức khỏe|fitness|workout|yoga/i.test(i))
+      else if (/thể thao|gym|chạy bộ|sức khỏe|fitness|workout|yoga/i.test(a))
         o = ["fitness", "workout", "running", "gym"];
-      else if (/^[a-zA-Z0-9\s\-',.]+$/.test(t)) {
-        const l = t.split(/\s+/).filter(Boolean);
-        o = [t, l[0] || "lifestyle", l[l.length - 1] || "cinematic"];
+      else if (/^[a-zA-Z0-9\s\-',.]+$/.test(e)) {
+        const l = e.split(/\s+/).filter(Boolean);
+        o = [e, l[0] || "lifestyle", l[l.length - 1] || "cinematic"];
       } else
-        o = [h(t).replace(/[^\w\s]/gi, " ").trim(), "lifestyle", "cinematic"];
-      const u = (c - 1) % o.length, d = [
+        o = [h(e).replace(/[^\w\s]/gi, " ").trim(), "lifestyle", "cinematic"];
+      const u = (r - 1) % o.length, d = [
         o[u],
         ...o.filter((l, m) => m !== u)
       ];
       for (const l of d)
         if (l)
           try {
-            const m = new AbortController(), v = setTimeout(() => m.abort(), 3500), a = Math.floor((c - 1) / o.length) + 1, g = await fetch(
-              `https://coverr.co/api/videos?query=${encodeURIComponent(l)}&page=${a}&urls=true`,
+            const m = new AbortController(), v = setTimeout(() => m.abort(), 3500), c = Math.floor((r - 1) / o.length) + 1, g = await fetch(
+              `https://coverr.co/api/videos?query=${encodeURIComponent(l)}&page=${c}&urls=true`,
               {
                 signal: m.signal,
                 headers: {
@@ -470,20 +470,20 @@ TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON (KHÔNG KÈM KÝ TỰ MARKDOWN):
                     url: ((y = p.urls) == null ? void 0 : y.mp4) || (($ = p.urls) == null ? void 0 : $.mp4_preview),
                     previewUrl: ((N = p.urls) == null ? void 0 : N.mp4_preview) || ((I = p.urls) == null ? void 0 : I.mp4),
                     thumbnail: p.thumbnail || p.poster,
-                    title: p.title || t,
+                    title: p.title || e,
                     source: "web",
                     duration: Math.round(Number(p.duration || 8))
                   };
                 });
-                return M.set(e, w), w;
+                return M.set(t, w), w;
               }
             }
           } catch (m) {
             console.warn(`Coverr fetch failed for keyword: ${l}`, m);
           }
       return [];
-    } catch (t) {
-      return console.warn("Video search error in main process:", t), [];
+    } catch (e) {
+      return console.warn("Video search error in main process:", e), [];
     }
   }), C.handle("app:restart", () => {
     R.relaunch(), R.exit(0);

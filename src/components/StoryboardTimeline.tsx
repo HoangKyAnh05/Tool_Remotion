@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { VideoProject, Scene, TransitionType, KenBurnsEffect } from '../types/video';
 import { synthesizeEdgeTTS } from '../services/edgeTtsService';
 import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideos, MediaAsset } from '../services/mediaService';
-import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
+import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64, extractAudioFromVideoData } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import { CreateCustomVisualModal } from './CreateCustomVisualModal';
 import { MotionTypographyModal } from './MotionTypographyModal';
@@ -617,7 +617,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     }
   };
 
-  // Custom Audio Upload & AI Speech-To-Text for a single scene
+  // Custom Audio/Video Upload & AI Speech-To-Text for a single scene
   const handleTriggerCustomAudioUpload = async (sceneId: string) => {
     const scene = project.scenes.find((s) => s.id === sceneId);
     if (!scene) return;
@@ -625,40 +625,54 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     if (window.electronAPI?.selectFile) {
       try {
         const files = await window.electronAPI.selectFile({
-          title: 'Chọn file sound lời thoại của bạn (MP3, WAV, M4A, AAC, OGG)',
+          title: 'Chọn file sound hoặc video MP4/MOV để tách lấy âm thanh',
           filters: [
-            { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] }
+            { name: 'Sound & Video Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'mp4', 'mov', 'webm', 'mkv'] },
+            { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] },
+            { name: 'Video Files', extensions: ['mp4', 'mov', 'webm', 'mkv'] }
           ]
         });
         if (files && files.length > 0) {
           const filePath = files[0];
+          const isVideoFile = /\.(mp4|mov|webm|mkv)$/i.test(filePath);
           setIsTranscribingSceneId(sceneId);
-          setTranscribeStatusText('Đang đọc và phân tích file âm thanh...');
+          setTranscribeStatusText(isVideoFile ? 'Đang nhận diện video MP4 & tự động tách lấy âm thanh (Sound)...' : 'Đang đọc và phân tích file âm thanh...');
 
           let base64Info = null;
           if (window.electronAPI?.readAudioBase64) {
             base64Info = await window.electronAPI.readAudioBase64(filePath);
           }
 
-          const audioUrl = `file://${filePath.replace(/\\/g, '/')}`;
-          const effectiveDataUrl = base64Info?.dataUrl || audioUrl;
+          let effectiveDataUrl = base64Info?.dataUrl || `file://${filePath.replace(/\\/g, '/')}`;
+          let effectiveBase64 = base64Info?.base64;
+          let effectiveMime = base64Info?.mimeType || (isVideoFile ? 'video/mp4' : 'audio/mp3');
 
-          setTranscribeStatusText('Đang nhận diện giọng nói (Tiếng Anh/Tiếng Việt) & căn chỉnh nhịp chữ...');
+          // Nếu là video MP4/MOV, dùng Web Audio API để tách triệt để âm thanh thành WAV Data URL
+          if (isVideoFile && base64Info?.dataUrl) {
+            setTranscribeStatusText('Đang giải mã và trích xuất sound track từ video MP4...');
+            const extracted = await extractAudioFromVideoData(base64Info.dataUrl);
+            if (extracted) {
+              effectiveDataUrl = extracted.dataUrl;
+              effectiveBase64 = extracted.base64;
+              effectiveMime = extracted.mimeType;
+            }
+          }
+
+          setTranscribeStatusText('Đang nhận diện giọng nói (Audio to text) & căn chỉnh nhịp chữ...');
 
           const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || undefined;
           const result = await transcribeCustomAudio({
             audioDataUrl: effectiveDataUrl,
-            audioBase64: base64Info?.base64,
-            mimeType: base64Info?.mimeType || 'audio/mp3',
+            audioBase64: effectiveBase64,
+            mimeType: effectiveMime,
             apiKeyGemini: activeGeminiKey,
             existingNarration: scene.narration
           });
 
           const fps = project.fps || 30;
-          const durationFrames = Math.max(30, Math.round(result.audioDuration * fps));
 
           updateScene(sceneId, {
-            audioUrl,
+            audioUrl: effectiveDataUrl,
             audioDuration: result.audioDuration,
             narration: result.narration || scene.narration,
             words: result.words
@@ -685,17 +699,30 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
 
     const sceneId = targetAudioUploadSceneId;
     const scene = project.scenes.find((s) => s.id === sceneId);
+    const isVideoFile = file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(file.name);
     setIsTranscribingSceneId(sceneId);
-    setTranscribeStatusText('Đang đọc file âm thanh...');
+    setTranscribeStatusText(isVideoFile ? 'Đang nhận diện video & trích xuất sound...' : 'Đang đọc file âm thanh...');
 
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          setTranscribeStatusText('Đang nhận diện giọng nói (Tiếng Anh/Tiếng Việt) & khớp chữ...');
-          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
-          const mimeType = file.type || 'audio/mp3';
+        const rawDataUrl = event.target?.result as string;
+        if (rawDataUrl) {
+          let dataUrl = rawDataUrl;
+          let base64 = rawDataUrl.includes(',') ? rawDataUrl.split(',')[1] : '';
+          let mimeType = file.type || 'audio/mp3';
+
+          if (isVideoFile) {
+            setTranscribeStatusText('Đang giải mã và tách lấy sound từ video MP4...');
+            const extracted = await extractAudioFromVideoData(rawDataUrl);
+            if (extracted) {
+              dataUrl = extracted.dataUrl;
+              base64 = extracted.base64;
+              mimeType = extracted.mimeType;
+            }
+          }
+
+          setTranscribeStatusText('Đang nhận diện giọng nói (Audio to text) & khớp chữ...');
           const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || undefined;
 
           const result = await transcribeCustomAudio({
@@ -705,9 +732,6 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             apiKeyGemini: activeGeminiKey,
             existingNarration: scene?.narration
           });
-
-          const fps = project.fps || 30;
-          const durationFrames = Math.max(30, Math.round(result.audioDuration * fps));
 
           updateScene(sceneId, {
             audioUrl: dataUrl,
@@ -736,30 +760,47 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     if (window.electronAPI?.selectFile) {
       try {
         const files = await window.electronAPI.selectFile({
-          title: 'Chọn file thu âm lời thoại toàn bộ bài (MP3, WAV, M4A, AAC, OGG)',
+          title: 'Chọn file thu âm hoặc video MP4 toàn bộ bài để tách lấy âm thanh',
           filters: [
-            { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] }
+            { name: 'Sound & Video Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'mp4', 'mov', 'webm', 'mkv'] },
+            { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] },
+            { name: 'Video Files', extensions: ['mp4', 'mov', 'webm', 'mkv'] }
           ]
         });
 
         if (files && files.length > 0) {
           const filePath = files[0];
+          const isVideoFile = /\.(mp4|mov|webm|mkv)$/i.test(filePath);
           setIsTranscribingFullAudio(true);
-          setFullAudioStatusText('Đang đọc file âm thanh toàn bài...');
+          setFullAudioStatusText(isVideoFile ? 'Đang nhận diện video MP4 & tự động trích xuất sound...' : 'Đang đọc file âm thanh toàn bài...');
 
           let base64Info = null;
           if (window.electronAPI?.readAudioBase64) {
             base64Info = await window.electronAPI.readAudioBase64(filePath);
           }
 
-          const audioUrl = `file://${filePath.replace(/\\/g, '/')}`;
+          let effectiveDataUrl = base64Info?.dataUrl || `file://${filePath.replace(/\\/g, '/')}`;
+          let effectiveBase64 = base64Info?.base64;
+          let effectiveMime = base64Info?.mimeType || (isVideoFile ? 'video/mp4' : 'audio/mp3');
+
+          // Nếu là video MP4/MOV, tách lấy track âm thanh
+          if (isVideoFile && base64Info?.dataUrl) {
+            setFullAudioStatusText('Đang giải mã và bóc tách sound track từ video MP4...');
+            const extracted = await extractAudioFromVideoData(base64Info.dataUrl);
+            if (extracted) {
+              effectiveDataUrl = extracted.dataUrl;
+              effectiveBase64 = extracted.base64;
+              effectiveMime = extracted.mimeType;
+            }
+          }
+
           const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY');
 
-          if (activeGeminiKey && base64Info?.base64) {
+          if (activeGeminiKey && effectiveBase64) {
             setFullAudioStatusText('AI đang nghe toàn bộ audio, tự chia cảnh & bóc tách lời thoại...');
             const splitScenes = await transcribeAndSplitFullAudio(
-              base64Info.base64,
-              base64Info.mimeType || 'audio/mp3',
+              effectiveBase64,
+              effectiveMime,
               activeGeminiKey
             );
 
@@ -768,7 +809,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                 id: `scene-stt-${idx}-${Date.now()}`,
                 order: idx + 1,
                 narration: sc.narration,
-                audioUrl: audioUrl,
+                audioUrl: effectiveDataUrl,
                 audioDuration: sc.audioDuration,
                 searchKeyword: sc.searchKeyword || sc.narration.slice(0, 30),
                 mediaType: 'image',
@@ -794,15 +835,15 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             setFullAudioStatusText('Đang nhận diện lời thoại phân cảnh đầu...');
             const firstScene = project.scenes[0];
             const result = await transcribeCustomAudio({
-              audioDataUrl: base64Info?.dataUrl || audioUrl,
-              audioBase64: base64Info?.base64,
-              mimeType: base64Info?.mimeType || 'audio/mp3',
+              audioDataUrl: effectiveDataUrl,
+              audioBase64: effectiveBase64,
+              mimeType: effectiveMime,
               apiKeyGemini: activeGeminiKey || undefined,
               existingNarration: firstScene.narration
             });
 
             updateScene(firstScene.id, {
-              audioUrl,
+              audioUrl: effectiveDataUrl,
               audioDuration: result.audioDuration,
               narration: result.narration || firstScene.narration,
               words: result.words
@@ -826,20 +867,34 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const isVideoFile = file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(file.name);
     setIsTranscribingFullAudio(true);
-    setFullAudioStatusText('Đang đọc file âm thanh toàn bài...');
+    setFullAudioStatusText(isVideoFile ? 'Đang nhận diện video MP4 & tự động tách lấy sound...' : 'Đang đọc file âm thanh toàn bài...');
 
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+        const rawDataUrl = event.target?.result as string;
+        if (rawDataUrl) {
+          let dataUrl = rawDataUrl;
+          let base64 = rawDataUrl.includes(',') ? rawDataUrl.split(',')[1] : '';
+          let mimeType = file.type || 'audio/mp3';
+
+          if (isVideoFile) {
+            setFullAudioStatusText('Đang giải mã và trích xuất sound track từ video MP4...');
+            const extracted = await extractAudioFromVideoData(rawDataUrl);
+            if (extracted) {
+              dataUrl = extracted.dataUrl;
+              base64 = extracted.base64;
+              mimeType = extracted.mimeType;
+            }
+          }
+
           const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY');
 
           if (activeGeminiKey && base64) {
             setFullAudioStatusText('AI đang nghe toàn bộ audio, tự chia cảnh & bóc tách lời thoại...');
-            const splitScenes = await transcribeAndSplitFullAudio(base64, file.type || 'audio/mp3', activeGeminiKey);
+            const splitScenes = await transcribeAndSplitFullAudio(base64, mimeType, activeGeminiKey);
             if (splitScenes && splitScenes.length > 0) {
               const newScenes: Scene[] = splitScenes.map((sc, idx) => ({
                 id: `scene-stt-${idx}-${Date.now()}`,
@@ -1362,12 +1417,12 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Hidden file input for browser audio uploads */}
+      {/* Hidden file input for browser audio/video uploads */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleBrowserAudioFileInput}
-        accept="audio/*"
+        accept="audio/*,video/*,.mp4,.mov,.webm,.mkv,.mp3,.wav,.m4a,.aac,.ogg"
         className="hidden"
       />
       {/* Hidden file input for transition audio uploads */}
@@ -1383,7 +1438,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         type="file"
         ref={fullAudioInputRef}
         onChange={handleBrowserFullAudioFileInput}
-        accept="audio/*"
+        accept="audio/*,video/*,.mp4,.mov,.webm,.mkv,.mp3,.wav,.m4a,.aac,.ogg"
         className="hidden"
       />
 
@@ -1866,13 +1921,13 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                         </button>
                       )}
 
-                      {/* Button 2: Upload Custom Voiceover File */}
+                      {/* Button 2: Upload Custom Voiceover File (MP3 & Video MP4 auto audio extract) */}
                       <button
                         type="button"
                         onClick={() => handleTriggerCustomAudioUpload(scene.id)}
                         disabled={Boolean(recordingSceneId) || isTranscribingSceneId === scene.id}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm"
-                        title="Tải file âm thanh thu âm của bạn (MP3, WAV, M4A...) - App tự nhận diện lời nói & chạy chữ karaoke"
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm cursor-pointer"
+                        title="Đẩy file sound MP3 hoặc video MP4 (tự động tách lấy sound) - Nhận diện giọng nói Audio to text & chạy chữ Karaoke"
                       >
                         <Upload className="w-3 h-3 text-emerald-400" />
                         <span>Đẩy sound</span>
