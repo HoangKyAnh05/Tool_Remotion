@@ -143,6 +143,7 @@ export interface Scene {
   // TikTok & CapCut Creative Pack
   tiktokTextTemplate?: string;     // ID Text Template CapCut
   tiktokTextEffect?: string;       // ID Text Effect ART CapCut
+  textEffectsMix?: string[];       // Danh sách Text Effect ART để chạy mix ngẫu nhiên mỗi từ 1 kiểu
   tiktokStickers?: string[];       // Danh sách ID Stickers CapCut
   tiktokVideoEffect?: string;      // ID Video FX CapCut
   tiktokFilter?: string;           // ID Bộ Lọc Màu Điện Ảnh CapCut

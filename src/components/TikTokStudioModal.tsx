@@ -17,6 +17,7 @@ interface TikTokStudioModalProps {
     updates: {
       tiktokTextTemplate?: string;
       tiktokTextEffect?: string;
+      textEffectsMix?: string[];
       tiktokStickers?: string[];
       tiktokVideoEffect?: string;
       tiktokFilter?: string;
@@ -26,6 +27,7 @@ interface TikTokStudioModalProps {
   ) => void;
   onApplyAll?: (updates: {
     tiktokTextEffect?: string;
+    textEffectsMix?: string[];
     tiktokFilter?: string;
     tiktokSfx?: string;
     transition?: TransitionType;
@@ -48,6 +50,8 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   // State cục bộ
   const [selectedTemplate, setSelectedTemplate] = useState<string>(scene.tiktokTextTemplate || '');
   const [selectedTextEffect, setSelectedTextEffect] = useState<string>(scene.tiktokTextEffect || '');
+  const [selectedMixEffects, setSelectedMixEffects] = useState<string[]>(scene.textEffectsMix || []);
+  const [isMixMode, setIsMixMode] = useState<boolean>((scene.textEffectsMix && scene.textEffectsMix.length > 0) || false);
   const [selectedStickers, setSelectedStickers] = useState<string[]>(scene.tiktokStickers || []);
   const [selectedEffect, setSelectedEffect] = useState<string>(scene.tiktokVideoEffect || '');
   const [selectedFilter, setSelectedFilter] = useState<string>(scene.tiktokFilter || 'filter_none');
@@ -82,7 +86,8 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   const handleConfirmSingle = () => {
     onApply(scene.id, {
       tiktokTextTemplate: selectedTemplate,
-      tiktokTextEffect: selectedTextEffect,
+      tiktokTextEffect: isMixMode ? '' : selectedTextEffect,
+      textEffectsMix: isMixMode && selectedMixEffects.length > 0 ? selectedMixEffects : [],
       tiktokStickers: selectedStickers,
       tiktokVideoEffect: selectedEffect,
       tiktokFilter: selectedFilter,
@@ -95,7 +100,8 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   const handleConfirmAll = () => {
     if (onApplyAll) {
       onApplyAll({
-        tiktokTextEffect: selectedTextEffect,
+        tiktokTextEffect: isMixMode ? '' : selectedTextEffect,
+        textEffectsMix: isMixMode && selectedMixEffects.length > 0 ? selectedMixEffects : [],
         tiktokFilter: selectedFilter,
         tiktokSfx: selectedSfx,
         transition: selectedTransition
@@ -233,37 +239,99 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
           {/* ========================================================================= */}
           {activeTab === 'effects_text' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-gray-300 uppercase tracking-wide">
-                  Hiệu Ứng Kiểu Chữ Nghệ Thuật CapCut (Text Effects / Styles)
-                </span>
-                {selectedTextEffect && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-[#181A20] border border-gray-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-gray-200 uppercase tracking-wide">
+                    {isMixMode
+                      ? `🔀 Chế Độ Mix Chữ: Đã chọn (${selectedMixEffects.length} kiểu mix ngẫu nhiên)`
+                      : 'Hiệu Ứng Kiểu Chữ Nghệ Thuật (Text Effects)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Nút Bật / Tắt Chế Độ Mix Chạy Chữ */}
                   <button
                     type="button"
-                    onClick={() => setSelectedTextEffect('')}
-                    className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
+                    onClick={() => {
+                      const next = !isMixMode;
+                      setIsMixMode(next);
+                      if (next && selectedMixEffects.length === 0 && selectedTextEffect) {
+                        setSelectedMixEffects([selectedTextEffect]);
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer border flex items-center gap-1.5 ${
+                      isMixMode
+                        ? 'bg-gradient-to-r from-amber-500 to-pink-500 border-amber-300 text-white shadow-lg shadow-pink-500/25 animate-pulse'
+                        : 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-300'
+                    }`}
+                    title="Bật tính năng: Chọn nhiều kiểu Text Effect, mỗi từ chạy sẽ đổi ngẫu nhiên 1 kiểu hiệu ứng"
                   >
-                    Bỏ chọn hiệu ứng chữ
+                    <span>🔀</span>
+                    <span>{isMixMode ? 'Đang Bật Mix Chữ' : 'Bật Tính Năng Mix Chữ'}</span>
                   </button>
-                )}
+
+                  {isMixMode ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMixEffects([])}
+                      className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  ) : selectedTextEffect ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTextEffect('')}
+                      className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
+                    >
+                      Bỏ chọn
+                    </button>
+                  ) : null}
+                </div>
               </div>
+
+              {isMixMode && (
+                <div className="px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5">
+                  <span>💡</span>
+                  <span>Nhấp vào các ô bên dưới để thêm/bớt kiểu chữ vào danh sách Mix. Khi video phát, mỗi từ sẽ đổi ngẫu nhiên 1 kiểu theo bạn chọn!</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                 {TIKTOK_TEXT_EFFECTS.map((eff) => {
-                  const isSelected = selectedTextEffect === eff.id;
+                  const isSelected = isMixMode
+                    ? selectedMixEffects.includes(eff.id)
+                    : selectedTextEffect === eff.id;
+
+                  const handleClick = () => {
+                    if (isMixMode) {
+                      setSelectedMixEffects((prev) =>
+                        prev.includes(eff.id) ? prev.filter((id) => id !== eff.id) : [...prev, eff.id]
+                      );
+                    } else {
+                      setSelectedTextEffect(eff.id);
+                    }
+                  };
+
                   return (
                     <div
                       key={eff.id}
-                      onClick={() => setSelectedTextEffect(eff.id)}
+                      onClick={handleClick}
                       className={`h-36 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
                         isSelected
-                          ? 'bg-[#242938] border-yellow-400 shadow-xl shadow-yellow-500/20 ring-2 ring-yellow-400/40'
+                          ? isMixMode
+                            ? 'bg-[#242938] border-pink-400 shadow-xl shadow-pink-500/25 ring-2 ring-pink-400/40'
+                            : 'bg-[#242938] border-yellow-400 shadow-xl shadow-yellow-500/20 ring-2 ring-yellow-400/40'
                           : 'bg-[#181A20] border-gray-800/80 hover:border-gray-700 hover:bg-[#1E2028]'
                       }`}
                     >
                       <span className="absolute top-2 left-2 text-[10px] text-yellow-400">💎</span>
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-yellow-400 text-black flex items-center justify-center font-bold text-xs shadow-md">
+                        <div
+                          className={`absolute top-2 right-2 w-5 h-5 rounded-full text-black flex items-center justify-center font-bold text-xs shadow-md ${
+                            isMixMode ? 'bg-pink-400' : 'bg-yellow-400'
+                          }`}
+                        >
                           ✓
                         </div>
                       )}

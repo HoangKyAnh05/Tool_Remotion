@@ -86,12 +86,14 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultScale: 1.0,
       renderPreview: (txt) => tpl ? tpl.render(txt || 'TEXT') : <span>TEXT</span>
     });
-  } else if (scene.tiktokTextEffect) {
-    const eff = getTikTokTextEffectById(scene.tiktokTextEffect);
+  } else if (scene.tiktokTextEffect || (scene.textEffectsMix && scene.textEffectsMix.length > 0)) {
+    const effId = scene.tiktokTextEffect || scene.textEffectsMix?.[0] || '';
+    const eff = getTikTokTextEffectById(effId);
+    const isMix = scene.textEffectsMix && scene.textEffectsMix.length > 0;
     draggableItems.push({
       id: 'text_effect',
       type: 'text_effect',
-      name: eff ? eff.name : 'Chữ Nghệ Thuật (Text Effect)',
+      name: isMix ? `🔀 Mix Chữ (${scene.textEffectsMix?.length} kiểu)` : (eff ? eff.name : 'Chữ Nghệ Thuật (Text Effect)'),
       defaultX: 50,
       defaultY: 24,
       defaultScale: 1.0,

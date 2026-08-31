@@ -128,7 +128,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           />
         );
       default:
-        if (scene.isGreenScreenMotion) {
+        // Kích hoạt engine xếp chữ Motion Typography khi bật phông xanh HOẶC khi chọn kiểu xếp chữ / chế độ lớp chữ
+        if (scene.isGreenScreenMotion || scene.motionTypographyLayout || scene.textLayerMode === 'front' || scene.textLayerMode === 'behind' || scene.textLayerMode === 'both_3d') {
           return (
             <GreenScreenDepthMotion
               scene={scene}
@@ -257,8 +258,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         );
       })()}
 
-      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Chỉ hiện khi không dùng Text Template */}
-      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && (!scene.isGreenScreenMotion || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
+      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Khi đã có phụ đề chạy theo từ thì chỉ render nếu người dùng ẩn phụ đề hoặc chỉnh vị trí kéo thả riêng */}
+      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && (scene.hideSubtitles || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
         const customPos = scene.elementPositions?.['text_effect'];
         return (
           <div
@@ -316,13 +317,15 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Tự động ẩn khi bật Motion Phông Xanh, khi dùng Template hoặc Text Effect */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && !scene.tiktokTextEffect && (
+      {/* Synchronized Word-Level Subtitles: Chạy phụ đề theo từ với Text Effect hoặc Mix Effects */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
           fallbackText={scene.narration}
           enableDynamicEmojis={enableDynamicEmojis}
+          textEffect={scene.tiktokTextEffect}
+          textEffectsMix={scene.textEffectsMix}
         />
       )}
 

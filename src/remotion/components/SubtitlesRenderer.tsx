@@ -1,12 +1,15 @@
 import React from 'react';
 import { useCurrentFrame, useVideoConfig, spring } from 'remotion';
 import { WordTimestamp, SubtitleStyle } from '../../types/video';
+import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
 
 interface SubtitlesRendererProps {
   words?: WordTimestamp[];
   subtitleStyle: SubtitleStyle;
   fallbackText?: string;
   enableDynamicEmojis?: boolean;
+  textEffect?: string;
+  textEffectsMix?: string[];
 }
 
 // Dictionary mapping common keywords to expressive emojis
@@ -80,7 +83,9 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
   words,
   subtitleStyle,
   fallbackText,
-  enableDynamicEmojis = true
+  enableDynamicEmojis = true,
+  textEffect,
+  textEffectsMix
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -210,21 +215,40 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
                 </span>
               )}
 
-              <span
-                className="font-black tracking-wide leading-none"
-                style={{
-                  fontFamily: subtitleStyle.fontFamily,
-                  fontSize: `${subtitleStyle.fontSize}px`,
-                  color: textColor,
-                  WebkitTextStroke: `${subtitleStyle.strokeWidth}px ${subtitleStyle.strokeColor}`,
-                  paintOrder: 'stroke fill',
-                  textShadow: isSpoken
-                    ? `0 0 24px ${subtitleStyle.highlightColor}cc, 0 4px 14px rgba(0,0,0,0.95)`
-                    : '0 4px 12px rgba(0,0,0,0.9)'
-                }}
-              >
-                {displayText}
-              </span>
+              {(() => {
+                // Xác định Text Effect cho từ này nếu có mix hoặc chọn effect
+                let effId = textEffect;
+                if (textEffectsMix && textEffectsMix.length > 0) {
+                  effId = textEffectsMix[index % textEffectsMix.length];
+                }
+                const effItem = effId ? getTikTokTextEffectById(effId) : null;
+
+                if (effItem) {
+                  return (
+                    <div className="inline-block transform origin-center">
+                      {effItem.applyStyle(displayText)}
+                    </div>
+                  );
+                }
+
+                return (
+                  <span
+                    className="font-black tracking-wide leading-none"
+                    style={{
+                      fontFamily: subtitleStyle.fontFamily,
+                      fontSize: `${subtitleStyle.fontSize}px`,
+                      color: textColor,
+                      WebkitTextStroke: `${subtitleStyle.strokeWidth}px ${subtitleStyle.strokeColor}`,
+                      paintOrder: 'stroke fill',
+                      textShadow: isSpoken
+                        ? `0 0 24px ${subtitleStyle.highlightColor}cc, 0 4px 14px rgba(0,0,0,0.95)`
+                        : '0 4px 12px rgba(0,0,0,0.9)'
+                    }}
+                  >
+                    {displayText}
+                  </span>
+                );
+              })()}
             </div>
           );
         })}

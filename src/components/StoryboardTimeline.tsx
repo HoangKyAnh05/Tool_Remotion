@@ -2626,10 +2626,11 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         onClose={() => setActiveMotionTypographyScene(null)}
         scene={activeMotionTypographyScene}
         onApply={(sceneId, layoutId, effectId) => {
+          const currentSc = project.scenes.find((s) => s.id === sceneId);
           updateScene(sceneId, {
             motionTypographyLayout: layoutId,
             motionTypographyEffect: effectId,
-            isGreenScreenMotion: true // Tự động kích hoạt chế độ motion
+            textLayerMode: currentSc?.textLayerMode || 'front'
           });
         }}
       />

@@ -4,6 +4,7 @@ import { Scene } from '../../types/video';
 import { getLayoutPresetById } from '../typography/layoutPresets';
 import { getEffectPresetById } from '../typography/motionEffects';
 import { getStylePresetByIndex, FONT_AND_FRAME_STYLES } from '../typography/fontAndFrameStyles';
+import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
 
 interface GreenScreenDepthMotionProps {
   scene: Scene;
@@ -149,23 +150,40 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
                 filter: fxStyle.filter
               }}
             >
-              {stylePreset.hasBox ? (
-                <div className={stylePreset.boxClass}>
+              {(() => {
+                // Xác định Text Effect cho từ này: Nếu có mix thì lấy theo index, hoặc dùng effect đơn
+                let customEffectId = scene.tiktokTextEffect;
+                if (scene.textEffectsMix && scene.textEffectsMix.length > 0) {
+                  customEffectId = scene.textEffectsMix[idx % scene.textEffectsMix.length];
+                }
+                const customEffect = customEffectId ? getTikTokTextEffectById(customEffectId) : null;
+
+                if (customEffect) {
+                  return (
+                    <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                      {customEffect.applyStyle(item.text)}
+                    </div>
+                  );
+                }
+
+                return stylePreset.hasBox ? (
+                  <div className={stylePreset.boxClass}>
+                    <span
+                      className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
+                      style={stylePreset.textStyle(baseColor)}
+                    >
+                      {item.text}
+                    </span>
+                  </div>
+                ) : (
                   <span
                     className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
                     style={stylePreset.textStyle(baseColor)}
                   >
                     {item.text}
                   </span>
-                </div>
-              ) : (
-                <span
-                  className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
-                  style={stylePreset.textStyle(baseColor)}
-                >
-                  {item.text}
-                </span>
-              )}
+                );
+              })()}
             </div>
           );
         })}
@@ -178,9 +196,11 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
         {isVideo ? (
           <Video
             src={mediaSource}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             style={{
-              filter: 'url(#greenScreenFilter) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+              filter: scene.isGreenScreenMotion
+                ? 'url(#greenScreenFilter) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+                : undefined
             }}
             startFrom={0}
             volume={0}
@@ -188,9 +208,11 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
         ) : (
           <Img
             src={mediaSource}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             style={{
-              filter: 'url(#greenScreenFilter) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+              filter: scene.isGreenScreenMotion
+                ? 'url(#greenScreenFilter) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+                : undefined
             }}
           />
         )}
@@ -242,23 +264,39 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
                 filter: fxStyle.filter
               }}
             >
-              {stylePreset.hasBox ? (
-                <div className={stylePreset.boxClass}>
+              {(() => {
+                let customEffectId = scene.tiktokTextEffect;
+                if (scene.textEffectsMix && scene.textEffectsMix.length > 0) {
+                  customEffectId = scene.textEffectsMix[idx % scene.textEffectsMix.length];
+                }
+                const customEffect = customEffectId ? getTikTokTextEffectById(customEffectId) : null;
+
+                if (customEffect) {
+                  return (
+                    <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                      {customEffect.applyStyle(item.text)}
+                    </div>
+                  );
+                }
+
+                return stylePreset.hasBox ? (
+                  <div className={stylePreset.boxClass}>
+                    <span
+                      className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
+                      style={stylePreset.textStyle(baseColor)}
+                    >
+                      {item.text}
+                    </span>
+                  </div>
+                ) : (
                   <span
                     className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
                     style={stylePreset.textStyle(baseColor)}
                   >
                     {item.text}
                   </span>
-                </div>
-              ) : (
-                <span
-                  className={`${pos.sizeClass} uppercase block whitespace-nowrap`}
-                  style={stylePreset.textStyle(baseColor)}
-                >
-                  {item.text}
-                </span>
-              )}
+                );
+              })()}
             </div>
           );
         })}
