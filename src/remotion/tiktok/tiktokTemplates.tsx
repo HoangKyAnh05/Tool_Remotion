@@ -7,6 +7,7 @@ export interface TikTokTextTemplate {
   previewText: string;
   fontFamily: string;
   render: (text: string) => React.ReactNode;
+  renderWord?: (text: string, isSpoken?: boolean) => React.ReactNode;
 }
 
 export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
@@ -34,6 +35,22 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'Đi nào'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <span
+        className={`inline-block font-black italic tracking-wide ${isSpoken ? 'scale-110 drop-shadow-2xl' : 'opacity-90'}`}
+        style={{
+          fontFamily: "'Montserrat', sans-serif",
+          fontWeight: 900,
+          color: isSpoken ? '#ffffff' : '#fef08a',
+          WebkitTextStroke: '3.5px #000000',
+          textShadow: isSpoken
+            ? '0 0 15px #facc15, 0 0 35px #eab308, 0 0 55px #ca8a04, 0 5px 0 #000, 0 8px 20px rgba(0,0,0,0.95)'
+            : '0 0 8px #facc15, 0 4px 0 #000'
+        }}
+      >
+        {text}
+      </span>
     )
   },
   {
@@ -56,6 +73,21 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'NĂNG ĐỘNG'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <span
+        className={`inline-block font-black uppercase tracking-tight ${isSpoken ? 'scale-110' : 'opacity-90'}`}
+        style={{
+          fontFamily: "'Anton', sans-serif",
+          color: isSpoken ? '#ffffff' : '#ff2b54',
+          WebkitTextStroke: '3.5px #000000',
+          textShadow: isSpoken
+            ? '0 0 20px #ff0044, 0 0 40px #dc2626, 0 0 70px #991b1b, 0 6px 20px rgba(0,0,0,0.95)'
+            : '0 0 10px #dc2626, 0 4px 0 #000'
+        }}
+      >
+        {text}
+      </span>
     )
   },
   {
@@ -73,11 +105,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           </span>
         </div>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-md bg-gradient-to-r from-red-600 to-rose-600 border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.8)] ${isSpoken ? 'scale-110' : ''}`}>
+        <span className="text-xs">📍</span>
+        <span className="font-black uppercase tracking-wider text-white">
+          {text}
+        </span>
+      </div>
     )
   },
 
   // ==========================================
-  // NHÓM 2: MẪU NEW (Từ Ảnh 3 bạn vừa gửi)
+  // NHÓM 2: MẪU MỚI THỊNH HÀNH
   // ==========================================
   // 1. Chapter One
   {
@@ -98,6 +138,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'Chapter One'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <span
+        className={`inline-block font-serif tracking-widest ${isSpoken ? 'scale-110 text-amber-300' : 'text-white'}`}
+        style={{
+          fontFamily: "'Cinzel', serif",
+          textShadow: isSpoken
+            ? '0 0 20px rgba(251, 191, 36, 0.9), 0 4px 10px rgba(0,0,0,0.9)'
+            : '0 2px 8px rgba(0,0,0,0.8)'
+        }}
+      >
+        {text}
+      </span>
     )
   },
 
@@ -120,6 +173,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
       >
         {text || 'summer escape'}
       </span>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <span
+        className={`inline-block font-black italic tracking-wide ${isSpoken ? 'scale-110' : ''}`}
+        style={{
+          fontFamily: "'Bangers', cursive",
+          color: isSpoken ? '#ffffff' : '#fbbf24',
+          WebkitTextStroke: '2.5px #1d4ed8',
+          textShadow: '0 4px 0 #1e3a8a, 0 6px 12px rgba(0,0,0,0.8)'
+        }}
+      >
+        {text}
+      </span>
     )
   },
 
@@ -135,6 +201,18 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
         <span className="text-white text-xs">●</span>
         <span className="text-lg sm:text-xl font-black uppercase tracking-widest text-white">
           {text || 'MINI VLOG DAY'}
+        </span>
+      </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xl backdrop-blur-md transition-all ${
+        isSpoken
+          ? 'bg-white text-black border-white scale-110'
+          : 'bg-black/80 text-white border-white/30'
+      }`}>
+        <span className="text-[10px]">●</span>
+        <span className="font-black uppercase tracking-widest">
+          {text}
         </span>
       </div>
     )
@@ -161,6 +239,22 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'YEAH!'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`relative inline-block px-3 py-0.5 rounded-lg border-2 border-black rotate-[-2deg] ${
+        isSpoken ? 'bg-yellow-300 scale-110 shadow-[0_6px_0_#000]' : 'bg-yellow-400 shadow-[0_4px_0_#000]'
+      }`}>
+        <span
+          className="font-black uppercase tracking-wider block text-white"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            WebkitTextStroke: '2.5px #ea580c',
+            textShadow: '2px 2px 0 #000'
+          }}
+        >
+          {text}
+        </span>
+      </div>
     )
   },
 
@@ -183,6 +277,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
       >
         {text || 'wow!'}
       </span>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <span
+        className={`inline-block font-black tracking-tight ${isSpoken ? 'scale-110' : ''}`}
+        style={{
+          fontFamily: "'Anton', sans-serif",
+          color: isSpoken ? '#ffffff' : '#fb923c',
+          WebkitTextStroke: '2.5px #000',
+          textShadow: '0 5px 0 #000, 0 8px 15px rgba(0,0,0,0.8)'
+        }}
+      >
+        {text}
+      </span>
     )
   },
 
@@ -200,6 +307,16 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           style={{ fontFamily: "'Anton', sans-serif" }}
         >
           {text || 'EMERGENCY MEETING'}
+        </span>
+      </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`inline-block px-3 py-1 bg-amber-500 border-y-2 border-black ${isSpoken ? 'scale-110 bg-amber-400 shadow-xl' : ''}`}>
+        <span
+          className="font-black uppercase tracking-wider block text-black"
+          style={{ fontFamily: "'Anton', sans-serif" }}
+        >
+          {text}
         </span>
       </div>
     )
@@ -224,6 +341,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'OMG!'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`relative inline-block px-4 py-1.5 bg-white rounded-full shadow-lg border-2 border-black rotate-[-1deg] ${isSpoken ? 'scale-110 ring-2 ring-red-500' : ''}`}>
+        <span
+          className="font-black uppercase tracking-wider block text-red-600"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            WebkitTextStroke: '1.5px #000'
+          }}
+        >
+          {text}
+        </span>
+      </div>
     )
   },
 
@@ -244,6 +374,19 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           }}
         >
           {text || 'MỚI!'}
+        </span>
+      </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`relative inline-block px-3 py-1 bg-orange-600 rounded-md shadow-lg border border-black rotate-[2deg] ${isSpoken ? 'scale-110 bg-orange-500 ring-2 ring-yellow-300' : ''}`}>
+        <span
+          className="font-black uppercase tracking-wider block text-white"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            textShadow: '1.5px 1.5px 0 #000'
+          }}
+        >
+          {text}
         </span>
       </div>
     )
@@ -270,6 +413,21 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
           {text || 'VINTAGE VIBES'}
         </span>
       </div>
+    ),
+    renderWord: (text: string, isSpoken?: boolean) => (
+      <div className={`relative inline-block px-3 py-1 bg-black/90 rounded-lg border border-amber-500 shadow-xl ${isSpoken ? 'scale-110 ring-2 ring-amber-400' : ''}`}>
+        <span
+          className="font-black uppercase tracking-widest block"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            color: isSpoken ? '#fbbf24' : '#f59e0b',
+            WebkitTextStroke: '1px #000',
+            textShadow: '0 2px 0 #b45309'
+          }}
+        >
+          {text}
+        </span>
+      </div>
     )
   }
 ];
@@ -278,3 +436,4 @@ export function getTikTokTemplateById(id?: string): TikTokTextTemplate | undefin
   if (!id) return undefined;
   return TIKTOK_TEXT_TEMPLATES.find((t) => t.id === id);
 }
+

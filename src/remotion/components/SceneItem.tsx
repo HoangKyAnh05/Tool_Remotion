@@ -249,8 +249,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* B. TikTok Text Template (Đi nào, Năng động, Tiêu đề...) */}
-      {scene.tiktokTextTemplate && (() => {
+      {/* B. TikTok Text Template (Đi nào, Năng động, Tiêu đề...) - Khi người dùng chọn Ẩn dòng phụ đề thì render toàn bộ câu cố định */}
+      {scene.tiktokTextTemplate && scene.hideSubtitles && (() => {
         const customPos = scene.elementPositions?.['text_template'];
         return (
           <div
@@ -333,16 +333,21 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Chạy phụ đề theo từ với Text Effect hoặc Mix Effects */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && (
+      {/* Synchronized Word-Level Subtitles: Chạy phụ đề theo từ với Text Template, Text Effect hoặc Mix Effects */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
           fallbackText={scene.narration}
           enableDynamicEmojis={enableDynamicEmojis}
+          textTemplate={scene.tiktokTextTemplate}
           textEffect={scene.tiktokTextEffect}
           textEffectsMix={scene.textEffectsMix}
-          customPos={scene.elementPositions?.['text_effect'] || scene.elementPositions?.['subtitles']}
+          customPos={
+            scene.elementPositions?.['text_template'] ||
+            scene.elementPositions?.['text_effect'] ||
+            scene.elementPositions?.['subtitles']
+          }
         />
       )}
 

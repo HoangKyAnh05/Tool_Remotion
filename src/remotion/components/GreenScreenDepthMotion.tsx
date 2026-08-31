@@ -5,6 +5,7 @@ import { getLayoutPresetById } from '../typography/layoutPresets';
 import { getEffectPresetById } from '../typography/motionEffects';
 import { getStylePresetByIndex, FONT_AND_FRAME_STYLES } from '../typography/fontAndFrameStyles';
 import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
+import { getTikTokTemplateById } from '../tiktok/tiktokTemplates';
 
 interface GreenScreenDepthMotionProps {
   scene: Scene;
@@ -160,7 +161,26 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
               }}
             >
               {(() => {
-                // Xác định Text Effect cho từ này: Nếu có mix thì lấy theo index, hoặc dùng effect đơn
+                // Ưu tiên 1: Text Template CapCut
+                if (scene.tiktokTextTemplate) {
+                  const tpl = getTikTokTemplateById(scene.tiktokTextTemplate);
+                  if (tpl) {
+                    if (tpl.renderWord) {
+                      return (
+                        <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                          {tpl.renderWord(item.text, true)}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                        {tpl.render(item.text)}
+                      </div>
+                    );
+                  }
+                }
+
+                // Ưu tiên 2: Text Effect ART CapCut
                 let customEffectId = scene.tiktokTextEffect;
                 if (scene.textEffectsMix && scene.textEffectsMix.length > 0) {
                   customEffectId = scene.textEffectsMix[idx % scene.textEffectsMix.length];
@@ -274,6 +294,26 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
               }}
             >
               {(() => {
+                // Ưu tiên 1: Text Template CapCut
+                if (scene.tiktokTextTemplate) {
+                  const tpl = getTikTokTemplateById(scene.tiktokTextTemplate);
+                  if (tpl) {
+                    if (tpl.renderWord) {
+                      return (
+                        <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                          {tpl.renderWord(item.text, true)}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className={`${pos.sizeClass} inline-block transform origin-center`}>
+                        {tpl.render(item.text)}
+                      </div>
+                    );
+                  }
+                }
+
+                // Ưu tiên 2: Text Effect ART CapCut
                 let customEffectId = scene.tiktokTextEffect;
                 if (scene.textEffectsMix && scene.textEffectsMix.length > 0) {
                   customEffectId = scene.textEffectsMix[idx % scene.textEffectsMix.length];

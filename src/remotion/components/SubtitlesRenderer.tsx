@@ -2,6 +2,7 @@ import React from 'react';
 import { useCurrentFrame, useVideoConfig, spring } from 'remotion';
 import { WordTimestamp, SubtitleStyle } from '../../types/video';
 import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
+import { getTikTokTemplateById } from '../tiktok/tiktokTemplates';
 
 interface SubtitlesRendererProps {
   words?: WordTimestamp[];
@@ -10,6 +11,7 @@ interface SubtitlesRendererProps {
   enableDynamicEmojis?: boolean;
   textEffect?: string;
   textEffectsMix?: string[];
+  textTemplate?: string;
   customPos?: { x: number; y: number; scale?: number; rotate?: number };
 }
 
@@ -87,6 +89,7 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
   enableDynamicEmojis = true,
   textEffect,
   textEffectsMix,
+  textTemplate,
   customPos
 }) => {
   const frame = useCurrentFrame();
@@ -226,7 +229,26 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
               )}
 
               {(() => {
-                // Xác định Text Effect cho từ này nếu có mix hoặc chọn effect
+                // Ưu tiên 1: Text Template CapCut (Ví dụ: Năng động, Đi nào, Location, OMG...)
+                if (textTemplate) {
+                  const tpl = getTikTokTemplateById(textTemplate);
+                  if (tpl) {
+                    if (tpl.renderWord) {
+                      return (
+                        <div className="inline-block transform origin-center">
+                          {tpl.renderWord(displayText, isSpoken)}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className={`inline-block transform origin-center ${isSpoken ? 'scale-110' : 'opacity-90'}`}>
+                        {tpl.render(displayText)}
+                      </div>
+                    );
+                  }
+                }
+
+                // Ưu tiên 2: Text Effect ART CapCut (mix hoặc đơn)
                 let effId = textEffect;
                 if (textEffectsMix && textEffectsMix.length > 0) {
                   effId = textEffectsMix[index % textEffectsMix.length];
