@@ -173,7 +173,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
   }, [scene.id, scene.tiktokSfx, scene.words, frame, fps]);
 
   // =========================================================================
-  // ENTRANCE TRANSITIONS (Chuyển Cảnh Toàn Cảnh: Fade, Zoom, Slide, Glitch, Flash...)
+  // ENTRANCE & EXIT TRANSITIONS (Chuyển Cảnh Mượt Mà Xuyên Suốt Toàn Phân Cảnh)
   // =========================================================================
   let transOpacity = 1;
   let transTranslateX = 0;
@@ -182,45 +182,59 @@ export const SceneItem: React.FC<SceneItemProps> = ({
   let whiteFlashOpacity = 0;
   let glitchOffsetX = 0;
 
-  const transFrames = 15; // 0.5s ở 30fps
-  if (frame <= transFrames && scene.transition && scene.transition !== 'none') {
-    const progress = Math.min(1, Math.max(0, frame / transFrames));
+  // Thời gian chuyển cảnh ở đầu phân cảnh (Entrance) và cuối phân cảnh (Exit)
+  const transFrames = Math.min(20, Math.floor(durationInFrames * 0.25)); // 20 frames hoặc 25% độ dài cảnh
 
-    switch (scene.transition) {
-      case 'fade':
-        transOpacity = progress;
-        break;
+  if (scene.transition && scene.transition !== 'none') {
+    // 1. Entrance (Đầu cảnh)
+    if (frame <= transFrames) {
+      const progress = Math.min(1, Math.max(0, frame / transFrames));
 
-      case 'slide_left':
-        transTranslateX = (1 - progress) * 100; // Trượt từ phải sang trái
-        break;
+      switch (scene.transition) {
+        case 'fade':
+          transOpacity = progress;
+          break;
 
-      case 'slide_right':
-        transTranslateX = (progress - 1) * 100; // Trượt từ trái sang phải
-        break;
+        case 'slide_left':
+          transTranslateX = (1 - progress) * 120; // Trượt từ phải sang trái
+          break;
 
-      case 'zoom_in':
-        transScale = 0.3 + progress * 0.7; // Thu nhỏ rồi phóng to vào
-        transOpacity = Math.min(1, progress * 1.5);
-        break;
+        case 'slide_right':
+          transTranslateX = (progress - 1) * 120; // Trượt từ trái sang phải
+          break;
 
-      case 'zoom_out':
-        transScale = 1.7 - progress * 0.7; // Phóng đại rồi thu về chuẩn
-        transOpacity = Math.min(1, progress * 1.5);
-        break;
+        case 'slide_up':
+          transTranslateY = (1 - progress) * 120; // Trượt từ dưới lên
+          break;
 
-      case 'flash_white':
-        whiteFlashOpacity = Math.max(0, 1 - progress * 1.5);
-        break;
+        case 'zoom_in':
+          transScale = 0.4 + progress * 0.6; // Phóng to từ nhỏ vào đầy màn hình
+          transOpacity = Math.min(1, progress * 1.5);
+          break;
 
-      case 'digital_glitch':
-        if (frame % 3 === 0) {
-          glitchOffsetX = (Math.random() - 0.5) * 40;
-        }
-        break;
+        case 'zoom_out':
+          transScale = 1.6 - progress * 0.6; // Thu nhỏ từ lớn về chuẩn
+          transOpacity = Math.min(1, progress * 1.5);
+          break;
 
-      default:
-        break;
+        case 'flash_white':
+          whiteFlashOpacity = Math.max(0, 1 - progress * 1.8);
+          break;
+
+        case 'digital_glitch':
+          if (frame % 2 === 0) {
+            glitchOffsetX = (Math.random() - 0.5) * 50;
+          }
+          break;
+
+        case 'cube_flip':
+          transScale = 0.6 + progress * 0.4;
+          transOpacity = progress;
+          break;
+
+        default:
+          break;
+      }
     }
   }
 
