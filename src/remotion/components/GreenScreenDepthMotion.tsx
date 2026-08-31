@@ -1,21 +1,23 @@
 import React from 'react';
-import { interpolate, spring, useCurrentFrame, useVideoConfig, Video, Img } from 'remotion';
-import { Scene, WordTimestamp } from '../../types/video';
+import { useCurrentFrame, useVideoConfig, Video, Img } from 'remotion';
+import { Scene } from '../../types/video';
+import { getLayoutPresetById } from '../typography/layoutPresets';
+import { getEffectPresetById } from '../typography/motionEffects';
 
 interface GreenScreenDepthMotionProps {
   scene: Scene;
   durationInFrames: number;
 }
 
-// Bảng màu neon tương phản cực mạnh
-const NEON_PALETTES = [
-  '#facc15', // Vàng Neon chói sáng
+// Bảng màu tương phản rực rỡ nghệ thuật
+const VIBRANT_COLORS = [
+  '#facc15', // Vàng Neon
   '#06b6d4', // Cyan điện tử
   '#ec4899', // Hồng Neon
   '#a855f7', // Tím Cyberpunk
-  '#22c55e', // Xanh lá Neon
-  '#ffffff', // Trắng tuyết sắc nét
-  '#fb923c'  // Cam lửa
+  '#22c55e', // Xanh Lá Neon
+  '#ffffff', // Trắng Tuyết
+  '#fb923c'  // Cam Lửa
 ];
 
 export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
@@ -28,10 +30,12 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
   const isVideo = scene.mediaType === 'video';
   const mediaSource = scene.localMediaPath || scene.mediaUrl;
 
-  // Lấy danh sách từ vựng kèm mốc thời gian
-  const hasWordTimestamps = scene.words && scene.words.length > 0;
+  // Lấy Preset Bố Cục (100 Layouts) và Preset Hiệu Ứng (100 Entrance Effects)
+  const layoutPreset = getLayoutPresetById(scene.motionTypographyLayout);
+  const effectPreset = getEffectPresetById(scene.motionTypographyEffect);
 
-  // Chuẩn bị danh sách từ: Nếu có scene.words thì dùng trực tiếp mốc giây, nếu không thì tách từ câu thoại và chia đều
+  // Chuẩn bị danh sách từ vựng căn theo thời gian giọng nói
+  const hasWordTimestamps = scene.words && scene.words.length > 0;
   const wordTokens: { text: string; startFrame: number }[] = hasWordTimestamps
     ? scene.words.map((w) => ({
         text: w.word.replace(/[.,!?;:"'()]/g, ''),
@@ -46,44 +50,11 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
           startFrame: Math.round((idx / Math.max(1, arr.length)) * (durationInFrames * 0.75))
         }));
 
-  // Chia từ thành 2 nhóm:
-  // Nhóm 1 (60%): LỚP SAU LƯNG NGƯỜI (Nằm ngay vị trí đầu, vai, lưng để người che lấp chữ)
-  // Nhóm 2 (40%): LỚP TRƯỚC MẶT NGƯỜI (Nằm trước ngực, trước mặt theo nhịp nói)
-  const mid = Math.max(1, Math.ceil(wordTokens.length * 0.6));
-  const behindWords = wordTokens.slice(0, mid);
-  const frontWords = wordTokens.slice(mid);
+  // Lấy các vị trí tọa độ tính toán theo preset bố cục đã chọn
+  const computedPositions = layoutPreset.getPositions(wordTokens.length);
 
-  // Vị trí chữ sau lưng: CẮT NGANG THÂN NGƯỜI Ở CHÍNH GIỮA ĐỂ NGƯỜI CHE CHỮ
-  const getBehindLayout = (idx: number) => {
-    const layouts = [
-      // 1. Chữ khổng lồ nằm ngay sau gáy/đầu người ở chính giữa màn hình
-      { top: '28%', left: '50%', transform: 'translate(-50%, -50%)', rotate: -2, size: 'text-7xl sm:text-8xl md:text-9xl' },
-      // 2. Chữ khổng lồ nằm ngang sau vai và lưng trên của người
-      { top: '48%', left: '50%', transform: 'translate(-50%, -50%)', rotate: 3, size: 'text-8xl sm:text-9xl' },
-      // 3. Chữ to sau vai trái vắt sang giữa (người che nửa phải của chữ)
-      { top: '38%', left: '38%', transform: 'translate(-50%, -50%)', rotate: -6, size: 'text-7xl sm:text-8xl' },
-      // 4. Chữ to sau vai phải vắt sang giữa (người che nửa trái của chữ)
-      { top: '42%', left: '62%', transform: 'translate(-50%, -50%)', rotate: 7, size: 'text-7xl sm:text-8xl' },
-      // 5. Chữ nằm sau lưng dưới
-      { top: '68%', left: '50%', transform: 'translate(-50%, -50%)', rotate: -4, size: 'text-6xl sm:text-7xl md:text-8xl' }
-    ];
-    return layouts[idx % layouts.length];
-  };
-
-  // Vị trí chữ trước mặt: Nằm ở trước ngực / 2 bên tay
-  const getFrontLayout = (idx: number) => {
-    const layouts = [
-      { top: '65%', left: '50%', transform: 'translate(-50%, -50%)', rotate: 4, size: 'text-4xl sm:text-5xl md:text-6xl' },
-      { top: '78%', left: '42%', transform: 'translate(-50%, -50%)', rotate: -5, size: 'text-3xl sm:text-4xl' },
-      { top: '82%', left: '58%', transform: 'translate(-50%, -50%)', rotate: 6, size: 'text-3xl sm:text-4xl' },
-      { top: '55%', left: '25%', transform: 'translate(-50%, -50%)', rotate: -8, size: 'text-3xl sm:text-4xl' },
-      { top: '55%', left: '75%', transform: 'translate(-50%, -50%)', rotate: 8, size: 'text-3xl sm:text-4xl' }
-    ];
-    return layouts[idx % layouts.length];
-  };
-
-  // Nhịp thở chuyển động
-  const floatY = Math.sin((frame / fps) * Math.PI * 1.5) * 6;
+  // Nhịp thở bồng bềnh
+  const floatY = Math.sin((frame / fps) * Math.PI * 1.5) * 5;
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-black select-none">
@@ -111,48 +82,50 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
         }}
       />
 
-      {/* ================================================================ */}
-      {/* TẦNG 1: CHỮ SAU LƯNG NGƯỜI (XUẤT HIỆN TỪNG TỪ CĂN THEO LỜI NÓI) */}
-      {/* ================================================================ */}
+      {/* ========================================================================= */}
+      {/* TẦNG 1: CHỮ SAU LƯNG NGƯỜI (BEHIND LAYER) - BỊ THÂN THỂ NGƯỜI CHE LẤP     */}
+      {/* ========================================================================= */}
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-        {behindWords.map((item, idx) => {
-          // Chỉ xuất hiện khi frame đạt đến mốc thời gian nói từ đó!
+        {wordTokens.map((item, idx) => {
+          const pos = computedPositions[idx % computedPositions.length];
+          // Chỉ render nếu thuộc lớp Sau Lưng
+          if (!pos.isBehind) return null;
           if (frame < item.startFrame) return null;
 
-          const wordAge = frame - item.startFrame;
-          const wordSpring = spring({
-            frame: wordAge,
-            fps,
-            config: { damping: 9, stiffness: 190, mass: 0.5 }
-          });
-
-          const layout = getBehindLayout(idx);
-          const color = NEON_PALETTES[idx % NEON_PALETTES.length];
+          const baseColor = VIBRANT_COLORS[idx % VIBRANT_COLORS.length];
+          const fxStyle = effectPreset.computeStyle(
+            {
+              frame,
+              startFrame: item.startFrame,
+              fps,
+              wordIndex: idx,
+              totalWords: wordTokens.length
+            },
+            baseColor
+          );
 
           return (
             <div
               key={`behind-${idx}`}
               className="absolute pointer-events-none transition-transform"
               style={{
-                top: layout.top,
-                left: layout.left,
-                transform: `${layout.transform} scale(${wordSpring}) rotate(${layout.rotate}deg) translateY(${floatY}px)`,
-                opacity: wordSpring
+                top: pos.top,
+                bottom: pos.bottom,
+                left: pos.left,
+                right: pos.right,
+                transform: `${pos.transform || ''} ${fxStyle.transform} rotate(${pos.rotate}deg) translateY(${floatY}px)`,
+                opacity: fxStyle.opacity,
+                filter: fxStyle.filter
               }}
             >
               <span
-                className={`${layout.size} font-black uppercase tracking-tighter block whitespace-nowrap`}
+                className={`${pos.sizeClass} font-black uppercase tracking-tight block whitespace-nowrap`}
                 style={{
-                  color,
+                  color: fxStyle.color || baseColor,
+                  background: fxStyle.background,
                   WebkitTextStroke: '3.5px #000000',
-                  textShadow: `
-                    0 2px 0 #000, 
-                    0 4px 0 #000, 
-                    0 6px 0 #111, 
-                    0 12px 30px rgba(0,0,0,0.95), 
-                    0 0 45px ${color}
-                  `,
-                  letterSpacing: '-0.03em'
+                  textShadow: fxStyle.textShadow || `0 2px 0 #000, 0 6px 20px rgba(0,0,0,0.95), 0 0 35px ${baseColor}88`,
+                  letterSpacing: '-0.02em'
                 }}
               >
                 {item.text}
@@ -162,9 +135,9 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
         })}
       </div>
 
-      {/* ================================================================ */}
-      {/* TẦNG 2: VẬT THỂ / CON NGƯỜI (VIDEO PHÔNG XANH ĐƯỢC TÁCH NỀN)      */}
-      {/* ================================================================ */}
+      {/* ========================================================================= */}
+      {/* TẦNG 2: VẬT THỂ / CON NGƯỜI (VIDEO PHÔNG XANH ĐÃ KHỬ NỀN CHROMA-KEY)       */}
+      {/* ========================================================================= */}
       <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
         {isVideo ? (
           <Video
@@ -187,43 +160,51 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
         )}
       </div>
 
-      {/* ================================================================ */}
-      {/* TẦNG 3: CHỮ TRƯỚC MẶT NGƯỜI (XUẤT HIỆN TỪNG TỪ CĂN THEO LỜI NÓI) */}
-      {/* ================================================================ */}
+      {/* ========================================================================= */}
+      {/* TẦNG 3: CHỮ TRƯỚC MẶT NGƯỜI (IN-FRONT LAYER) - BAY VỜN NỔI KHỐI           */}
+      {/* ========================================================================= */}
       <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
-        {frontWords.map((item, idx) => {
-          // Chỉ xuất hiện khi frame đạt đến mốc thời gian nói từ đó!
+        {wordTokens.map((item, idx) => {
+          const pos = computedPositions[idx % computedPositions.length];
+          // Chỉ render nếu thuộc lớp Trước Mặt
+          if (pos.isBehind) return null;
           if (frame < item.startFrame) return null;
 
-          const wordAge = frame - item.startFrame;
-          const wordSpring = spring({
-            frame: wordAge,
-            fps,
-            config: { damping: 8, stiffness: 210, mass: 0.4 }
-          });
-
-          const layout = getFrontLayout(idx);
-          const color = NEON_PALETTES[(idx + 2) % NEON_PALETTES.length];
+          const baseColor = VIBRANT_COLORS[(idx + 2) % VIBRANT_COLORS.length];
+          const fxStyle = effectPreset.computeStyle(
+            {
+              frame,
+              startFrame: item.startFrame,
+              fps,
+              wordIndex: idx,
+              totalWords: wordTokens.length
+            },
+            baseColor
+          );
 
           return (
             <div
               key={`front-${idx}`}
               className="absolute pointer-events-none transition-transform"
               style={{
-                top: layout.top,
-                left: layout.left,
-                transform: `${layout.transform} scale(${wordSpring}) rotate(${layout.rotate}deg)`,
-                opacity: wordSpring
+                top: pos.top,
+                bottom: pos.bottom,
+                left: pos.left,
+                right: pos.right,
+                transform: `${pos.transform || ''} ${fxStyle.transform} rotate(${pos.rotate}deg)`,
+                opacity: fxStyle.opacity,
+                filter: fxStyle.filter
               }}
             >
-              <div className="flex items-center gap-2 px-5 py-2 rounded-2xl bg-black/85 backdrop-blur-md border-2 border-white/50 shadow-[0_15px_40px_rgba(0,0,0,0.95),0_0_30px_rgba(255,255,255,0.3)]">
-                <span className="text-xl">🔥</span>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-black/85 backdrop-blur-md border-2 border-white/50 shadow-[0_15px_35px_rgba(0,0,0,0.95),0_0_25px_rgba(255,255,255,0.25)]">
+                <span className="text-lg">🔥</span>
                 <span
-                  className={`${layout.size} font-black uppercase tracking-tight`}
+                  className={`${pos.sizeClass} font-black uppercase tracking-tight`}
                   style={{
-                    color,
+                    color: fxStyle.color || baseColor,
+                    background: fxStyle.background,
                     WebkitTextStroke: '2px #000000',
-                    textShadow: `0 2px 12px rgba(0,0,0,0.9), 0 0 25px ${color}`
+                    textShadow: fxStyle.textShadow || `0 2px 10px rgba(0,0,0,0.9), 0 0 20px ${baseColor}`
                   }}
                 >
                   {item.text}

@@ -130,6 +130,8 @@ export interface Scene {
   localMediaPath?: string;
   isGreenScreenMotion?: boolean; // Bật chế độ Video Phông Xanh & Chữ Motion 3D (Trước & Sau Vật Thể)
   hideSubtitles?: boolean;       // Tùy chọn ẩn dòng phụ đề ngang mặc định ở dưới
+  motionTypographyLayout?: string; // ID preset trong 100 kiểu sắp xếp vị trí
+  motionTypographyEffect?: string; // ID preset trong 100 hiệu ứng xuất hiện
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];

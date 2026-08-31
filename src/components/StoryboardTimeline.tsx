@@ -5,6 +5,7 @@ import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideo
 import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import { CreateCustomVisualModal } from './CreateCustomVisualModal';
+import { MotionTypographyModal } from './MotionTypographyModal';
 import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
 import {
   Film,
@@ -130,6 +131,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
   const [visualStylesList, setVisualStylesList] = useState<CustomVisualItem[]>(() => visualStylesService.getAll());
   const [isCreateVisualModalOpen, setIsCreateVisualModalOpen] = useState(false);
+  const [activeMotionTypographyScene, setActiveMotionTypographyScene] = useState<Scene | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1698,6 +1700,17 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                   >
                     <span>{scene.hideSubtitles || scene.isGreenScreenMotion ? '🚫 Đã Tắt Chữ Ngang Dưới' : '👁️ Đang Hiện Chữ Ngang Dưới'}</span>
                   </button>
+
+                  {/* Nút Mở Modal 100 Kiểu Sắp Xếp & 100 Hiệu Ứng Chữ Motion */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveMotionTypographyScene(scene)}
+                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-extrabold transition-all border shadow-sm cursor-pointer active:scale-95 bg-gradient-to-r from-emerald-600/30 to-cyan-600/30 hover:from-emerald-600/50 hover:to-cyan-600/50 border-emerald-500/40 text-emerald-200 hover:text-white"
+                    title="Chọn trong 100 kiểu sắp xếp vị trí và 100 hiệu ứng xuất hiện chữ bùng nổ"
+                  >
+                    <span>🔤</span>
+                    <span>100 Kiểu Xếp Chữ & Hiệu Ứng FX</span>
+                  </button>
                 </div>
 
                 {/* Narration & Subtitles Editor (Col 5-8) */}
@@ -2557,6 +2570,20 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         onCreated={(newVisual) => {
           const updated = visualStylesService.getAll();
           setVisualStylesList(updated);
+        }}
+      />
+
+      {/* Modal 100 Kiểu Sắp Xếp & 100 Hiệu Ứng Chữ Motion 3D */}
+      <MotionTypographyModal
+        isOpen={Boolean(activeMotionTypographyScene)}
+        onClose={() => setActiveMotionTypographyScene(null)}
+        scene={activeMotionTypographyScene}
+        onApply={(sceneId, layoutId, effectId) => {
+          updateScene(sceneId, {
+            motionTypographyLayout: layoutId,
+            motionTypographyEffect: effectId,
+            isGreenScreenMotion: true // Tự động kích hoạt chế độ motion
+          });
         }}
       />
     </div>
