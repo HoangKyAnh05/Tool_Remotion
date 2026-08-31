@@ -1098,6 +1098,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
       mediaType: 'image',
       mediaUrl: generateAiImageUrl('cinematic glowing atmospheric space scene 8k', project.aspectRatio),
       audioDuration: 4.5,
+      hideSubtitles: true, // Mặc định tắt dòng chữ ngang dưới để chỉ hiển thị chữ nghệ thuật / Motion
       words: [
         { word: 'Khám', start: 0.2, end: 0.5 },
         { word: 'phá', start: 0.5, end: 0.8 },
@@ -1579,6 +1580,34 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
               </span>
             </button>
           )}
+
+          {/* NÚT 1-CLICK TẮT/BẬT CHỮ NGANG DƯỚI CHO TẤT CẢ PHÂN ĐOẠN */}
+          {(() => {
+            const allHidden = project.scenes.every((sc) => sc.hideSubtitles !== false);
+            return (
+              <button
+                onClick={() => {
+                  const targetState = !allHidden; // Nếu đang tắt hết thì bật lại, nếu đang bật thì tắt
+                  setProject((prev) => ({
+                    ...prev,
+                    scenes: prev.scenes.map((sc) => ({
+                      ...sc,
+                      hideSubtitles: targetState
+                    }))
+                  }));
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer shadow-md ${
+                  allHidden
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 shadow-amber-500/10'
+                    : 'bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/50 shadow-indigo-500/10'
+                }`}
+                title="Bấm để TẮT hoặc BẬT phụ đề ngang dưới đáy cho TẤT CẢ các phân đoạn trong video"
+              >
+                <span>{allHidden ? '🚫' : '👁️'}</span>
+                <span>{allHidden ? 'Tất Cả: Đã Tắt Chữ Ngang' : 'Tất Cả: Đang Bật Chữ Ngang'}</span>
+              </button>
+            );
+          })()}
 
           {/* NÚT ĐỒNG BỘ & CẬP NHẬT PHÂN CẢNH LÊN VIDEO PLAYER */}
           <button
