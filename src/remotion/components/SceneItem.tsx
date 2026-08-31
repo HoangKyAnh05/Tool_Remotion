@@ -21,6 +21,7 @@ import {
 import { ExtendedVisualOverlay } from './visuals/ExtendedVisualOverlay';
 import { GreenScreenDepthMotion } from './GreenScreenDepthMotion';
 import { getTikTokTemplateById } from '../tiktok/tiktokTemplates';
+import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
 import { getTikTokStickerById } from '../tiktok/tiktokStickers';
 import { getTikTokVideoEffectById } from '../tiktok/tiktokEffects';
 
@@ -212,6 +213,13 @@ export const SceneItem: React.FC<SceneItemProps> = ({
       {scene.tiktokTextTemplate && (
         <div className="absolute top-[20%] inset-x-0 flex justify-center z-25 pointer-events-none">
           {getTikTokTemplateById(scene.tiktokTextTemplate)?.render(scene.narration)}
+        </div>
+      )}
+
+      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) */}
+      {scene.tiktokTextEffect && (
+        <div className="absolute top-[22%] inset-x-0 flex justify-center z-25 pointer-events-none">
+          {getTikTokTextEffectById(scene.tiktokTextEffect)?.applyStyle(scene.narration)}
         </div>
       )}
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Check, X, Film, Plus, Trash2, ArrowRight } from 'lucide-react';
 import { Scene, TransitionType } from '../types/video';
 import { TIKTOK_TEXT_TEMPLATES, TikTokTextTemplate } from '../remotion/tiktok/tiktokTemplates';
+import { TIKTOK_TEXT_EFFECTS, TikTokTextEffectItem } from '../remotion/tiktok/tiktokTextEffects';
 import { TIKTOK_STICKERS, TikTokStickerItem } from '../remotion/tiktok/tiktokStickers';
 import { TIKTOK_VIDEO_EFFECTS, TikTokVideoEffect } from '../remotion/tiktok/tiktokEffects';
 
@@ -13,6 +14,7 @@ interface TikTokStudioModalProps {
     sceneId: string,
     updates: {
       tiktokTextTemplate?: string;
+      tiktokTextEffect?: string;
       tiktokStickers?: string[];
       tiktokVideoEffect?: string;
       transition?: TransitionType;
@@ -28,10 +30,11 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
 }) => {
   if (!isOpen || !scene) return null;
 
-  const [activeTab, setActiveTab] = useState<'text' | 'stickers' | 'effects' | 'transitions'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'effects_text' | 'stickers' | 'effects' | 'transitions'>('effects_text');
 
   // State cục bộ
   const [selectedTemplate, setSelectedTemplate] = useState<string>(scene.tiktokTextTemplate || '');
+  const [selectedTextEffect, setSelectedTextEffect] = useState<string>(scene.tiktokTextEffect || '');
   const [selectedStickers, setSelectedStickers] = useState<string[]>(scene.tiktokStickers || []);
   const [selectedEffect, setSelectedEffect] = useState<string>(scene.tiktokVideoEffect || '');
   const [selectedTransition, setSelectedTransition] = useState<TransitionType>(scene.transition || 'none');
@@ -45,6 +48,7 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   const handleConfirm = () => {
     onApply(scene.id, {
       tiktokTextTemplate: selectedTemplate,
+      tiktokTextEffect: selectedTextEffect,
       tiktokStickers: selectedStickers,
       tiktokVideoEffect: selectedEffect,
       transition: selectedTransition
@@ -79,6 +83,18 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                 }`}
               >
                 TI Text Templates
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('effects_text')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeTab === 'effects_text'
+                    ? 'bg-[#2E323E] text-white shadow-sm font-black'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                🎨 Text Effects (ART)
               </button>
 
               <button
@@ -178,6 +194,62 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
 
                       <span className="text-[11px] font-extrabold text-gray-300 truncate w-full">
                         {tpl.name}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 1.5: TEXT EFFECTS ART (20+ Kiểu Chữ Nghệ Thuật CapCut Trong Ảnh)     */}
+          {/* ========================================================================= */}
+          {activeTab === 'effects_text' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-gray-300 uppercase tracking-wide">
+                  Hiệu Ứng Kiểu Chữ Nghệ Thuật CapCut (Text Effects / Styles)
+                </span>
+                {selectedTextEffect && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTextEffect('')}
+                    className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
+                  >
+                    Bỏ chọn hiệu ứng chữ
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                {TIKTOK_TEXT_EFFECTS.map((eff) => {
+                  const isSelected = selectedTextEffect === eff.id;
+                  return (
+                    <div
+                      key={eff.id}
+                      onClick={() => setSelectedTextEffect(eff.id)}
+                      className={`h-36 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
+                        isSelected
+                          ? 'bg-[#242938] border-yellow-400 shadow-xl shadow-yellow-500/20 ring-2 ring-yellow-400/40'
+                          : 'bg-[#181A20] border-gray-800/80 hover:border-gray-700 hover:bg-[#1E2028]'
+                      }`}
+                    >
+                      <span className="absolute top-2 left-2 text-[10px] text-yellow-400">💎</span>
+
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-yellow-400 text-black flex items-center justify-center font-bold text-xs shadow-md">
+                          ✓
+                        </div>
+                      )}
+
+                      {/* Live Art Render */}
+                      <div className="flex-1 flex items-center justify-center w-full transform scale-75 group-hover:scale-85 transition-transform">
+                        {eff.applyStyle('ART')}
+                      </div>
+
+                      <span className="text-[11px] font-extrabold text-gray-300 truncate w-full">
+                        {eff.name}
                       </span>
                     </div>
                   );

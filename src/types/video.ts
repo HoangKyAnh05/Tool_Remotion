@@ -134,6 +134,7 @@ export interface Scene {
   motionTypographyEffect?: string; // ID preset trong 100 hiệu ứng xuất hiện
   // TikTok & CapCut Creative Pack
   tiktokTextTemplate?: string;     // ID Text Template CapCut
+  tiktokTextEffect?: string;       // ID Text Effect ART CapCut
   tiktokStickers?: string[];       // Danh sách ID Stickers CapCut
   tiktokVideoEffect?: string;      // ID Video FX CapCut
   audioUrl?: string;
