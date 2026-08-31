@@ -2538,16 +2538,20 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         }}
       />
 
-      {/* Modal Quét Xóa Phông Vật Thể AI */}
+      {/* Modal Quét Xóa Phông Vật Thể AI (Hỗ trợ cả Video lẫn Ảnh) */}
       <RemoveBackgroundModal
         isOpen={Boolean(activeRemoveBgScene)}
         onClose={() => setActiveRemoveBgScene(null)}
         scene={activeRemoveBgScene}
-        onApply={(sceneId, newMediaUrl) => {
-          updateScene(sceneId, {
-            mediaUrl: newMediaUrl,
-            mediaType: 'image'
-          });
+        onApply={(sceneId, cutoutMode, newMediaUrl) => {
+          const updates: Partial<Scene> = {
+            videoCutoutMode: cutoutMode
+          };
+          if (newMediaUrl) {
+            updates.mediaUrl = newMediaUrl;
+            updates.mediaType = 'image';
+          }
+          updateScene(sceneId, updates);
         }}
       />
     </div>

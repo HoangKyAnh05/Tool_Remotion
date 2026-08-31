@@ -127,6 +127,7 @@ export interface Scene {
   mediaType: 'image' | 'video';
   mediaUrl: string;
   localMediaPath?: string;
+  videoCutoutMode?: 'none' | 'transparent' | 'blur_bg' | 'green_key' | 'black_key';
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];
