@@ -144,6 +144,9 @@ export default defineConfig({
     electron([
       {
         entry: 'electron/main.ts',
+        onstart(options) {
+          options.startup();
+        },
         vite: {
           build: {
             outDir: 'dist-electron',
@@ -166,7 +169,13 @@ export default defineConfig({
         },
         vite: {
           build: {
-            outDir: 'dist-electron'
+            outDir: 'dist-electron',
+            rollupOptions: {
+              output: {
+                format: 'cjs',
+                entryFileNames: 'preload.cjs'
+              }
+            }
           }
         }
       }

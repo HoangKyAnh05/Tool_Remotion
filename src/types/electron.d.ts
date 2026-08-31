@@ -27,11 +27,20 @@ export interface IElectronAPI {
     title?: string;
     source: 'web' | 'pexels' | 'ai';
   }>>;
+  searchWebVideos?: (query: string, page?: number) => Promise<any[]>;
   restartApp?: () => Promise<void>;
   reloadApp?: () => Promise<void>;
   openPath: (path: string) => Promise<string>;
   selectFile: (options?: any) => Promise<string[] | null>;
   selectFolder: () => Promise<string | null>;
+  readAudioBase64?: (filePath: string) => Promise<{ dataUrl: string; base64: string; mimeType: string; sizeBytes: number } | null>;
+  transcribeAudio?: (params: { audioBase64: string; mimeType?: string; apiKey?: string }) => Promise<{
+    narration?: string;
+    language?: string;
+    audioDuration?: number;
+    words?: Array<{ word: string; start: number; end: number }>;
+    error?: string;
+  }>;
   onProcessMessage: (callback: (message: string) => void) => void;
 }
 

@@ -13,11 +13,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
   searchWebImages: (query: string) => ipcRenderer.invoke('media:search-web', query),
+  searchWebVideos: (query: string, page: number = 1) => ipcRenderer.invoke('media:search-videos', query, page),
   restartApp: () => ipcRenderer.invoke('app:restart'),
   reloadApp: () => ipcRenderer.invoke('app:reload'),
   openPath: (path: string) => ipcRenderer.invoke('shell:open-path', path),
   selectFile: (options: any) => ipcRenderer.invoke('dialog:select-file', options),
   selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
+  readAudioBase64: (filePath: string) => ipcRenderer.invoke('audio:read-file-base64', filePath),
+  transcribeAudio: (params: { audioBase64: string; mimeType?: string; apiKey?: string }) =>
+    ipcRenderer.invoke('audio:transcribe', params),
   onProcessMessage: (callback: (message: string) => void) => {
     ipcRenderer.on('main-process-message', (_event, value) => callback(value));
   }

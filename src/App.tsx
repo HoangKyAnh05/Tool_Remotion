@@ -162,6 +162,7 @@ export const App: React.FC = () => {
             <StoryboardTimeline
               project={project}
               setProject={setProject}
+              apiKeyGemini={apiKeyGemini}
               apiKeyPexels={apiKeyPexels}
               onOpenBatchVocab={() => setIsBatchVocabOpen(true)}
             />

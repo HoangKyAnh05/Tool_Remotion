@@ -41,12 +41,12 @@ export const MathGridScene: React.FC<MathGridSceneProps> = ({
   const flowerAngle = (frame * 3) % 360;
 
   return (
-    <AbsoluteFill className="bg-[#090A10] flex flex-col justify-between items-center py-16 px-6 select-none">
+    <AbsoluteFill className="bg-[#090A10]/95 flex flex-col justify-start items-center pt-14 pb-28 px-6 select-none overflow-hidden">
       {/* 1. Header Badge */}
       <HeaderBadge text={badgeText} variant="cyan" />
 
       {/* 2. Headline & Punchline */}
-      <div className="text-center flex flex-col items-center mt-2 max-w-lg px-2">
+      <div className="text-center flex flex-col items-center mt-5 max-w-lg px-2">
         <h2 className="text-lg md:text-xl font-black text-gray-300 tracking-wider uppercase">
           {headline}
         </h2>
@@ -55,9 +55,9 @@ export const MathGridScene: React.FC<MathGridSceneProps> = ({
         </h1>
       </div>
 
-      {/* 3. 2x2 Animated Visual Cards Grid */}
+      {/* 3. 2x2 Animated Visual Cards Grid - Wide (w-[94%] max-w-xl) */}
       <div
-        className="grid grid-cols-2 gap-5 w-full max-w-lg my-auto"
+        className="grid grid-cols-2 gap-4 w-[94%] max-w-xl my-auto"
         style={{ transform: `scale(${introSpring})` }}
       >
         {/* CARD 1: Parabol */}

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Audio, AbsoluteFill, useVideoConfig } from 'remotion';
+import { Audio, AbsoluteFill, useVideoConfig, Img, Video } from 'remotion';
 import { Scene, SubtitleStyle } from '../../types/video';
 import { SceneMedia } from './SceneMedia';
 import { SubtitlesRenderer } from './SubtitlesRenderer';
+import { HeaderBadge } from './visuals/HeaderBadge';
 import { ChatBubbleScene } from './visuals/ChatBubbleScene';
 import { OrbitalGlowScene } from './visuals/OrbitalGlowScene';
 import { MathGridScene } from './visuals/MathGridScene';
@@ -129,14 +130,33 @@ export const SceneItem: React.FC<SceneItemProps> = ({
   };
 
   const isSpecialVisual = Boolean(scene.visualType && scene.visualType !== 'media');
-  const visualScale = scene.visualScale ?? 1.0;
+  const visualScale = scene.visualScale ?? 1.15;
 
   return (
     <AbsoluteFill className="bg-black overflow-hidden">
-      {/* Visual Canvas (Media or Scalable Motion Graphics) */}
+      {/* 1. Cinematic Blurred Image/Video Backdrop for Motion Graphic scenes (Kết hợp Motion Graphics với Ảnh/Video) */}
+      {isSpecialVisual && scene.mediaUrl && (
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-30 filter blur-md scale-110">
+          {scene.mediaType === 'video' ? (
+            <Video
+              src={scene.mediaUrl}
+              volume={0}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Img
+              src={scene.mediaUrl}
+              className="w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/75" />
+        </div>
+      )}
+
+      {/* 2. Visual Canvas (Media or Scalable Motion Graphics) */}
       {isSpecialVisual ? (
         <div
-          className="w-full h-full flex items-center justify-center pointer-events-none"
+          className="w-full h-full flex items-center justify-center pointer-events-none relative z-10"
           style={{
             transform: `scale(${visualScale})`,
             transformOrigin: 'center center'
@@ -145,7 +165,16 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           {renderVisualContent()}
         </div>
       ) : (
-        renderVisualContent()
+        <div className="w-full h-full relative">
+          {renderVisualContent()}
+
+          {/* Dynamic Motion HeaderBadge for Media scenes */}
+          {scene.headerBadge && (
+            <div className="absolute top-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
+              <HeaderBadge text={scene.headerBadge} variant="cyan" />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Synchronized Word-Level Subtitles: Unified single render (except chat_bubble where text is in chat bubbles) */}

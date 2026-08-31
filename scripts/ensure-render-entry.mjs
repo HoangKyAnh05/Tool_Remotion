@@ -7,9 +7,20 @@ if (!fs.existsSync(distElectron)) {
 }
 
 const mainJsPath = path.join(distElectron, 'main.js');
-const content = `// Render fallback entry point
+if (!fs.existsSync(mainJsPath)) {
+  const content = `// Render fallback entry point
 import '../server.mjs';
 `;
+  fs.writeFileSync(mainJsPath, content, 'utf8');
+  console.log('Created dist-electron/main.js fallback for Render!');
+} else {
+  console.log('dist-electron/main.js exists, keeping built Electron main process.');
+}
 
-fs.writeFileSync(mainJsPath, content, 'utf8');
-console.log('Successfully created dist-electron/main.js fallback for Render!');
+const preloadSrc = path.resolve('electron/preload.cjs');
+const preloadDest = path.join(distElectron, 'preload.cjs');
+if (fs.existsSync(preloadSrc)) {
+  fs.copyFileSync(preloadSrc, preloadDest);
+  console.log('Copied pure CommonJS preload.cjs to dist-electron/preload.cjs');
+}
+

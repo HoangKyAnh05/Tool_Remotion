@@ -2,7 +2,7 @@
   "name": "remotion-video-auto-editor",
   "version": "1.0.0",
   "description": "Desktop AI Video Editor powered by Remotion, Electron & Edge-TTS",
-  "main": "server.mjs",
+  "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
     "start": "node server.mjs",

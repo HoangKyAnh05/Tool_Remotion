@@ -139,21 +139,50 @@ Quy tắc:
   }
 ]`;
 
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.7
+  const candidateModels = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-pro'
+  ];
+
+  const apiVersions = ['v1beta', 'v1'];
+  let parsed: any = null;
+
+  for (const model of candidateModels) {
+    for (const apiVer of apiVersions) {
+      try {
+        const response = await axios.post(
+          `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${apiKey}`,
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.7
+            }
+          },
+          { timeout: 25000 }
+        );
+
+        let text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          text = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim();
+          parsed = JSON.parse(text);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            break;
+          }
+        }
+      } catch {
+        // Thử tiếp
       }
     }
-  );
+    if (parsed) break;
+  }
 
-  const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('No content returned from Gemini');
+  if (!parsed || !Array.isArray(parsed)) throw new Error('No valid content returned from Gemini');
 
-  const parsed = JSON.parse(text);
   return parsed.map((s: any, idx: number) => ({
     id: `scene-${Date.now()}-${idx + 1}`,
     order: idx + 1,

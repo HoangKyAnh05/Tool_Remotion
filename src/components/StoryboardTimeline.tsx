@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { VideoProject, Scene, TransitionType, KenBurnsEffect } from '../types/video';
 import { synthesizeEdgeTTS } from '../services/edgeTtsService';
-import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, MediaAsset } from '../services/mediaService';
+import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideos, MediaAsset } from '../services/mediaService';
+import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import {
   Film,
@@ -16,12 +17,17 @@ import {
   Sliders,
   FolderOpen,
   Check,
+  X,
+  Edit3,
+  RotateCcw,
   Eye,
   Camera,
   Play,
   Pause,
   Upload,
+  Mic,
   Mic2,
+  Square,
   CheckCircle2,
   Activity,
   Music,
@@ -31,15 +37,73 @@ import {
 interface StoryboardTimelineProps {
   project: VideoProject;
   setProject: React.Dispatch<React.SetStateAction<VideoProject>>;
+  apiKeyGemini?: string;
   apiKeyPexels?: string;
   onOpenBatchVocab?: () => void;
 }
 
 const FALLBACK_THUMBNAIL = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80';
 
+// Các chủ đề video ngắn B-Roll thịnh hành
+const POPULAR_VIDEO_TOPICS = [
+  { label: '🌌 Vũ trụ / Galaxy', query: 'galaxy nebula space deep cosmos' },
+  { label: '🍳 Ẩm thực / Món ăn', query: 'cooking delicious food kitchen pan' },
+  { label: '💻 Công nghệ & AI', query: 'technology coding artificial intelligence' },
+  { label: '💰 Tiền & Tài chính', query: 'money finance business growth' },
+  { label: '✈️ Du lịch / Máy bay', query: 'airplane flight clouds travel adventure' },
+  { label: '🏎️ Cao tốc / Xe hơi', query: 'night highway car driving neon' },
+  { label: '🌆 Thành phố / Đô thị', query: 'modern city skyline urban traffic' },
+  { label: '🌿 Thiên nhiên / Thư giãn', query: 'calm nature forest river sunset' },
+  { label: '🏃 Thể thao / Gym', query: 'fitness workout running athlete' },
+];
+
+// Trích xuất từ khóa gợi ý thông minh từ kịch bản phân cảnh
+function getScriptSuggestions(scene?: Scene | null): string[] {
+  if (!scene) return ['galaxy space', 'công nghệ', 'ẩm thực', 'tài chính', 'du lịch'];
+  const list: string[] = [];
+  if (scene.searchKeyword && scene.searchKeyword.trim()) {
+    list.push(scene.searchKeyword.trim());
+  }
+
+  const text = (scene.narration || '').toLowerCase();
+  if (/vũ trụ|thiên hà|ngân hà|không gian|sao|hành tinh|tiểu hành tinh|black hole/i.test(text)) {
+    list.push('galaxy nebula space');
+    list.push('vũ trụ thiên hà');
+  } else if (/bún|cá|phở|món|ẩm thực|nấu|chiên|xào|nướng|nhà hàng|thực khách|hương vị|tô|bát/i.test(text)) {
+    list.push('cooking delicious food');
+    list.push('ẩm thực món ngon');
+  } else if (/tiền|tài chính|chứng khoán|cổ phiếu|lợi nhuận|doanh thu|ngân hàng|giàu|đầu tư/i.test(text)) {
+    list.push('money finance business');
+    list.push('tài chính đầu tư');
+  } else if (/code|lập trình|ai|trí tuệ nhân tạo|phần mềm|công nghệ|máy tính|robot/i.test(text)) {
+    list.push('technology futuristic coding');
+    list.push('công nghệ trí tuệ nhân tạo');
+  } else if (/máy bay|chuyến bay|sân bay|cất cánh/i.test(text)) {
+    list.push('airplane flight takeoff');
+  } else if (/đua xe|cao tốc|lái xe|đèn neon|đường phố|xe hơi/i.test(text)) {
+    list.push('night highway driving');
+  } else if (/du lịch|biển|núi|khám phá|bình minh|hoàng hôn/i.test(text)) {
+    list.push('travel landscape sunset');
+  } else if (/thành phố|đô thị|tòa nhà/i.test(text)) {
+    list.push('city skyline urban');
+  }
+
+  // Tách 2-3 từ ngắn từ câu thoại
+  const words = (scene.narration || '')
+    .replace(/[^\p{L}\d\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !/^(hôm|nay|chúng|tôi|bạn|các|những|một|cho|về|với|tại|trong|khi|được|sẽ|đã|đang|là|thì|mà|rất|quá|lại)$/i.test(w));
+  if (words.length >= 2) {
+    list.push(words.slice(0, 3).join(' '));
+  }
+
+  return Array.from(new Set(list)).filter(Boolean).slice(0, 5);
+}
+
 export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   project,
   setProject,
+  apiKeyGemini,
   apiKeyPexels,
   onOpenBatchVocab
 }) => {
@@ -47,14 +111,32 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MediaAsset[]>([]);
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
+  const [mediaPage, setMediaPage] = useState<number>(1);
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [isSynthesizingSceneId, setIsSynthesizingSceneId] = useState<string | null>(null);
   const [isBatchSynthesizing, setIsBatchSynthesizing] = useState(false);
   const [batchProgressText, setBatchProgressText] = useState('');
   const [playingAudioSceneId, setPlayingAudioSceneId] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
+  // States for Voiceover Speech-To-Text (Nhận diện lời thoại & chạy chữ từ audio của tôi)
+  const [isTranscribingSceneId, setIsTranscribingSceneId] = useState<string | null>(null);
+  const [transcribeStatusText, setTranscribeStatusText] = useState<string>('');
+  const [isTranscribingFullAudio, setIsTranscribingFullAudio] = useState(false);
+  const [fullAudioStatusText, setFullAudioStatusText] = useState('');
+
+  // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
+  const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
+  const liveTranscribedTextRef = useRef<string>('');
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [targetAudioUploadSceneId, setTargetAudioUploadSceneId] = useState<string | null>(null);
+  const fullAudioInputRef = useRef<HTMLInputElement | null>(null);
 
   const transitionAudioInputRef = useRef<HTMLInputElement | null>(null);
   const [targetTransitionAudioSceneId, setTargetTransitionAudioSceneId] = useState<string | null>(null);
@@ -101,6 +183,158 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
       ...prev,
       scenes: prev.scenes.map((s) => (s.id === id ? { ...s, ...updates } : s))
     }));
+  };
+
+  // State for inline word editing
+  const [editingWord, setEditingWord] = useState<{
+    sceneId: string;
+    wordIdx: number;
+    word: string;
+    start: number;
+    end: number;
+  } | null>(null);
+
+  // Khi người dùng sửa câu thoại trong ô Textarea -> Tự động đồng bộ lại nhịp từ words
+  const handleNarrationChange = (scene: Scene, newText: string) => {
+    const duration = scene.audioDuration || 4.0;
+    const syncedWords = syncWordsFromNarration(newText, duration, scene.words);
+    updateScene(scene.id, {
+      narration: newText,
+      words: syncedWords
+    });
+  };
+
+  // Cập nhật 1 từ đơn lẻ trong chip từ
+  const handleSaveWordEdit = (sceneId: string, wordIdx: number, newWord: string, newStart: number, newEnd: number) => {
+    const scene = project.scenes.find((s) => s.id === sceneId);
+    if (!scene || !scene.words) return;
+
+    const updatedWords = [...scene.words];
+    updatedWords[wordIdx] = {
+      word: newWord.trim(),
+      start: Number(Number(newStart).toFixed(2)),
+      end: Number(Number(newEnd).toFixed(2))
+    };
+
+    const reconstructedNarration = updatedWords.map((w) => w.word).join(' ');
+    updateScene(sceneId, {
+      narration: reconstructedNarration,
+      words: updatedWords
+    });
+    setEditingWord(null);
+  };
+
+  // Xóa 1 từ khỏi danh sách words
+  const handleDeleteWord = (sceneId: string, wordIdx: number) => {
+    const scene = project.scenes.find((s) => s.id === sceneId);
+    if (!scene || !scene.words) return;
+
+    const updatedWords = scene.words.filter((_, idx) => idx !== wordIdx);
+    const reconstructedNarration = updatedWords.map((w) => w.word).join(' ');
+    updateScene(sceneId, {
+      narration: reconstructedNarration,
+      words: updatedWords
+    });
+    setEditingWord(null);
+  };
+
+  // 1-Click căn lại toàn bộ mốc nhịp từ theo câu thoại hiện tại
+  const handleRealignWords = (scene: Scene) => {
+    const duration = scene.audioDuration || 4.0;
+    const syncedWords = syncWordsFromNarration(scene.narration, duration);
+    updateScene(scene.id, {
+      words: syncedWords
+    });
+  };
+
+  // Nút chuyên dụng 1-Click: AI Audio to Text (Nghe âm thanh & tự động tạo chữ chạy video)
+  const handleAutoAudioToText = async (scene: Scene) => {
+    if (!scene.audioUrl) {
+      alert('Phân cảnh này chưa có âm thanh. Vui lòng bấm "Ghi âm" hoặc "Đẩy sound" trước!');
+      return;
+    }
+
+    let activeGeminiKey = (apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || '').trim();
+    if (!activeGeminiKey) {
+      const inputKey = prompt(
+        '✨ Tính năng AI Audio-to-Text (Chuyển giọng nói thành chữ như Google Dịch & ChatGPT):\n\nVui lòng dán Google Gemini API Key của bạn vào đây (Lấy miễn phí tại https://aistudio.google.com/app/apikey):'
+      );
+      if (inputKey && inputKey.trim()) {
+        activeGeminiKey = inputKey.trim();
+        localStorage.setItem('GEMINI_API_KEY', activeGeminiKey);
+      } else {
+        return;
+      }
+    }
+
+    setIsTranscribingSceneId(scene.id);
+    setTranscribeStatusText('AI đang nghe âm thanh & tự động bóc tách chữ chạy video...');
+
+    try {
+      const audioInfo = await extractAudioBase64(scene.audioUrl);
+      if (!audioInfo.base64) {
+        throw new Error('Không thể đọc dữ liệu âm thanh từ phân cảnh này.');
+      }
+
+      let transcribedData: any = null;
+
+      // 1. Thử qua Electron Main Process IPC
+      if (window.electronAPI?.transcribeAudio) {
+        const ipcRes = await window.electronAPI.transcribeAudio({
+          audioBase64: audioInfo.base64,
+          mimeType: audioInfo.mimeType || 'audio/mp3',
+          apiKey: activeGeminiKey
+        });
+
+        if (ipcRes?.error) {
+          throw new Error(ipcRes.error);
+        }
+
+        if (ipcRes?.narration) {
+          transcribedData = ipcRes;
+        }
+      }
+
+      // 2. Fallback qua transcribeCustomAudio trong Renderer
+      if (!transcribedData) {
+        const res = await transcribeCustomAudio({
+          audioDataUrl: audioInfo.dataUrl || scene.audioUrl,
+          audioBase64: audioInfo.base64,
+          mimeType: audioInfo.mimeType || 'audio/mp3',
+          apiKeyGemini: activeGeminiKey,
+          existingNarration: scene.narration
+        });
+
+        if (res && res.narration) {
+          transcribedData = res;
+        }
+      }
+
+      if (transcribedData && transcribedData.narration) {
+        const finalDuration = transcribedData.audioDuration || scene.audioDuration || 4.0;
+        let finalWords = transcribedData.words;
+        if (!finalWords || finalWords.length === 0) {
+          finalWords = syncWordsFromNarration(transcribedData.narration, finalDuration);
+        }
+
+        updateScene(scene.id, {
+          narration: transcribedData.narration,
+          audioDuration: finalDuration,
+          words: finalWords
+        });
+      } else {
+        throw new Error('AI không nhận diện được lời nói trong file âm thanh này.');
+      }
+
+      setIsTranscribingSceneId(null);
+      setTranscribeStatusText('');
+    } catch (err: any) {
+      console.error('Auto Audio to text error:', err);
+      const errMsg = err?.response?.data?.error?.message || err?.message || 'Vui lòng kiểm tra lại kết nối mạng hoặc API key Gemini.';
+      alert('Lỗi nhận diện âm thanh AI:\n' + errMsg);
+      setIsTranscribingSceneId(null);
+      setTranscribeStatusText('');
+    }
   };
 
   // 1-Click Generate Voice for a Single Scene
@@ -232,31 +466,201 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     }
   };
 
-  // Custom Audio Upload for a scene (Works in both Electron and Web browser)
+  // Live Microphone Recording for a scene with Auto Speech-To-Text
+  const startRecordingSceneAudio = async (sceneId: string) => {
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      liveTranscribedTextRef.current = '';
+
+      // Khởi động Web SpeechRecognition nếu trình duyệt hỗ trợ
+      const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognitionClass) {
+        try {
+          const recognition = new SpeechRecognitionClass();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'vi-VN';
+          recognition.onresult = (event: any) => {
+            let transcript = '';
+            for (let i = 0; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+            }
+            if (transcript.trim()) {
+              liveTranscribedTextRef.current = transcript.trim();
+            }
+          };
+          recognition.onerror = () => {};
+          recognition.start();
+          speechRecognitionRef.current = recognition;
+        } catch (recInitErr) {
+          console.warn('Live SpeechRecognition not supported or blocked:', recInitErr);
+        }
+      }
+
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else {
+          mimeType = '';
+        }
+      }
+
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+
+        if (speechRecognitionRef.current) {
+          try {
+            speechRecognitionRef.current.stop();
+          } catch (e) {}
+          speechRecognitionRef.current = null;
+        }
+
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        if (audioBlob.size === 0) {
+          setRecordingSceneId(null);
+          setRecordingSeconds(0);
+          return;
+        }
+
+        setRecordingSceneId(null);
+        setRecordingSeconds(0);
+        setIsTranscribingSceneId(sceneId);
+        setTranscribeStatusText('Đang nhận diện giọng nói & tạo phụ đề karaoke chạy vào video...');
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const dataUrl = e.target?.result as string;
+          if (dataUrl) {
+            const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+            const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || undefined;
+            const scene = project.scenes.find((s) => s.id === sceneId);
+            const liveRecognizedText = liveTranscribedTextRef.current.trim();
+
+            const result = await transcribeCustomAudio({
+              audioDataUrl: dataUrl,
+              audioBase64: base64,
+              mimeType: recorder.mimeType || 'audio/webm',
+              apiKeyGemini: activeGeminiKey,
+              existingNarration: liveRecognizedText || scene?.narration
+            });
+
+            updateScene(sceneId, {
+              audioUrl: dataUrl,
+              audioDuration: result.audioDuration,
+              narration: result.narration || liveRecognizedText || scene?.narration || '',
+              words: result.words
+            });
+
+            setIsTranscribingSceneId(null);
+            setTranscribeStatusText('');
+          }
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      recorder.start(100);
+      setRecordingSceneId(sceneId);
+      setRecordingSeconds(0);
+
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      console.error('Microphone recording error:', err);
+      alert('Không thể mở micro: ' + (err.message || 'Vui lòng kiểm tra kết nối micro trên máy tính.'));
+      setRecordingSceneId(null);
+      setRecordingSeconds(0);
+    }
+  };
+
+  const stopRecordingSceneAudio = () => {
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {}
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  // Custom Audio Upload & AI Speech-To-Text for a single scene
   const handleTriggerCustomAudioUpload = async (sceneId: string) => {
+    const scene = project.scenes.find((s) => s.id === sceneId);
+    if (!scene) return;
+
     if (window.electronAPI?.selectFile) {
       try {
         const files = await window.electronAPI.selectFile({
-          title: 'Chọn file thu âm / giọng đọc (MP3, WAV, M4A)',
+          title: 'Chọn file sound lời thoại của bạn (MP3, WAV, M4A, AAC, OGG)',
           filters: [
             { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] }
           ]
         });
         if (files && files.length > 0) {
           const filePath = files[0];
+          setIsTranscribingSceneId(sceneId);
+          setTranscribeStatusText('Đang đọc và phân tích file âm thanh...');
+
+          let base64Info = null;
+          if (window.electronAPI?.readAudioBase64) {
+            base64Info = await window.electronAPI.readAudioBase64(filePath);
+          }
+
           const audioUrl = `file://${filePath.replace(/\\/g, '/')}`;
-          const audio = new Audio(audioUrl);
-          audio.onloadedmetadata = () => {
-            const dur = Number((audio.duration || 4.0).toFixed(2));
-            updateScene(sceneId, {
-              audioUrl,
-              audioDuration: dur
-            });
-          };
-          audio.load();
+          const effectiveDataUrl = base64Info?.dataUrl || audioUrl;
+
+          setTranscribeStatusText('Đang nhận diện giọng nói (Tiếng Anh/Tiếng Việt) & căn chỉnh nhịp chữ...');
+
+          const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || undefined;
+          const result = await transcribeCustomAudio({
+            audioDataUrl: effectiveDataUrl,
+            audioBase64: base64Info?.base64,
+            mimeType: base64Info?.mimeType || 'audio/mp3',
+            apiKeyGemini: activeGeminiKey,
+            existingNarration: scene.narration
+          });
+
+          const fps = project.fps || 30;
+          const durationFrames = Math.max(30, Math.round(result.audioDuration * fps));
+
+          updateScene(sceneId, {
+            audioUrl,
+            audioDuration: result.audioDuration,
+            narration: result.narration || scene.narration,
+            words: result.words
+          });
+
+          setIsTranscribingSceneId(null);
+          setTranscribeStatusText('');
         }
-      } catch (err) {
-        console.error('File select error', err);
+      } catch (err: any) {
+        console.error('File select / STT error', err);
+        setIsTranscribingSceneId(null);
+        setTranscribeStatusText('');
       }
     } else {
       // Browser fallback via file input
@@ -265,45 +669,247 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     }
   };
 
-  const handleBrowserAudioFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBrowserAudioFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !targetAudioUploadSceneId) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        const audio = new Audio(dataUrl);
-        audio.onloadedmetadata = () => {
-          const dur = Number((audio.duration || 4.0).toFixed(2));
-          updateScene(targetAudioUploadSceneId, {
-            audioUrl: dataUrl,
-            audioDuration: dur
+    const sceneId = targetAudioUploadSceneId;
+    const scene = project.scenes.find((s) => s.id === sceneId);
+    setIsTranscribingSceneId(sceneId);
+    setTranscribeStatusText('Đang đọc file âm thanh...');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setTranscribeStatusText('Đang nhận diện giọng nói (Tiếng Anh/Tiếng Việt) & khớp chữ...');
+          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+          const mimeType = file.type || 'audio/mp3';
+          const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY') || undefined;
+
+          const result = await transcribeCustomAudio({
+            audioDataUrl: dataUrl,
+            audioBase64: base64,
+            mimeType,
+            apiKeyGemini: activeGeminiKey,
+            existingNarration: scene?.narration
           });
+
+          const fps = project.fps || 30;
+          const durationFrames = Math.max(30, Math.round(result.audioDuration * fps));
+
+          updateScene(sceneId, {
+            audioUrl: dataUrl,
+            audioDuration: result.audioDuration,
+            narration: result.narration || scene?.narration || '',
+            words: result.words
+          });
+
+          setIsTranscribingSceneId(null);
           setTargetAudioUploadSceneId(null);
-        };
-        audio.load();
-      }
-    };
-    reader.readAsDataURL(file);
+          setTranscribeStatusText('');
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Browser audio STT error:', err);
+      setIsTranscribingSceneId(null);
+      setTargetAudioUploadSceneId(null);
+      setTranscribeStatusText('');
+    }
     e.target.value = '';
   };
 
-  const [searchSource, setSearchSource] = useState<'web' | 'pexels' | 'ai'>('web');
+  // Upload Full Audio Voiceover & Split/Transcribe All Scenes
+  const handleFullAudioVoiceoverUpload = async () => {
+    if (window.electronAPI?.selectFile) {
+      try {
+        const files = await window.electronAPI.selectFile({
+          title: 'Chọn file thu âm lời thoại toàn bộ bài (MP3, WAV, M4A, AAC, OGG)',
+          filters: [
+            { name: 'Audio Files', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] }
+          ]
+        });
+
+        if (files && files.length > 0) {
+          const filePath = files[0];
+          setIsTranscribingFullAudio(true);
+          setFullAudioStatusText('Đang đọc file âm thanh toàn bài...');
+
+          let base64Info = null;
+          if (window.electronAPI?.readAudioBase64) {
+            base64Info = await window.electronAPI.readAudioBase64(filePath);
+          }
+
+          const audioUrl = `file://${filePath.replace(/\\/g, '/')}`;
+          const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY');
+
+          if (activeGeminiKey && base64Info?.base64) {
+            setFullAudioStatusText('AI đang nghe toàn bộ audio, tự chia cảnh & bóc tách lời thoại...');
+            const splitScenes = await transcribeAndSplitFullAudio(
+              base64Info.base64,
+              base64Info.mimeType || 'audio/mp3',
+              activeGeminiKey
+            );
+
+            if (splitScenes && splitScenes.length > 0) {
+              const newScenes: Scene[] = splitScenes.map((sc, idx) => ({
+                id: `scene-stt-${idx}-${Date.now()}`,
+                order: idx + 1,
+                narration: sc.narration,
+                audioUrl: audioUrl,
+                audioDuration: sc.audioDuration,
+                searchKeyword: sc.searchKeyword || sc.narration.slice(0, 30),
+                mediaType: 'image',
+                mediaUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+                transition: 'fade',
+                kenBurns: 'zoom_in',
+                words: sc.words
+              }));
+
+              setProject((prev) => ({
+                ...prev,
+                scenes: newScenes
+              }));
+
+              setIsTranscribingFullAudio(false);
+              setFullAudioStatusText('');
+              return;
+            }
+          }
+
+          // Fallback: gán audio vào scene hiện tại
+          if (project.scenes.length > 0) {
+            setFullAudioStatusText('Đang nhận diện lời thoại phân cảnh đầu...');
+            const firstScene = project.scenes[0];
+            const result = await transcribeCustomAudio({
+              audioDataUrl: base64Info?.dataUrl || audioUrl,
+              audioBase64: base64Info?.base64,
+              mimeType: base64Info?.mimeType || 'audio/mp3',
+              apiKeyGemini: activeGeminiKey || undefined,
+              existingNarration: firstScene.narration
+            });
+
+            updateScene(firstScene.id, {
+              audioUrl,
+              audioDuration: result.audioDuration,
+              narration: result.narration || firstScene.narration,
+              words: result.words
+            });
+          }
+
+          setIsTranscribingFullAudio(false);
+          setFullAudioStatusText('');
+        }
+      } catch (err) {
+        console.error('Full audio upload error:', err);
+        setIsTranscribingFullAudio(false);
+        setFullAudioStatusText('');
+      }
+    } else {
+      fullAudioInputRef.current?.click();
+    }
+  };
+
+  const handleBrowserFullAudioFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsTranscribingFullAudio(true);
+    setFullAudioStatusText('Đang đọc file âm thanh toàn bài...');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+          const activeGeminiKey = apiKeyGemini || localStorage.getItem('GEMINI_API_KEY');
+
+          if (activeGeminiKey && base64) {
+            setFullAudioStatusText('AI đang nghe toàn bộ audio, tự chia cảnh & bóc tách lời thoại...');
+            const splitScenes = await transcribeAndSplitFullAudio(base64, file.type || 'audio/mp3', activeGeminiKey);
+            if (splitScenes && splitScenes.length > 0) {
+              const newScenes: Scene[] = splitScenes.map((sc, idx) => ({
+                id: `scene-stt-${idx}-${Date.now()}`,
+                order: idx + 1,
+                narration: sc.narration,
+                audioUrl: dataUrl,
+                audioDuration: sc.audioDuration,
+                searchKeyword: sc.searchKeyword || sc.narration.slice(0, 30),
+                mediaType: 'image',
+                mediaUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+                transition: 'fade',
+                kenBurns: 'zoom_in',
+                words: sc.words
+              }));
+
+              setProject((prev) => ({
+                ...prev,
+                scenes: newScenes
+              }));
+
+              setIsTranscribingFullAudio(false);
+              setFullAudioStatusText('');
+              return;
+            }
+          }
+
+          if (project.scenes.length > 0) {
+            const firstScene = project.scenes[0];
+            const result = await transcribeCustomAudio({
+              audioDataUrl: dataUrl,
+              audioBase64: base64,
+              mimeType: file.type || 'audio/mp3',
+              apiKeyGemini: activeGeminiKey || undefined,
+              existingNarration: firstScene.narration
+            });
+
+            updateScene(firstScene.id, {
+              audioUrl: dataUrl,
+              audioDuration: result.audioDuration,
+              narration: result.narration || firstScene.narration,
+              words: result.words
+            });
+          }
+
+          setIsTranscribingFullAudio(false);
+          setFullAudioStatusText('');
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Browser full audio error:', err);
+      setIsTranscribingFullAudio(false);
+      setFullAudioStatusText('');
+    }
+    e.target.value = '';
+  };
+
+  const [searchSource, setSearchSource] = useState<'video' | 'web' | 'pexels' | 'ai'>('video');
   const [directImageUrlInput, setDirectImageUrlInput] = useState('');
 
   // Open Media Search Modal for Scene
-  const openMediaSearch = (scene: Scene) => {
+  const openMediaSearch = (scene: Scene, defaultSource?: 'video' | 'web' | 'pexels' | 'ai') => {
     setActiveMediaModalSceneId(scene.id);
-    const initialQuery = scene.searchKeyword || scene.narration.slice(0, 30);
+    const initialQuery = scene.searchKeyword || scene.narration.slice(0, 35).trim();
     setSearchQuery(initialQuery);
-    handleSearchMedia(initialQuery, searchSource);
+    const sourceToUse = defaultSource || (scene.mediaType === 'video' ? 'video' : 'video');
+    setSearchSource(sourceToUse);
+    setMediaPage(1);
+    handleSearchMedia(initialQuery, sourceToUse, 1);
   };
 
-  const handleSearchMedia = async (query: string, source: 'web' | 'pexels' | 'ai' = searchSource) => {
+  const handleSearchMedia = async (
+    query: string,
+    source: 'video' | 'web' | 'pexels' | 'ai' = searchSource,
+    page: number = 1
+  ) => {
     const cleanQuery = query.trim();
     if (!cleanQuery) return;
     setIsSearchingMedia(true);
+    setMediaPage(page);
     try {
       if (source === 'ai') {
         const aiUrl = generateAiImageUrl(cleanQuery, project.aspectRatio);
@@ -317,6 +923,13 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             title: `Ảnh AI: ${cleanQuery}`
           }
         ]);
+      } else if (source === 'video') {
+        // Search short videos from Coverr / Electron / Pexels with pagination page
+        let videoResults = await searchStockVideos(cleanQuery, page);
+        if (videoResults.length === 0 && apiKeyPexels) {
+          videoResults = await searchPexelsMedia(cleanQuery, project.aspectRatio, apiKeyPexels, 'video');
+        }
+        setSearchResults(videoResults);
       } else if (source === 'pexels' && apiKeyPexels) {
         const results = await searchPexelsMedia(cleanQuery, project.aspectRatio, apiKeyPexels, 'all');
         setSearchResults(results);
@@ -330,6 +943,18 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     } finally {
       setIsSearchingMedia(false);
     }
+  };
+
+  const handleNextBatch = () => {
+    const nextPage = mediaPage + 1;
+    setMediaPage(nextPage);
+    handleSearchMedia(searchQuery, searchSource, nextPage);
+  };
+
+  const handlePrevBatch = () => {
+    const prevPage = Math.max(1, mediaPage - 1);
+    setMediaPage(prevPage);
+    handleSearchMedia(searchQuery, searchSource, prevPage);
   };
 
   const selectMediaForScene = (asset: MediaAsset) => {
@@ -704,6 +1329,14 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         accept="audio/*"
         className="hidden"
       />
+      {/* Hidden file input for full audio voiceover uploads */}
+      <input
+        type="file"
+        ref={fullAudioInputRef}
+        onChange={handleBrowserFullAudioFileInput}
+        accept="audio/*"
+        className="hidden"
+      />
 
       {/* Header bar with Global AI Voice Action */}
       <div className="bg-gray-900/80 rounded-2xl p-4 border border-gray-800 flex flex-wrap items-center justify-between gap-3 glass-panel">
@@ -738,6 +1371,26 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
               <>
                 <Mic2 className="w-3.5 h-3.5" />
                 <span>Ghép giọng AI toàn bộ cảnh</span>
+              </>
+            )}
+          </button>
+
+          {/* Full Audio Voiceover STT Upload Button */}
+          <button
+            onClick={handleFullAudioVoiceoverUpload}
+            disabled={isBatchSynthesizing || isTranscribingFullAudio}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all active:scale-95 border border-emerald-400/30"
+            title="Tải lên 1 file sound lời thoại toàn bộ bài (MP3/WAV/M4A) - Tự động nhận diện lời nói tiếng Anh / tiếng Việt & chạy chữ từ đầu đến cuối"
+          >
+            {isTranscribingFullAudio ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>{fullAudioStatusText || 'Đang nhận diện...'}</span>
+              </>
+            ) : (
+              <>
+                <Mic className="w-3.5 h-3.5" />
+                <span>🎙️ Đẩy sound toàn bài (Tự nhận diện chữ)</span>
               </>
             )}
           </button>
@@ -905,19 +1558,28 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                   </div>
 
                   {/* Quick Media Action buttons */}
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-4 gap-1">
                     <button
-                      onClick={() => openMediaSearch(scene)}
-                      className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-gray-800/80 hover:bg-indigo-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[11px] font-medium transition-all"
-                      title="Tìm kiếm Stock ảnh/video Pexels"
+                      onClick={() => openMediaSearch(scene, 'video')}
+                      className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-pink-600/20 hover:bg-pink-600/40 text-pink-300 hover:text-white border border-pink-500/40 text-[10px] font-bold transition-all shadow-sm group/vbtn"
+                      title="Tìm và chọn video ngắn phù hợp chủ đề kịch bản cảnh này"
+                    >
+                      <Play className="w-3 h-3 text-pink-400 fill-pink-400 group-hover/vbtn:scale-110 transition-transform" />
+                      <span>Video</span>
+                    </button>
+
+                    <button
+                      onClick={() => openMediaSearch(scene, 'web')}
+                      className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-gray-800/80 hover:bg-indigo-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[10px] font-medium transition-all"
+                      title="Tìm kiếm hình ảnh Web / Google"
                     >
                       <Search className="w-3 h-3 text-indigo-400" />
-                      <span>Stock</span>
+                      <span>Ảnh Web</span>
                     </button>
 
                     <button
                       onClick={() => generateAiImageForScene(scene)}
-                      className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-gray-800/80 hover:bg-purple-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[11px] font-medium transition-all"
+                      className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-gray-800/80 hover:bg-purple-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[10px] font-medium transition-all"
                       title="Tạo ảnh AI theo prompt phân cảnh"
                     >
                       <Sparkles className="w-3 h-3 text-purple-400" />
@@ -926,8 +1588,8 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
 
                     <button
                       onClick={() => handleSelectLocalMedia(scene.id)}
-                      className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-gray-800/80 hover:bg-emerald-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[11px] font-medium transition-all"
-                      title="Chọn file từ máy tính"
+                      className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-gray-800/80 hover:bg-emerald-600/30 text-gray-300 hover:text-white border border-gray-700/50 text-[10px] font-medium transition-all"
+                      title="Chọn video hoặc ảnh từ máy tính"
                     >
                       <FolderOpen className="w-3 h-3 text-emerald-400" />
                       <span>Từ PC</span>
@@ -937,32 +1599,45 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
 
                 {/* Narration & Subtitles Editor (Col 5-8) */}
                 <div className="md:col-span-5 flex flex-col gap-2.5">
-                  {/* Voice Status & Action Bar */}
-                  <div className="flex items-center justify-between bg-gray-950/60 p-2 rounded-xl border border-gray-800">
-                    {/* Status Badge */}
-                    <div className="flex items-center gap-1.5">
-                      {hasAudio ? (
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Đã có giọng ({scene.audioDuration?.toFixed(1)}s)</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-amber-400">
-                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                          <span>Chưa tạo giọng đọc</span>
-                        </span>
-                      )}
-                    </div>
+                  {/* Voice Status & Action Bar - Clean 2-Tier Layout */}
+                  <div className="flex flex-col gap-2 bg-gray-950/60 p-2.5 rounded-xl border border-gray-800">
+                    {/* Top Tier: Status & Listen Button */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 overflow-hidden flex-1 min-w-0">
+                        {recordingSceneId === scene.id ? (
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-rose-400 animate-pulse">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                            <span>Đang ghi âm ({String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:{String(recordingSeconds % 60).padStart(2, '0')})...</span>
+                          </span>
+                        ) : isTranscribingSceneId === scene.id ? (
+                          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-400 animate-pulse">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400 flex-shrink-0" />
+                            <span className="truncate">{transcribeStatusText || 'Đang nhận diện giọng nói...'}</span>
+                          </span>
+                        ) : hasAudio ? (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 truncate">
+                            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate">
+                              Đã có sound ({scene.audioDuration?.toFixed(1)}s)
+                              {scene.words && scene.words.length > 0 && ` • ${scene.words.length} từ`}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1.5 text-[11px] font-medium text-amber-400/90">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping flex-shrink-0" />
+                            <span>Chưa có âm thanh thoại</span>
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Actions: Listen / Generate / Upload */}
-                    <div className="flex items-center gap-1.5">
-                      {/* Play/Pause Button */}
+                      {/* Play / Stop Audio Button */}
                       <button
+                        type="button"
                         onClick={() => togglePlaySceneAudio(scene)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shadow-sm ${
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shadow-sm flex-shrink-0 ${
                           isPlaying
                             ? 'bg-pink-600 text-white animate-pulse'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                            : 'bg-indigo-600/90 hover:bg-indigo-500 text-white'
                         }`}
                         title="Nghe thử giọng đọc phân cảnh này"
                       >
@@ -974,58 +1649,212 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                         ) : (
                           <>
                             <Play className="w-3 h-3" />
-                            <span>Nghe giọng</span>
+                            <span>Nghe thử</span>
                           </>
                         )}
                       </button>
+                    </div>
 
-                      {/* Re-generate Button */}
+                    {/* Bottom Tier: 4 Equal Voice Action Buttons (Ghi âm Mic / Đẩy Sound / Auto Text / Giọng AI) */}
+                    <div className="grid grid-cols-4 gap-1">
+                      {/* Button 1: Live Microphone Recording */}
+                      {recordingSceneId === scene.id ? (
+                        <button
+                          type="button"
+                          onClick={stopRecordingSceneAudio}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-rose-600 text-white text-[10px] font-bold transition-all animate-pulse shadow-md shadow-rose-600/30 border border-rose-400 active:scale-95"
+                          title="Bấm để dừng ghi âm và tự động nhận diện chữ chạy video"
+                        >
+                          <Square className="w-3 h-3 fill-white" />
+                          <span>Dừng ({recordingSeconds}s)</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => startRecordingSceneAudio(scene.id)}
+                          disabled={Boolean(recordingSceneId) || isTranscribingSceneId === scene.id}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 hover:text-white border border-rose-500/40 text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm"
+                          title="Bấm để bắt đầu thu âm giọng nói trực tiếp qua micro máy tính"
+                        >
+                          <Mic className="w-3 h-3 text-rose-400" />
+                          <span>Ghi âm</span>
+                        </button>
+                      )}
+
+                      {/* Button 2: Upload Custom Voiceover File */}
                       <button
-                        onClick={() => handleGenerateSceneTTS(scene)}
-                        disabled={isSynthesizing}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-[11px] font-medium transition-all disabled:opacity-50"
-                        title="Tạo lại giọng đọc AI cho câu này"
+                        type="button"
+                        onClick={() => handleTriggerCustomAudioUpload(scene.id)}
+                        disabled={Boolean(recordingSceneId) || isTranscribingSceneId === scene.id}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm"
+                        title="Tải file âm thanh thu âm của bạn (MP3, WAV, M4A...) - App tự nhận diện lời nói & chạy chữ karaoke"
                       >
-                        <RefreshCw className={`w-3 h-3 ${isSynthesizing ? 'animate-spin text-pink-400' : 'text-indigo-400'}`} />
-                        <span>{isSynthesizing ? 'Đang đọc...' : 'Tạo giọng'}</span>
+                        <Upload className="w-3 h-3 text-emerald-400" />
+                        <span>Đẩy sound</span>
                       </button>
 
-                      {/* Custom Audio Upload */}
+                      {/* Button 3: AI Audio to Text Button */}
                       <button
-                        onClick={() => handleTriggerCustomAudioUpload(scene.id)}
-                        className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-[11px] transition-all"
-                        title="Tải file thu âm giọng đọc riêng (MP3/WAV)"
+                        type="button"
+                        onClick={() => handleAutoAudioToText(scene)}
+                        disabled={!scene.audioUrl || Boolean(recordingSceneId) || isTranscribingSceneId === scene.id}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 hover:text-white border border-amber-500/40 text-[10px] font-bold transition-all disabled:opacity-40 active:scale-95 shadow-sm"
+                        title="AI tự động nghe file âm thanh của phân cảnh này và chuyển thành văn bản + mốc từ chạy chữ karaoke"
                       >
-                        <Upload className="w-3 h-3 text-gray-400 hover:text-white" />
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span>Auto Text</span>
+                      </button>
+
+                      {/* Button 4: Generate AI Speech */}
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateSceneTTS(scene)}
+                        disabled={isSynthesizing || Boolean(recordingSceneId) || isTranscribingSceneId === scene.id}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-white border border-indigo-500/40 text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm"
+                        title="Tạo lại giọng đọc AI từ văn bản kịch bản"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isSynthesizing ? 'animate-spin text-pink-400' : 'text-indigo-400'}`} />
+                        <span>{isSynthesizing ? 'Đọc...' : 'Giọng AI'}</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Narration Textarea */}
-                  <div className="relative">
+                  <div className="relative flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
+                      <span>Câu thoại lồng tiếng (Chữ chạy video):</span>
+                      <span className="text-gray-500">Sửa chữ tại đây tự cập nhật phụ đề</span>
+                    </div>
                     <textarea
                       value={scene.narration}
-                      onChange={(e) => updateScene(scene.id, { narration: e.target.value })}
+                      onChange={(e) => handleNarrationChange(scene, e.target.value)}
                       rows={3}
                       className="w-full bg-gray-950/90 border border-gray-800 focus:border-indigo-500 rounded-xl p-2.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none transition-all resize-none font-sans leading-relaxed"
-                      placeholder="Nhập câu thoại lồng tiếng cho phân cảnh này..."
+                      placeholder="Nhập câu thoại hoặc bấm 'Ghi âm' / 'Đẩy sound' / 'Auto Text' để tự động nhận diện chữ..."
                     />
                   </div>
 
-                  {/* Subtitle Words Timing chips preview */}
-                  {scene.words && scene.words.length > 0 && (
-                    <div className="flex flex-wrap gap-1 p-2 rounded-xl bg-gray-950/60 border border-gray-800/60 max-h-16 overflow-y-auto">
-                      {scene.words.map((w, wIdx) => (
-                        <span
-                          key={wIdx}
-                          className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-[10px] text-indigo-300 border border-indigo-500/20 font-medium"
-                        >
-                          {w.word}
-                          <span className="text-[8px] text-gray-500 ml-1 font-mono">{w.start.toFixed(1)}s</span>
-                        </span>
-                      ))}
+                  {/* Interactive Subtitle Words Timing chips & Editor */}
+                  <div className="flex flex-col gap-1.5 p-2 rounded-xl bg-gray-950/80 border border-gray-800/80">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-300">
+                        <span>🔤 Nhịp Chạy Chữ Karaoke ({scene.words?.length || 0} từ):</span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {scene.audioUrl && (
+                          <button
+                            type="button"
+                            onClick={() => handleAutoAudioToText(scene)}
+                            disabled={isTranscribingSceneId === scene.id}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-[10px] text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all active:scale-95 font-semibold"
+                            title="AI tự động nghe âm thanh và bóc tách thành câu chữ + mốc từ karaoke"
+                          >
+                            <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                            <span>Audio to Text</span>
+                          </button>
+                        )}
+
+                        {scene.narration?.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => handleRealignWords(scene)}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[10px] text-indigo-300 hover:text-indigo-200 border border-indigo-500/20 transition-all active:scale-95"
+                            title="Tự động chia đều lại mốc thời gian từng từ theo độ dài âm thanh"
+                          >
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            <span>Căn lại nhịp</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
+
+                    {scene.words && scene.words.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                        {scene.words.map((w, wIdx) => {
+                          const isEditingThis = editingWord?.sceneId === scene.id && editingWord?.wordIdx === wIdx;
+
+                          if (isEditingThis) {
+                            return (
+                              <div
+                                key={wIdx}
+                                className="flex items-center gap-1 p-1 rounded-lg bg-indigo-950 border border-indigo-400 shadow-md"
+                              >
+                                <input
+                                  type="text"
+                                  value={editingWord.word}
+                                  onChange={(e) => setEditingWord({ ...editingWord, word: e.target.value })}
+                                  className="w-16 px-1 py-0.5 bg-gray-900 border border-gray-700 rounded text-[11px] text-white focus:outline-none"
+                                  autoFocus
+                                />
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={editingWord.start}
+                                  onChange={(e) => setEditingWord({ ...editingWord, start: parseFloat(e.target.value) || 0 })}
+                                  className="w-11 px-1 py-0.5 bg-gray-900 border border-gray-700 rounded text-[10px] text-indigo-300 font-mono focus:outline-none"
+                                  title="Giây bắt đầu"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveWordEdit(scene.id, wIdx, editingWord.word, editingWord.start, editingWord.end)}
+                                  className="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white"
+                                  title="Lưu"
+                                >
+                                  <Check className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteWord(scene.id, wIdx)}
+                                  className="p-1 rounded bg-rose-600 hover:bg-rose-500 text-white"
+                                  title="Xóa từ này"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={wIdx}
+                              type="button"
+                              onClick={() =>
+                                setEditingWord({
+                                  sceneId: scene.id,
+                                  wordIdx: wIdx,
+                                  word: w.word,
+                                  start: w.start,
+                                  end: w.end
+                                })
+                              }
+                              className="group flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/25 text-[10px] text-indigo-300 border border-indigo-500/20 font-medium transition-all cursor-pointer"
+                              title="Bấm để sửa từ này hoặc sửa mốc giây"
+                            >
+                              <span>{w.word}</span>
+                              <span className="text-[8px] text-gray-500 font-mono group-hover:text-indigo-200">
+                                {w.start.toFixed(1)}s
+                              </span>
+                              <Edit3 className="w-2 h-2 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-gray-500 italic py-1 flex items-center justify-between">
+                        <span>Chưa có mốc từ (Gõ câu thoại hoặc ghi âm để tạo)</span>
+                        {scene.narration?.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => handleRealignWords(scene)}
+                            className="text-indigo-400 hover:underline font-semibold"
+                          >
+                            Tạo nhịp chữ ngay
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Effects & Controls (Col 9-12) */}
@@ -1212,167 +2041,399 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
       </div>
 
       {/* Media Search Modal */}
-      {activeMediaModalSceneId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400">
-                  <Search className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Tìm kiếm & Chèn Hình ảnh / Video</h4>
-                  <p className="text-[11px] text-gray-400">Hỗ trợ tìm kiếm theo từ khóa tiếng Việt hoặc tiếng Anh chuẩn xác</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveMediaModalSceneId(null)}
-                className="text-gray-400 hover:text-white text-lg font-bold px-2"
-              >
-                ✕
-              </button>
-            </div>
+      {activeMediaModalSceneId && (() => {
+        const activeScene = project.scenes.find((s) => s.id === activeMediaModalSceneId);
+        const scriptSuggestions = getScriptSuggestions(activeScene);
 
-            {/* Source Mode Tabs */}
-            <div className="px-4 pt-3 flex items-center gap-2 border-b border-gray-800/80 pb-3">
-              <button
-                onClick={() => {
-                  setSearchSource('web');
-                  handleSearchMedia(searchQuery, 'web');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  searchSource === 'web'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                    : 'bg-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                <span>🌐 Tìm kiếm Web / Google</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setSearchSource('ai');
-                  handleSearchMedia(searchQuery, 'ai');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  searchSource === 'ai'
-                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                    : 'bg-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>✨ Tạo ảnh AI</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setSearchSource('pexels');
-                  handleSearchMedia(searchQuery, 'pexels');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  searchSource === 'pexels'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                    : 'bg-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                <Film className="w-3.5 h-3.5" />
-                <span>📸 Stock Pexels</span>
-              </button>
-            </div>
-
-            {/* Search Input Bar */}
-            <div className="p-4 border-b border-gray-800 flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearchMedia(searchQuery, searchSource)}
-                placeholder="Nhập tên người, địa danh, đồ vật (ví dụ: Huấn hoa hồng, Bác Hồ, xe Vinfast, bãi biển Phú Quốc, galaxy)..."
-                className="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                onClick={() => handleSearchMedia(searchQuery, searchSource)}
-                disabled={isSearchingMedia || !searchQuery.trim()}
-                className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 transition-all shadow-md"
-              >
-                {isSearchingMedia ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                <span>Tìm kiếm</span>
-              </button>
-            </div>
-
-            {/* Direct Paste URL Input Bar */}
-            <div className="px-4 py-2 bg-gray-950/40 border-b border-gray-800/60 flex items-center gap-2">
-              <span className="text-[11px] text-gray-400 flex-shrink-0">Hoặc dán URL:</span>
-              <input
-                type="text"
-                value={directImageUrlInput}
-                onChange={(e) => setDirectImageUrlInput(e.target.value)}
-                placeholder="https://example.com/image.jpg hoặc link video mp4..."
-                className="flex-1 bg-gray-950 border border-gray-800/80 rounded-lg px-2.5 py-1 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                onClick={() => {
-                  if (directImageUrlInput.trim() && activeMediaModalSceneId) {
-                    const isVid = directImageUrlInput.includes('.mp4') || directImageUrlInput.includes('.mov');
-                    selectMediaForScene({
-                      id: `direct-${Date.now()}`,
-                      type: isVid ? 'video' : 'image',
-                      url: directImageUrlInput.trim(),
-                      thumbnail: directImageUrlInput.trim(),
-                      source: 'web',
-                      title: 'Link dán trực tiếp'
-                    });
-                    setDirectImageUrlInput('');
-                  }
-                }}
-                disabled={!directImageUrlInput.trim()}
-                className="px-3 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white text-xs font-medium disabled:opacity-40"
-              >
-                Dùng link này
-              </button>
-            </div>
-
-            {/* Media Results Grid */}
-            <div className="p-4 overflow-y-auto flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[260px] max-h-[50vh]">
-              {isSearchingMedia ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
-                  <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-                  <span className="text-xs">Đang tìm kiếm hình ảnh phù hợp...</span>
-                </div>
-              ) : searchResults.length > 0 ? (
-                searchResults.map((asset) => (
-                  <div
-                    key={asset.id}
-                    onClick={() => selectMediaForScene(asset)}
-                    className="group relative aspect-video rounded-xl overflow-hidden bg-black border border-gray-800 hover:border-indigo-500 cursor-pointer transition-all hover:scale-[1.02] shadow-lg"
-                  >
-                    <img
-                      src={asset.thumbnail || asset.url}
-                      alt={asset.title || 'asset'}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = FALLBACK_THUMBNAIL;
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                      <span className="text-[10px] text-white font-medium truncate">{asset.title || asset.source}</span>
-                      <span className="text-[9px] text-indigo-300 uppercase font-bold">✓ Click để chọn</span>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <div className="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="p-3.5 border-b border-gray-800 flex items-center justify-between bg-gray-950/80 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-2xl bg-gradient-to-tr from-pink-600 to-indigo-600 text-white shadow-lg shadow-pink-600/20">
+                    <Play className="w-4 h-4 fill-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-white text-sm">Tìm kiếm & Chèn Video Ngắn / Hình ảnh</h4>
+                      <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[10px] font-bold">
+                        B-Roll & Stock HD
+                      </span>
                     </div>
-                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-sm text-[9px] text-white uppercase font-bold border border-white/10">
-                      {asset.type}
+                    <p className="text-[10px] text-gray-400">
+                      Tự động gợi ý từ khóa chuẩn theo kịch bản phân cảnh hoặc gõ tìm kiếm tự do
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveMediaModalSceneId(null);
+                    setHoveredVideoId(null);
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center font-bold text-sm transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Script Context & Smart Suggestions Box */}
+              {activeScene && (
+                <div className="px-4 py-2.5 bg-gradient-to-r from-indigo-950/30 via-purple-950/20 to-gray-950/50 border-b border-gray-800/80 flex flex-col gap-1.5 shrink-0">
+                  <div className="flex items-start gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-[9px] font-bold whitespace-nowrap">
+                      Cảnh {activeScene.order}
+                    </span>
+                    <p className="text-xs text-gray-200 line-clamp-1 italic leading-relaxed">
+                      "{activeScene.narration}"
+                    </p>
+                  </div>
+
+                  {/* Keyword suggestions from script */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-pink-400 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Gợi ý kịch bản:</span>
+                    </span>
+                    {scriptSuggestions.map((kw, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery(kw);
+                          setSearchSource('video');
+                          handleSearchMedia(kw, 'video');
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-pink-950/40 hover:bg-pink-600/30 text-pink-200 hover:text-white border border-pink-500/30 text-[10px] font-medium transition-all flex items-center gap-1 group/sug"
+                      >
+                        <span>{kw}</span>
+                        <Search className="w-2.5 h-2.5 text-pink-400 opacity-60 group-hover/sug:opacity-100" />
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Popular B-Roll Topics Bar */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none pt-0.5 border-t border-gray-800/50">
+                    <span className="text-[9px] font-semibold text-gray-400 whitespace-nowrap">
+                      🔥 Chủ đề hot:
+                    </span>
+                    {POPULAR_VIDEO_TOPICS.map((topic, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery(topic.query);
+                          setSearchSource('video');
+                          handleSearchMedia(topic.query, 'video');
+                        }}
+                        className="px-2 py-0.5 rounded-md bg-gray-800/80 hover:bg-indigo-600/30 text-gray-300 hover:text-white border border-gray-700/60 text-[9px] whitespace-nowrap transition-all"
+                      >
+                        {topic.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Source Mode Tabs */}
+              <div className="px-4 pt-2.5 pb-2.5 flex items-center gap-2 border-b border-gray-800/80 bg-gray-950/40 shrink-0 overflow-x-auto scrollbar-none">
+                <button
+                  onClick={() => {
+                    setSearchSource('video');
+                    handleSearchMedia(searchQuery, 'video');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    searchSource === 'video'
+                      ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg shadow-pink-600/30 scale-[1.02]'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>🎬 Video ngắn (Stock B-Roll)</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchSource('web');
+                    handleSearchMedia(searchQuery, 'web');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    searchSource === 'web'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <span>🌐 Tìm ảnh Web / Google</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchSource('ai');
+                    handleSearchMedia(searchQuery, 'ai');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    searchSource === 'ai'
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>✨ Tạo ảnh AI</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchSource('pexels');
+                    handleSearchMedia(searchQuery, 'pexels');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    searchSource === 'pexels'
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Film className="w-3.5 h-3.5" />
+                  <span>📸 Stock Pexels</span>
+                </button>
+              </div>
+
+              {/* Search Input Bar */}
+              <div className="p-3 border-b border-gray-800 flex gap-2 bg-gray-900 shrink-0">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchMedia(searchQuery, searchSource)}
+                    placeholder="Nhập từ khóa chủ đề (ví dụ: vũ trụ, galaxy, nấu ăn, công nghệ, tiền bạc, xe cộ, thiên nhiên)..."
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl pl-3.5 pr-8 py-2 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs"
+                      title="Xóa ô tìm kiếm"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setMediaPage(1);
+                    handleSearchMedia(searchQuery, searchSource, 1);
+                  }}
+                  disabled={isSearchingMedia || !searchQuery.trim()}
+                  className="px-4 py-2 bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 transition-all shadow-md active:scale-95 whitespace-nowrap"
+                >
+                  {isSearchingMedia ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  <span>{searchSource === 'video' ? 'Tìm Video' : 'Tìm kiếm'}</span>
+                </button>
+
+                {searchSource === 'video' && (
+                  <button
+                    type="button"
+                    onClick={handleNextBatch}
+                    disabled={isSearchingMedia || !searchQuery.trim()}
+                    className="px-3.5 py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 whitespace-nowrap border border-purple-400/40"
+                    title="Đổi sang tập video khác cho chủ đề này"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSearchingMedia ? 'animate-spin' : ''}`} />
+                    <span>Đổi video khác</span>
+                    <span className="px-1.5 py-0.5 bg-black/40 text-purple-200 rounded text-[10px] font-mono">
+                      #{mediaPage}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* Direct Paste URL Input Bar */}
+              <div className="px-4 py-1.5 bg-gray-950/40 border-b border-gray-800/60 flex items-center gap-2 shrink-0">
+                <span className="text-[11px] text-gray-400 flex-shrink-0">Hoặc dán URL:</span>
+                <input
+                  type="text"
+                  value={directImageUrlInput}
+                  onChange={(e) => setDirectImageUrlInput(e.target.value)}
+                  placeholder="https://example.com/video.mp4 hoặc link ảnh..."
+                  className="flex-1 bg-gray-950 border border-gray-800/80 rounded-lg px-2.5 py-1 text-xs text-gray-200 focus:outline-none focus:border-pink-500"
+                />
+                <button
+                  onClick={() => {
+                    if (directImageUrlInput.trim() && activeMediaModalSceneId) {
+                      const isVid = directImageUrlInput.includes('.mp4') || directImageUrlInput.includes('.mov');
+                      selectMediaForScene({
+                        id: `direct-${Date.now()}`,
+                        type: isVid ? 'video' : 'image',
+                        url: directImageUrlInput.trim(),
+                        thumbnail: directImageUrlInput.trim(),
+                        source: 'web',
+                        title: 'Link dán trực tiếp'
+                      });
+                      setDirectImageUrlInput('');
+                    }
+                  }}
+                  disabled={!directImageUrlInput.trim()}
+                  className="px-3 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white text-xs font-medium disabled:opacity-40 whitespace-nowrap"
+                >
+                  Dùng link này
+                </button>
+              </div>
+
+              {/* Media Results Grid with Hover Video Preview */}
+              <div className="p-4 overflow-y-auto flex-1 min-h-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 auto-rows-max items-start content-start">
+                {isSearchingMedia ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
+                    <RefreshCw className="w-8 h-8 animate-spin text-pink-400" />
+                    <span className="text-xs font-medium">
+                      {searchSource === 'video'
+                        ? 'Đang tìm kiếm video ngắn HD phù hợp với chủ đề...'
+                        : 'Đang tìm kiếm hình ảnh phù hợp...'}
                     </span>
                   </div>
-                ))
-              ) : (
-                <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500 text-xs">
-                  Không tìm thấy hình ảnh nào. Hãy thử tìm từ khóa khác hoặc bấm tạo ảnh AI!
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((asset) => {
+                    const isHovered = hoveredVideoId === asset.id;
+
+                    return (
+                      <div
+                        key={asset.id}
+                        onClick={() => selectMediaForScene(asset)}
+                        onMouseEnter={() => setHoveredVideoId(asset.id)}
+                        onMouseLeave={() => setHoveredVideoId(null)}
+                        className="group relative w-full aspect-video rounded-xl overflow-hidden bg-gray-950 border border-gray-800 hover:border-pink-500 cursor-pointer transition-all hover:scale-[1.02] shadow-lg shrink-0"
+                        style={{ minHeight: '110px' }}
+                      >
+                        {/* If video and hovered, render actual live video preview */}
+                        {asset.type === 'video' && isHovered ? (
+                          <video
+                            src={asset.previewUrl || asset.url}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                            className="absolute inset-0 w-full h-full object-cover block"
+                          />
+                        ) : (
+                          <img
+                            src={asset.thumbnail || asset.url}
+                            alt={asset.title || 'asset'}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = FALLBACK_THUMBNAIL;
+                            }}
+                            className="absolute inset-0 w-full h-full object-cover block"
+                          />
+                        )}
+
+                        {/* Video play icon overlay when not hovered */}
+                        {asset.type === 'video' && !isHovered && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/20 group-hover:bg-pink-600/80 transition-all">
+                              <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Hover Overlay info */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5 z-10">
+                          <span className="text-[11px] text-white font-semibold truncate leading-tight">
+                            {asset.title || asset.source}
+                          </span>
+                          <div className="flex items-center justify-between mt-1">
+                            {asset.duration ? (
+                              <span className="text-[9px] text-pink-300 font-mono font-bold bg-black/50 px-1.5 py-0.5 rounded">
+                                ⏱ {asset.duration}s
+                              </span>
+                            ) : (
+                              <span className="text-[9px] text-gray-300 font-mono">HD</span>
+                            )}
+                            <span className="text-[9px] text-pink-300 uppercase font-extrabold flex items-center gap-0.5">
+                              ✓ Chọn cảnh này
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Top Badge */}
+                        <span
+                          className={`absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-md backdrop-blur-md text-[9px] font-extrabold border border-white/10 ${
+                            asset.type === 'video'
+                              ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-sm'
+                              : 'bg-black/75 text-gray-200'
+                          }`}
+                        >
+                          {asset.type === 'video' ? '🎬 VIDEO' : 'IMAGE'}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-400 gap-3">
+                    <p className="text-xs">
+                      Chưa tìm thấy video phù hợp với từ khóa "<span className="text-pink-300 font-medium">{searchQuery}</span>".
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
+                      <span className="text-[11px] text-gray-500">Thử tìm theo chủ đề:</span>
+                      {POPULAR_VIDEO_TOPICS.slice(0, 4).map((t, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(t.query);
+                            setSearchSource('video');
+                            handleSearchMedia(t.query, 'video');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-pink-600/30 text-gray-300 hover:text-white border border-gray-700 text-xs font-medium"
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Switch Video Batch Pagination Bar */}
+              {searchSource === 'video' && searchResults.length > 0 && (
+                <div className="px-4 py-2.5 bg-gray-950/90 border-t border-gray-800 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <span className="text-gray-300 font-medium">Đang hiển thị {searchResults.length} video</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-pink-400 font-bold bg-pink-950/40 border border-pink-500/30 px-2 py-0.5 rounded-md">
+                      Tập {mediaPage}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {mediaPage > 1 && (
+                      <button
+                        type="button"
+                        onClick={handlePrevBatch}
+                        disabled={isSearchingMedia}
+                        className="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs font-semibold transition-all border border-gray-700 disabled:opacity-40"
+                      >
+                        ◀ Tập trước
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleNextBatch}
+                      disabled={isSearchingMedia}
+                      className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-pink-600/25 active:scale-95 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSearchingMedia ? 'animate-spin' : ''}`} />
+                      <span>Đổi sang tập video khác ▶</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

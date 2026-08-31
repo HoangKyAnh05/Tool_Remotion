@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { VideoProject, Scene } from '../types/video';
 import { searchWebMedia, generateAiImageUrl } from '../services/mediaService';
 import { synthesizeEdgeTTS } from '../services/edgeTtsService';
+import { analyzeSentenceForMotion } from '../services/scriptToMotionEngine';
 import {
   ListPlus,
   Sparkles,
@@ -254,6 +255,8 @@ Trả về DUY NHẤT một khối mã JSON chuẩn cú pháp (không kèm lời
 
       totalAudioDuration += audioDuration;
 
+      const motionAnalysis = analyzeSentenceForMotion(narrationText, i, totalCount);
+
       newScenes.push({
         id: `batch-scene-${Date.now()}-${i}`,
         order: baseOrder + i + 1,
@@ -264,8 +267,14 @@ Trả về DUY NHẤT một khối mã JSON chuẩn cú pháp (không kèm lời
         audioUrl,
         audioDuration,
         words: wordsTimestamps,
-        transition: transitionTypes[i % transitionTypes.length],
-        kenBurns: kenBurnsTypes[i % kenBurnsTypes.length]
+        transition: motionAnalysis.transition || transitionTypes[i % transitionTypes.length],
+        kenBurns: motionAnalysis.kenBurns || kenBurnsTypes[i % kenBurnsTypes.length],
+        visualType: motionAnalysis.visualType,
+        visualScale: 1.0,
+        headerBadge: motionAnalysis.headerBadge,
+        orbitTitle: motionAnalysis.orbitTitle,
+        orbitIcon: motionAnalysis.orbitIcon,
+        chatMessages: motionAnalysis.chatMessages
       });
     }
 

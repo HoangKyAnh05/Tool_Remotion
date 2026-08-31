@@ -86,6 +86,10 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
   const { fps } = useVideoConfig();
   const currentTime = frame / fps;
 
+  // Bù trễ âm thanh 160ms (lead offset) để chữ bật sáng đúng khoảnh khắc giọng đọc phát âm, không bị delay
+  const AUDIO_LEAD_OFFSET = 0.16;
+  const effectiveTime = currentTime + AUDIO_LEAD_OFFSET;
+
   if (!words || words.length === 0) {
     if (fallbackText) {
       return (
@@ -123,21 +127,23 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
 
   const maxWords = subtitleStyle.maxWordsPerLine || 4;
 
-  // Group words into display chunks
+  // Group words into display chunks - xuất hiện sớm 200ms trước khi nói để phụ đề mượt mà
   const chunks: Array<{ words: WordTimestamp[]; start: number; end: number }> = [];
   for (let i = 0; i < words.length; i += maxWords) {
     const chunkWords = words.slice(i, i + maxWords);
+    const chunkStart = Math.max(0, chunkWords[0].start - 0.2);
+    const chunkEnd = chunkWords[chunkWords.length - 1].end + 0.35;
     chunks.push({
       words: chunkWords,
-      start: chunkWords[0].start,
-      end: chunkWords[chunkWords.length - 1].end + 0.3
+      start: chunkStart,
+      end: chunkEnd
     });
   }
 
-  // Find active chunk
+  // Find active chunk using effectiveTime, fallback to first chunk if beginning of scene
   const activeChunk = chunks.find(
-    (c) => currentTime >= c.start && currentTime <= c.end
-  );
+    (c) => effectiveTime >= c.start && effectiveTime <= c.end
+  ) || (currentTime < 0.6 && chunks.length > 0 ? chunks[0] : null);
 
   if (!activeChunk) return null;
 
@@ -155,11 +161,11 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
         }`}
       >
         {activeChunk.words.map((item, index) => {
-          const isSpoken = currentTime >= item.start && currentTime <= item.end;
-          const hasPassed = currentTime > item.end;
+          const isSpoken = effectiveTime >= item.start && effectiveTime <= item.end + 0.05;
+          const hasPassed = effectiveTime > item.end + 0.05;
 
           // Physics-based spring bounce animation when word is spoken
-          const wordFrameOffset = Math.max(0, Math.round((currentTime - item.start) * fps));
+          const wordFrameOffset = Math.max(0, Math.round((effectiveTime - item.start) * fps));
           const popScale = isSpoken
             ? spring({
                 frame: wordFrameOffset,

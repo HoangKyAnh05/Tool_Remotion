@@ -40,23 +40,23 @@ export const RadarTechScene: React.FC<RadarTechSceneProps> = ({
   const radarAngle = (frame * 3.5) % 360;
 
   return (
-    <AbsoluteFill className="bg-[#090A10] flex flex-col justify-between items-center py-16 px-6 select-none">
+    <AbsoluteFill className="bg-[#090A10]/95 flex flex-col justify-start items-center pt-14 pb-28 px-6 select-none overflow-hidden">
       {/* Top Header Badge */}
       <HeaderBadge text={badgeText} variant="cyan" />
 
       {/* Headline & Punchline */}
-      <div className="text-center flex flex-col items-center mt-3">
-        <h2 className="text-2xl font-black text-gray-300 tracking-wider uppercase">
+      <div className="text-center flex flex-col items-center mt-5">
+        <h2 className="text-xl md:text-2xl font-black text-gray-300 tracking-wider uppercase">
           {headline}
         </h2>
-        <h1 className="text-4xl md:text-5xl font-black tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 drop-shadow-[0_0_30px_rgba(34,211,238,0.7)]">
+        <h1 className="text-3xl md:text-4xl font-black tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 drop-shadow-[0_0_30px_rgba(34,211,238,0.7)]">
           {punchline}
         </h1>
       </div>
 
-      {/* 2x2 Tech & Data Visual Grid */}
+      {/* 2x2 Tech & Data Visual Grid - Wide (w-[94%] max-w-xl) */}
       <div
-        className="grid grid-cols-2 gap-4 w-full max-w-md my-auto"
+        className="grid grid-cols-2 gap-4 w-[94%] max-w-xl my-auto"
         style={{ transform: `scale(${introSpring})` }}
       >
         {/* CARD 1: Biểu đồ (Bar Chart) */}
