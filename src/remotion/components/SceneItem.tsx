@@ -249,55 +249,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* B. TikTok Text Template (Đi nào, Năng động, Tiêu đề...) - Khi người dùng chọn Ẩn dòng phụ đề thì render toàn bộ câu cố định */}
-      {scene.tiktokTextTemplate && scene.hideSubtitles && (() => {
-        const customPos = scene.elementPositions?.['text_template'];
-        return (
-          <div
-            className="absolute z-40 pointer-events-none transition-all"
-            style={
-              customPos
-                ? {
-                    left: `${customPos.x}%`,
-                    top: `${customPos.y}%`,
-                    transform: `translate(-50%, -50%) scale(${customPos.scale ?? 1}) rotate(${customPos.rotate ?? 0}deg)`
-                  }
-                : {
-                    top: '20%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)'
-                  }
-            }
-          >
-            {getTikTokTemplateById(scene.tiktokTextTemplate)?.render(scene.narration)}
-          </div>
-        );
-      })()}
 
-      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Khi ẩn dòng phụ đề thì render khối chữ tĩnh này theo tọa độ kéo thả */}
-      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && scene.hideSubtitles && (() => {
-        const customPos = scene.elementPositions?.['text_effect'];
-        return (
-          <div
-            className="absolute z-40 pointer-events-none transition-all"
-            style={
-              customPos
-                ? {
-                    left: `${customPos.x}%`,
-                    top: `${customPos.y}%`,
-                    transform: `translate(-50%, -50%) scale(${customPos.scale ?? 1}) rotate(${customPos.rotate ?? 0}deg)`
-                  }
-                : {
-                    top: '22%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)'
-                  }
-            }
-          >
-            {getTikTokTextEffectById(scene.tiktokTextEffect)?.applyStyle(scene.narration)}
-          </div>
-        );
-      })()}
 
       {/* C. TikTok Stickers Overlay (Meme, Emojis, Icons...) */}
       {scene.tiktokStickers && scene.tiktokStickers.length > 0 && (
