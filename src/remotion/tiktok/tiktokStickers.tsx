@@ -345,5 +345,33 @@ export const TIKTOK_STICKERS: TikTokStickerItem[] = [
 
 export function getTikTokStickerById(id?: string): TikTokStickerItem | undefined {
   if (!id) return undefined;
-  return TIKTOK_STICKERS.find((s) => s.id === id);
+  
+  const found = TIKTOK_STICKERS.find((s) => s.id === id);
+  if (found) return found;
+
+  // Hỗ trợ Sticker Tùy Chỉnh do người dùng tải ảnh lên (Base64 data URL hoặc link ảnh)
+  if (id.startsWith('data:image/') || id.startsWith('http://') || id.startsWith('https://') || id.startsWith('blob:') || id.startsWith('custom_stk_')) {
+    const imageUrl = id.startsWith('custom_stk_') ? id.replace('custom_stk_', '') : id;
+    return {
+      id,
+      name: 'Sticker Ảnh Tùy Chỉnh (Tự động bo viền)',
+      category: 'trending',
+      previewIcon: '🖼️',
+      render: () => (
+        <div className="relative inline-block select-none filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] transform hover:scale-105 transition-transform">
+          {/* Lớp nền viền Sticker trắng phong cách Die-Cut TikTok CapCut */}
+          <div className="relative p-1 bg-white rounded-3xl shadow-2xl border-2 border-white/90">
+            <img
+              src={imageUrl}
+              alt="Custom Sticker"
+              className="max-w-[200px] max-h-[200px] object-contain rounded-2xl"
+              crossOrigin="anonymous"
+            />
+          </div>
+        </div>
+      )
+    };
+  }
+
+  return undefined;
 }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Check, X, Film, Volume2, Wand2, Play, Layers } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Sparkles, Check, X, Film, Volume2, Wand2, Play, Layers, Upload, Plus, Image as ImageIcon } from 'lucide-react';
 import { Scene, TransitionType } from '../types/video';
 import { TIKTOK_TEXT_TEMPLATES } from '../remotion/tiktok/tiktokTemplates';
 import { TIKTOK_TEXT_EFFECTS } from '../remotion/tiktok/tiktokTextEffects';
@@ -412,20 +412,86 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
           {/* ========================================================================= */}
           {activeTab === 'stickers' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-gray-300 uppercase tracking-wide">
-                  Hình Dán & Meme Triệu View (Trending Stickers)
-                </span>
-                {selectedStickers.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedStickers([])}
-                    className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
-                  >
-                    Xóa tất cả sticker ({selectedStickers.length})
-                  </button>
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-[#181A20] rounded-2xl border border-gray-800">
+                <div>
+                  <span className="text-xs font-black text-gray-200 uppercase tracking-wide block">
+                    Hình Dán & Meme Triệu View (Trending Stickers)
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    Tải lên ảnh bất kỳ (PNG/JPG/GIF/Meme), ứng dụng tự động bo viền trắng thành Sticker chuẩn CapCut!
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Nút Tải Ảnh Lên Thành Sticker */}
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-black cursor-pointer shadow-lg shadow-rose-600/20 active:scale-95 transition">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>+ Tải Ảnh Tạo Sticker</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const dataUrl = ev.target?.result as string;
+                            if (dataUrl) {
+                              const customStkId = dataUrl;
+                              setSelectedStickers((prev) => [...prev, customStkId]);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {selectedStickers.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStickers([])}
+                      className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer px-2 py-1"
+                    >
+                      Xóa tất cả ({selectedStickers.length})
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Danh sách sticker đã tải lên */}
+              {selectedStickers.some((s) => s.startsWith('data:image/') || s.startsWith('http')) && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-pink-400 flex items-center gap-1">
+                    <span>✨ Sticker Tùy Chỉnh Của Bạn (Đã Chọn):</span>
+                  </span>
+                  <div className="flex flex-wrap gap-3 p-3 bg-black/40 rounded-2xl border border-pink-500/30">
+                    {selectedStickers
+                      .filter((s) => s.startsWith('data:image/') || s.startsWith('http'))
+                      .map((customStkId, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group p-2 bg-[#242938] border-2 border-pink-400 rounded-2xl shadow-xl flex items-center justify-center"
+                        >
+                          <img
+                            src={customStkId}
+                            alt="Custom Sticker"
+                            className="w-20 h-20 object-contain rounded-xl bg-white p-1 shadow"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleSticker(customStkId)}
+                            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center font-bold text-xs shadow-lg transition"
+                            title="Xóa sticker này"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                 {TIKTOK_STICKERS.map((stk) => {
