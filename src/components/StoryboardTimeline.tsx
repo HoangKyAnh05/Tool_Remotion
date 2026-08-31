@@ -8,6 +8,7 @@ import { CreateCustomVisualModal } from './CreateCustomVisualModal';
 import { MotionTypographyModal } from './MotionTypographyModal';
 import { TikTokStudioModal } from './TikTokStudioModal';
 import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
+import { SOUND_EFFECTS_LIST, playSoundEffectById } from '../services/soundEffectsService';
 import {
   Film,
   Image as ImageIcon,
@@ -1977,8 +1978,25 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                   {/* Interactive Subtitle Words Timing chips & Editor */}
                   <div className="flex flex-col gap-1.5 p-2 rounded-xl bg-gray-950/80 border border-gray-800/80">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-300">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-300">
                         <span>🔤 Nhịp Chạy Chữ Karaoke ({scene.words?.length || 0} từ):</span>
+                        {scene.tiktokSfx && (() => {
+                          const sfxItem = SOUND_EFFECTS_LIST.find((s) => s.id === scene.tiktokSfx);
+                          return (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', scene.tiktokSfx || '');
+                              }}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-400/80 text-cyan-300 text-[10px] font-mono cursor-grab active:cursor-grabbing hover:bg-cyan-900 transition shadow-sm select-none"
+                              title="KÉO THẢ: Kéo badge âm thanh này vào trước bất kỳ từ nào bên dưới để SFX phát đúng lúc nói từ đó!"
+                            >
+                              <Volume2 className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
+                              <span className="font-sans font-black">{sfxItem ? sfxItem.name.split(' ')[0] + ' ' + sfxItem.name.split(' ')[1] : 'SFX'}</span>
+                              <span className="text-[8px] bg-cyan-500/20 text-cyan-200 px-1 rounded">Kéo vào từ ⬇️</span>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -2010,7 +2028,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     </div>
 
                     {scene.words && scene.words.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                      <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto pr-1">
                         {scene.words.map((w, wIdx) => {
                           const isEditingThis = editingWord?.sceneId === scene.id && editingWord?.wordIdx === wIdx;
 
@@ -2055,28 +2073,101 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                             );
                           }
 
+                          const wordSfxItem = w.sfxId ? SOUND_EFFECTS_LIST.find((s) => s.id === w.sfxId) : null;
+
                           return (
-                            <button
+                            <div
                               key={wIdx}
-                              type="button"
-                              onClick={() =>
-                                setEditingWord({
-                                  sceneId: scene.id,
-                                  wordIdx: wIdx,
-                                  word: w.word,
-                                  start: w.start,
-                                  end: w.end
-                                })
-                              }
-                              className="group flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/25 text-[10px] text-indigo-300 border border-indigo-500/20 font-medium transition-all cursor-pointer"
-                              title="Bấm để sửa từ này hoặc sửa mốc giây"
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('ring-2', 'ring-cyan-400', 'bg-cyan-950/60');
+                              }}
+                              onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('ring-2', 'ring-cyan-400', 'bg-cyan-950/60');
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('ring-2', 'ring-cyan-400', 'bg-cyan-950/60');
+                                const sfxId = e.dataTransfer.getData('text/plain') || scene.tiktokSfx;
+                                if (sfxId) {
+                                  const nextWords = [...scene.words];
+                                  nextWords[wIdx] = { ...nextWords[wIdx], sfxId };
+                                  updateScene(scene.id, { words: nextWords });
+                                  playSoundEffectById(sfxId);
+                                }
+                              }}
+                              className={`group inline-flex items-center gap-1 px-1.5 py-0.5 rounded border transition-all ${
+                                w.sfxId
+                                  ? 'bg-cyan-950/80 border-cyan-400/80 shadow-md shadow-cyan-500/20'
+                                  : 'bg-indigo-500/10 hover:bg-indigo-500/25 border-indigo-500/20'
+                              }`}
                             >
-                              <span>{w.word}</span>
-                              <span className="text-[8px] text-gray-500 font-mono group-hover:text-indigo-200">
-                                {w.start.toFixed(1)}s
-                              </span>
-                              <Edit3 className="w-2 h-2 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
-                            </button>
+                              {/* Nút SFX Badge nếu từ này có âm thanh */}
+                              {w.sfxId ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    playSoundEffectById(w.sfxId!);
+                                  }}
+                                  className="flex items-center gap-0.5 px-1 py-0.2 rounded bg-cyan-500 text-black text-[8px] font-black hover:bg-cyan-300 transition cursor-pointer"
+                                  title={`Âm thanh ${wordSfxItem ? wordSfxItem.name : w.sfxId} sẽ kêu đúng lúc nói từ này! Bấm để nghe thử.`}
+                                >
+                                  <span>🔊</span>
+                                  <span>{wordSfxItem ? wordSfxItem.name.split(' ')[0] : 'SFX'}</span>
+                                  {/* Gỡ SFX khỏi từ */}
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const nextWords = [...scene.words];
+                                      nextWords[wIdx] = { ...nextWords[wIdx], sfxId: undefined };
+                                      updateScene(scene.id, { words: nextWords });
+                                    }}
+                                    className="ml-0.5 hover:text-red-900 font-bold"
+                                    title="Gỡ âm thanh này khỏi từ"
+                                  >
+                                    ✕
+                                  </span>
+                                </button>
+                              ) : scene.tiktokSfx ? (
+                                /* Nút 1-Click gán nhanh SFX của cảnh vào từ */
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const nextWords = [...scene.words];
+                                    nextWords[wIdx] = { ...nextWords[wIdx], sfxId: scene.tiktokSfx };
+                                    updateScene(scene.id, { words: nextWords });
+                                    playSoundEffectById(scene.tiktokSfx!);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 text-[8px] px-1 py-0.2 rounded bg-cyan-900/90 text-cyan-300 hover:bg-cyan-600 hover:text-black border border-cyan-400/50 transition cursor-pointer"
+                                  title="Gán âm thanh SFX của cảnh vào từ này"
+                                >
+                                  +🔊
+                                </button>
+                              ) : null}
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditingWord({
+                                    sceneId: scene.id,
+                                    wordIdx: wIdx,
+                                    word: w.word,
+                                    start: w.start,
+                                    end: w.end
+                                  })
+                                }
+                                className="flex items-center gap-1 text-[10px] text-indigo-300 font-medium cursor-pointer"
+                                title="Bấm để sửa từ này hoặc sửa mốc giây"
+                              >
+                                <span className={w.sfxId ? 'text-cyan-200 font-black' : ''}>{w.word}</span>
+                                <span className="text-[8px] text-gray-500 font-mono group-hover:text-indigo-200">
+                                  {w.start.toFixed(1)}s
+                                </span>
+                                <Edit3 className="w-2 h-2 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
+                              </button>
+                            </div>
                           );
                         })}
                       </div>

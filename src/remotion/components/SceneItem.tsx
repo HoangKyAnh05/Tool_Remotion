@@ -151,12 +151,24 @@ export const SceneItem: React.FC<SceneItemProps> = ({
   const visualScale = scene.visualScale ?? 1.15;
   const currentFilter = getTikTokFilterById(scene.tiktokFilter);
 
-  // Kích hoạt âm thanh SFX tự động ở đầu phân cảnh
+  // Kích hoạt âm thanh SFX tự động ở đầu phân cảnh hoặc tại mốc nhịp của từng từ được gán SFX
   React.useEffect(() => {
     if (scene.tiktokSfx && frame <= 2) {
       playSoundEffectById(scene.tiktokSfx);
     }
-  }, [scene.id, scene.tiktokSfx]);
+
+    if (scene.words && scene.words.length > 0) {
+      scene.words.forEach((w) => {
+        if (w.sfxId) {
+          const wordStartFrame = Math.max(0, Math.round(w.start * fps));
+          // Khi Remotion phát đúng đến frame của từ có gán SFX (dung sai 1 frame)
+          if (frame === wordStartFrame || (frame >= wordStartFrame && frame <= wordStartFrame + 1)) {
+            playSoundEffectById(w.sfxId);
+          }
+        }
+      });
+    }
+  }, [scene.id, scene.tiktokSfx, scene.words, frame, fps]);
 
   return (
     <AbsoluteFill

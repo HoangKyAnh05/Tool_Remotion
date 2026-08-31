@@ -39,6 +39,7 @@ export interface WordTimestamp {
   word: string;
   start: number; // in seconds
   end: number;   // in seconds
+  sfxId?: string; // ID âm thanh SFX phát đúng khoảnh khắc nói từ này
 }
 
 export interface SubtitleStyle {
