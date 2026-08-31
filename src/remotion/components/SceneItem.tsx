@@ -24,6 +24,8 @@ import { getTikTokTemplateById } from '../tiktok/tiktokTemplates';
 import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
 import { getTikTokStickerById } from '../tiktok/tiktokStickers';
 import { getTikTokVideoEffectById } from '../tiktok/tiktokEffects';
+import { getTikTokFilterById } from '../tiktok/tiktokFilters';
+import { playSoundEffectById } from '../../services/soundEffectsService';
 
 interface SceneItemProps {
   scene: Scene;
@@ -146,9 +148,30 @@ export const SceneItem: React.FC<SceneItemProps> = ({
 
   const isSpecialVisual = Boolean(scene.visualType && scene.visualType !== 'media');
   const visualScale = scene.visualScale ?? 1.15;
+  const currentFilter = getTikTokFilterById(scene.tiktokFilter);
+
+  // Kích hoạt âm thanh SFX tự động ở đầu phân cảnh
+  React.useEffect(() => {
+    if (scene.tiktokSfx && frame <= 2) {
+      playSoundEffectById(scene.tiktokSfx);
+    }
+  }, [scene.id, scene.tiktokSfx]);
 
   return (
-    <AbsoluteFill className="bg-black overflow-hidden">
+    <AbsoluteFill
+      className="bg-black overflow-hidden"
+      style={{
+        filter: currentFilter?.cssFilter && currentFilter.cssFilter !== 'none' ? currentFilter.cssFilter : undefined
+      }}
+    >
+      {/* Cinematic Color Overlay */}
+      {currentFilter?.overlayStyle && (
+        <div
+          className="absolute inset-0 pointer-events-none z-30"
+          style={currentFilter.overlayStyle}
+        />
+      )}
+
       {/* 1. Cinematic Blurred Image/Video Backdrop for Motion Graphic scenes (Kết hợp Motion Graphics với Ảnh/Video) */}
       {isSpecialVisual && scene.mediaUrl && (
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-30 filter blur-md scale-110">

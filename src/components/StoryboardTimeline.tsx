@@ -2603,13 +2603,18 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         }}
       />
 
-      {/* Modal TikTok & CapCut Studio (Text Templates, Stickers, Effects, Transitions) */}
+      {/* Modal TikTok & CapCut Studio (Text Templates, Stickers, Effects, Transitions, Filters, SFX) */}
       <TikTokStudioModal
         isOpen={Boolean(activeTikTokStudioScene)}
         onClose={() => setActiveTikTokStudioScene(null)}
         scene={activeTikTokStudioScene}
         onApply={(sceneId, updates) => {
           updateScene(sceneId, updates);
+        }}
+        onApplyAll={(updates) => {
+          project.scenes.forEach((sc) => {
+            updateScene(sc.id, updates);
+          });
         }}
       />
     </div>

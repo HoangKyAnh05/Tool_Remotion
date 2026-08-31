@@ -137,6 +137,8 @@ export interface Scene {
   tiktokTextEffect?: string;       // ID Text Effect ART CapCut
   tiktokStickers?: string[];       // Danh sách ID Stickers CapCut
   tiktokVideoEffect?: string;      // ID Video FX CapCut
+  tiktokFilter?: string;           // ID Bộ Lọc Màu Điện Ảnh CapCut
+  tiktokSfx?: string;              // ID Âm Thanh SFX Editor CapCut
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];
