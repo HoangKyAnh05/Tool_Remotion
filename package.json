@@ -15,6 +15,7 @@
     "remotion:render": "remotion render src/remotion/index.ts MainComposition out/video.mp4"
   },
   "dependencies": {
+    "@mediapipe/selfie_segmentation": "^0.1.1675465747",
     "@remotion/media-utils": "^4.0.245",
     "@remotion/player": "^4.0.245",
     "axios": "^1.7.9",
