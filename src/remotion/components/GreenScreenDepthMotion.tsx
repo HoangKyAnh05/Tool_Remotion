@@ -109,7 +109,10 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {wordTokens.map((item, idx) => {
           const pos = computedPositions[idx % computedPositions.length];
-          if (!pos.isBehind) return null;
+          // Nếu chọn "Luôn ở trước video" thì tầng sau lưng không render
+          if (scene.textLayerMode === 'front') return null;
+          // Nếu chọn "Đan xen 3D" (mặc định) thì chỉ render từ có cờ isBehind
+          if ((!scene.textLayerMode || scene.textLayerMode === 'both_3d') && !pos.isBehind) return null;
 
           // QUY TẮC KHÔNG ĐÈ CHỮ: Chỉ hiển thị trong khoảng thời gian nói của từ!
           // Khi từ tiếp theo bắt đầu, từ cũ sẽ biến mất sau 4 frame fade-out
@@ -199,7 +202,10 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
       <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
         {wordTokens.map((item, idx) => {
           const pos = computedPositions[idx % computedPositions.length];
-          if (pos.isBehind) return null;
+          // Nếu chọn "Chạy ở dưới video" thì tầng trước mặt không render
+          if (scene.textLayerMode === 'behind') return null;
+          // Nếu chọn "Đan xen 3D" (mặc định) thì chỉ render từ có cờ trước mặt (!pos.isBehind)
+          if ((!scene.textLayerMode || scene.textLayerMode === 'both_3d') && pos.isBehind) return null;
 
           // QUY TẮC KHÔNG ĐÈ CHỮ: Chỉ hiển thị trong khoảng thời gian nói của từ!
           // Khi từ tiếp theo bắt đầu, từ cũ sẽ biến mất sau 4 frame fade-out

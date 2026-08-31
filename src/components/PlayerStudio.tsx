@@ -95,6 +95,13 @@ export const PlayerStudio: React.FC<PlayerStudioProps> = ({ project, setProject 
     }));
   };
 
+  const handleUpdateScene = (sceneId: string, updates: any) => {
+    setProject((prev) => ({
+      ...prev,
+      scenes: prev.scenes.map((s) => (s.id === sceneId ? { ...s, ...updates } : s))
+    }));
+  };
+
   const updateSubtitleStyle = (updates: Partial<SubtitleStyle>) => {
     setProject((prev) => ({
       ...prev,
@@ -230,6 +237,7 @@ export const PlayerStudio: React.FC<PlayerStudioProps> = ({ project, setProject 
                 aspectRatio={project.aspectRatio}
                 onUpdatePositions={handleUpdatePositions}
                 onUpdateNarration={handleUpdateNarration}
+                onUpdateScene={handleUpdateScene}
               />
             ) : null}
           </div>

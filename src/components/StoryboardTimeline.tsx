@@ -1685,6 +1685,37 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     </span>
                   </button>
 
+                  {/* Nút Thứ Tự Lớp Chữ: Luôn Ở Trước / Ở Dưới Video / Đan Xen 3D */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = scene.textLayerMode || (scene.isGreenScreenMotion ? 'both_3d' : 'front');
+                      const next =
+                        current === 'front'
+                          ? 'behind'
+                          : current === 'behind'
+                          ? 'both_3d'
+                          : 'front';
+                      updateScene(scene.id, { textLayerMode: next });
+                    }}
+                    className={`w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-black transition-all border shadow-sm cursor-pointer active:scale-95 ${
+                      scene.textLayerMode === 'front'
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 border-cyan-300 text-white shadow-lg shadow-cyan-500/25'
+                        : scene.textLayerMode === 'behind'
+                        ? 'bg-gradient-to-r from-purple-700 to-indigo-600 border-indigo-300 text-white shadow-lg shadow-indigo-500/25'
+                        : 'bg-gradient-to-r from-amber-600 to-orange-500 border-amber-300 text-white shadow-lg shadow-amber-500/25'
+                    }`}
+                    title="Click để đổi thứ tự lớp: Chữ luôn chạy ở trước video (đè lên trên) HOẶC chạy ở dưới video (sau lưng) HOẶC đan xen 3D"
+                  >
+                    <span>
+                      {scene.textLayerMode === 'front'
+                        ? '🔝 Chữ: Luôn Ở TRƯỚC Video'
+                        : scene.textLayerMode === 'behind'
+                        ? '🔙 Chữ: Chạy Ở DƯỚI Video'
+                        : '⚡ Chữ: Đan Xen 3D (Trước & Sau)'}
+                    </span>
+                  </button>
+
                   {/* Nút Tắt / Bật Dòng Chữ Phụ Đề Ngang Mặc Định Ở Dưới */}
                   <button
                     type="button"

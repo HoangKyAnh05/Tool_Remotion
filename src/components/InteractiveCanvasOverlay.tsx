@@ -21,6 +21,7 @@ interface InteractiveCanvasOverlayProps {
   aspectRatio: '9:16' | '16:9' | '1:1';
   onUpdatePositions: (sceneId: string, positions: Record<string, ElementPosition>) => void;
   onUpdateNarration?: (sceneId: string, text: string) => void;
+  onUpdateScene?: (sceneId: string, updates: Partial<Scene>) => void;
 }
 
 interface DraggableItem {
@@ -37,7 +38,8 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
   scene,
   aspectRatio,
   onUpdatePositions,
-  onUpdateNarration
+  onUpdateNarration,
+  onUpdateScene
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -286,17 +288,52 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
           <span>Kéo chuột để di chuyển • Cuộn con lăn để Phóng to/Thu nhỏ • Nhấp đúp để sửa chữ</span>
         </div>
 
-        {Object.keys(currentPositions).length > 0 && (
-          <button
-            type="button"
-            onClick={handleResetAll}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 text-[11px] font-bold transition cursor-pointer"
-            title="Đặt lại toàn bộ chữ và sticker về vị trí mặc định"
-          >
-            <ResetIcon className="w-3 h-3" />
-            <span>Đặt Lại Mặc Định</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Nút Chuyển Đổi Thứ Tự Lớp Chữ (Trước Video / Dưới Video / Đan Xen 3D) */}
+          {onUpdateScene && (
+            <button
+              type="button"
+              onClick={() => {
+                const current = scene.textLayerMode || (scene.isGreenScreenMotion ? 'both_3d' : 'front');
+                const next =
+                  current === 'front'
+                    ? 'behind'
+                    : current === 'behind'
+                    ? 'both_3d'
+                    : 'front';
+                onUpdateScene(scene.id, { textLayerMode: next });
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black transition cursor-pointer border ${
+                scene.textLayerMode === 'front'
+                  ? 'bg-blue-600/40 border-blue-400 text-blue-200'
+                  : scene.textLayerMode === 'behind'
+                  ? 'bg-purple-600/40 border-purple-400 text-purple-200'
+                  : 'bg-amber-600/40 border-amber-400 text-amber-200'
+              }`}
+              title="Đổi vị trí: Chữ luôn chạy ở TRƯỚC video hoặc chạy ở DƯỚI video hoặc đan xen 3D"
+            >
+              <span>
+                {scene.textLayerMode === 'front'
+                  ? '🔝 Trước Video'
+                  : scene.textLayerMode === 'behind'
+                  ? '🔙 Dưới Video'
+                  : '⚡ Đan Xen 3D'}
+              </span>
+            </button>
+          )}
+
+          {Object.keys(currentPositions).length > 0 && (
+            <button
+              type="button"
+              onClick={handleResetAll}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 text-[11px] font-bold transition cursor-pointer"
+              title="Đặt lại toàn bộ chữ và sticker về vị trí mặc định"
+            >
+              <ResetIcon className="w-3 h-3" />
+              <span>Đặt Lại</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Thanh Sửa Chữ Nhanh Trực Tiếp (Quick Inline Text Editor) */}

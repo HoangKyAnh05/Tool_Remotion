@@ -136,6 +136,7 @@ export interface Scene {
   mediaUrl: string;
   localMediaPath?: string;
   isGreenScreenMotion?: boolean; // Bật chế độ Video Phông Xanh & Chữ Motion 3D (Trước & Sau Vật Thể)
+  textLayerMode?: 'front' | 'behind' | 'both_3d'; // 'front': Luôn ở trước video | 'behind': Chạy ở dưới/sau video | 'both_3d': Đan xen 3D trước & sau
   hideSubtitles?: boolean;       // Tùy chọn ẩn dòng phụ đề ngang mặc định ở dưới
   motionTypographyLayout?: string; // ID preset trong 100 kiểu sắp xếp vị trí
   motionTypographyEffect?: string; // ID preset trong 100 hiệu ứng xuất hiện
