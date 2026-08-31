@@ -161,7 +161,8 @@ export const MotionTypographyModal: React.FC<MotionTypographyModalProps> = ({
               {/* Category Filter */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[
-                  { id: 'all', label: 'Tất Cả (100 Kiểu)' },
+                  { id: 'all', label: 'Tất Cả' },
+                  { id: 'horizontal', label: '➡️ Hàng Ngang (Trái ➜ Phải)' },
                   { id: 'geometric', label: '🏛️ Hình Khối' },
                   { id: 'anatomy', label: '👤 Bám Cơ Thể' },
                   { id: 'chaotic', label: '🌪️ Hỗn Loạn Đa Chiều' },

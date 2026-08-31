@@ -16,7 +16,7 @@ export interface LayoutPosition {
 export interface TypographyLayoutPreset {
   id: string;
   name: string;
-  category: 'geometric' | 'anatomy' | 'chaotic' | 'creator' | 'icons' | 'niche' | 'physics';
+  category: 'horizontal' | 'geometric' | 'anatomy' | 'chaotic' | 'creator' | 'icons' | 'niche' | 'physics';
   icon: string;
   desc: string;
   getPositions: (totalWords: number) => LayoutPosition[];
@@ -24,8 +24,168 @@ export interface TypographyLayoutPreset {
 
 export const TYPOGRAPHY_LAYOUT_PRESETS: TypographyLayoutPreset[] = [
   // =========================================================================
-  // NHÓM 1: HÌNH KHỐI HÌNH HỌC (GEOMETRIC FRAMING) - 15 KIỂU
+  // NHÓM 0: HÀNG NGANG TỪ TRÁI SANG PHẢI (HORIZONTAL STREAM & MICRO VARIATIONS)
   // =========================================================================
+  {
+    id: 'horiz_clean_center',
+    name: '1. Hàng Ngang Chuẩn Thẳng Táp (Classic Clean)',
+    category: 'horizontal',
+    icon: '➡️',
+    desc: 'Chữ xếp thẳng hàng ngang từ trái sang phải, kích thước đều tăm tắp, thanh lịch',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 20 + step * 60; // Trải từ 20% đến 80%
+        return {
+          top: '78%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: 0,
+          sizeClass: 'text-5xl sm:text-6xl md:text-7xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_wave_gentle',
+    name: '2. Hàng Ngang Sóng Lượn Nhấp Nhô Nhẹ (Gentle Wave)',
+    category: 'horizontal',
+    icon: '〰️',
+    desc: 'Chữ chạy ngang từ trái qua phải, vị trí lên xuống nhịp nhàng hình sin (±3%)',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const yOffset = Math.sin(i * 1.5) * 3.5; // Lên xuống nhẹ nhàng ±3.5%
+        return {
+          top: `${76 + yOffset}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: Math.sin(i * 1.5) * 2.5, // Xoay nhẹ ±2.5 độ
+          sizeClass: 'text-5xl sm:text-6xl md:text-7xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_micro_tilt',
+    name: '3. Hàng Ngang Nghiêng Nhẹ So Le (Micro Tilt)',
+    category: 'horizontal',
+    icon: '📐',
+    desc: 'Chữ chạy ngang, mỗi từ xoay nghiêng nhẹ góc -3° đến +3° tự nhiên như chữ viết tay',
+    getPositions: (total) => {
+      const tilts = [-3, 2, -2, 3, -1.5, 2.5, -2.5, 1.5];
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        return {
+          top: '78%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: tilts[i % tilts.length],
+          sizeClass: 'text-5xl sm:text-6xl md:text-7xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_grow_forward',
+    name: '4. Hàng Ngang Tăng Dần Kích Thước (Grow Forward)',
+    category: 'horizontal',
+    icon: '📈',
+    desc: 'Chữ chạy ngang từ trái qua phải, từ đầu nhỏ vừa, từ cuối to dần tạo điểm nhấn câu kết',
+    getPositions: (total) => {
+      const sizeList = [
+        'text-4xl sm:text-5xl',
+        'text-5xl sm:text-6xl',
+        'text-6xl sm:text-7xl',
+        'text-7xl sm:text-8xl'
+      ];
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const sizeIdx = Math.min(sizeList.length - 1, Math.floor(step * sizeList.length));
+        return {
+          top: '78%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: step * 2, // Nghiêng tiến nhẹ
+          sizeClass: sizeList[sizeIdx],
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_punch_peak',
+    name: '5. Hàng Ngang Nhấn Đỉnh Ở Giữa (Center Punch)',
+    category: 'horizontal',
+    icon: '🎯',
+    desc: 'Chữ chạy ngang, 2 đầu kích thước vừa phải, từ ở giữa to bự nổi bật nhất',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const distFromCenter = Math.abs(step - 0.5); // 0 ở giữa, 0.5 ở 2 đầu
+        const isCenter = distFromCenter < 0.2;
+        return {
+          top: isCenter ? '76%' : '78%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: isCenter ? 0 : (step < 0.5 ? -2 : 2),
+          sizeClass: isCenter ? 'text-7xl sm:text-8xl md:text-9xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_stair_climb',
+    name: '6. Hàng Ngang Bậc Thang Lướt Nhẹ (Gentle Climb)',
+    category: 'horizontal',
+    icon: '🪜',
+    desc: 'Chữ xếp ngang nhưng nhích dần lên trên từng chút một (từ 82% lên 74%) như bước tiến',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const topPercent = 82 - step * 8; // Đi lên nhẹ 8%
+        return {
+          top: `${topPercent}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: -2, // Chếch nhẹ theo dốc đi lên
+          sizeClass: 'text-5xl sm:text-6xl md:text-7xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_dynamic_bounce',
+    name: '7. Hàng Ngang Nảy Nhịp So Le Cao Thấp (Rhythm Bounce)',
+    category: 'horizontal',
+    icon: '🎚️',
+    desc: 'Chữ chạy ngang, từ chẵn nhích lên 2%, từ lẻ hạ xuống 2% tạo nhịp điệu sinh động',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const isEven = i % 2 === 0;
+        return {
+          top: isEven ? '76.5%' : '79.5%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: isEven ? -1.5 : 1.5,
+          sizeClass: isEven ? 'text-6xl sm:text-7xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
   {
     id: 'geo_halo_orbit',
     name: '1. Halo Vòng Hào Quang Trên Đầu',
