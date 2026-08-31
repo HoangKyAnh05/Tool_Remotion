@@ -35,6 +35,7 @@ interface TikTokStudioModalProps {
   onApplyAll?: (updates: {
     tiktokTextEffect?: string;
     textEffectsMix?: string[];
+    tiktokVideoEffect?: string;
     tiktokFilter?: string;
     tiktokSfx?: string;
     transition?: TransitionType;
@@ -110,6 +111,7 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
       onApplyAll({
         tiktokTextEffect: isMixMode ? '' : selectedTextEffect,
         textEffectsMix: isMixMode && selectedMixEffects.length > 0 ? selectedMixEffects : [],
+        tiktokVideoEffect: selectedEffect,
         tiktokFilter: selectedFilter,
         tiktokSfx: selectedSfx,
         transition: selectedTransition
