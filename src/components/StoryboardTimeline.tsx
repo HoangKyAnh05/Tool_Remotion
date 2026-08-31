@@ -1027,6 +1027,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     if (!activeMediaModalSceneId) return;
     updateScene(activeMediaModalSceneId, {
       mediaUrl: asset.url,
+      localMediaPath: undefined,
       mediaType: asset.type,
       searchKeyword: searchQuery
     });
@@ -1038,6 +1039,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     const url = generateAiImageUrl(prompt, project.aspectRatio);
     updateScene(scene.id, {
       mediaUrl: url,
+      localMediaPath: undefined,
       mediaType: 'image'
     });
   };
@@ -1058,6 +1060,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                 return {
                   ...sc,
                   mediaUrl: webRes[0].url,
+                  localMediaPath: undefined,
                   mediaType: webRes[0].type || 'image'
                 };
               }
@@ -1065,6 +1068,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             return {
               ...sc,
               mediaUrl: generateAiImageUrl(kw, project.aspectRatio),
+              localMediaPath: undefined,
               mediaType: 'image' as const
             };
           }
