@@ -3,12 +3,24 @@ import { Scene, ElementPosition } from '../types/video';
 import { getTikTokTemplateById } from '../remotion/tiktok/tiktokTemplates';
 import { getTikTokTextEffectById } from '../remotion/tiktok/tiktokTextEffects';
 import { getTikTokStickerById } from '../remotion/tiktok/tiktokStickers';
-import { Move, RotateCw, ZoomIn, RotateCcw, Check, Sparkles } from 'lucide-react';
+import {
+  Move,
+  RotateCw,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+  Edit3,
+  Check,
+  RotateCcw as ResetIcon,
+  Type,
+  X
+} from 'lucide-react';
 
 interface InteractiveCanvasOverlayProps {
   scene: Scene;
   aspectRatio: '9:16' | '16:9' | '1:1';
   onUpdatePositions: (sceneId: string, positions: Record<string, ElementPosition>) => void;
+  onUpdateNarration?: (sceneId: string, text: string) => void;
 }
 
 interface DraggableItem {
@@ -18,18 +30,28 @@ interface DraggableItem {
   defaultX: number;
   defaultY: number;
   defaultScale: number;
-  renderPreview: () => React.ReactNode;
+  renderPreview: (text: string) => React.ReactNode;
 }
 
 export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> = ({
   scene,
   aspectRatio,
-  onUpdatePositions
+  onUpdatePositions,
+  onUpdateNarration
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null);
+
+  // State chỉnh sửa chữ trực tiếp
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [editingTextValue, setEditingTextValue] = useState(scene.narration || '');
+
+  // Đồng bộ editingTextValue khi scene thay đổi
+  useEffect(() => {
+    setEditingTextValue(scene.narration || '');
+  }, [scene.id, scene.narration]);
 
   const currentPositions = scene.elementPositions || {};
 
@@ -46,7 +68,7 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultX: 50,
       defaultY: 24,
       defaultScale: 1.0,
-      renderPreview: () => eff ? eff.applyStyle(scene.narration?.slice(0, 20) || 'ART') : <span>ART</span>
+      renderPreview: (txt) => eff ? eff.applyStyle(txt || 'ART') : <span>ART</span>
     });
   }
 
@@ -60,7 +82,7 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultX: 50,
       defaultY: 20,
       defaultScale: 1.0,
-      renderPreview: () => tpl ? tpl.render(scene.narration?.slice(0, 15) || 'TEXT') : <span>TEXT</span>
+      renderPreview: (txt) => tpl ? tpl.render(txt || 'TEXT') : <span>TEXT</span>
     });
   }
 
@@ -96,9 +118,9 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultX: 50,
       defaultY: 50,
       defaultScale: 1.0,
-      renderPreview: () => (
-        <div className="px-4 py-1.5 rounded-lg bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-black text-xs uppercase tracking-wider backdrop-blur-sm">
-          Khối Chữ 3D Motion
+      renderPreview: (txt) => (
+        <div className="px-4 py-1.5 rounded-lg bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-black text-xs uppercase tracking-wider backdrop-blur-sm shadow-lg shadow-yellow-500/20">
+          {txt ? txt.slice(0, 25) : 'Khối Chữ 3D Motion'}
         </div>
       )
     });
@@ -110,9 +132,9 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultX: 50,
       defaultY: 84,
       defaultScale: 1.0,
-      renderPreview: () => (
-        <div className="px-4 py-1.5 rounded-lg bg-black/80 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wide">
-          {scene.narration?.slice(0, 30) || 'Dòng Phụ Đề'}...
+      renderPreview: (txt) => (
+        <div className="px-4 py-1.5 rounded-lg bg-black/80 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wide shadow-lg">
+          {txt ? txt.slice(0, 30) : 'Dòng Phụ Đề'}...
         </div>
       )
     });
@@ -148,7 +170,7 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
     };
   };
 
-  // Xử lý di chuyển chuột trên toàn bộ container
+  // Di chuyển chuột trên toàn màn hình
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!draggingId || !dragStartRef.current || !containerRef.current) return;
@@ -194,12 +216,12 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
     };
   }, [draggingId, scene.id, currentPositions, onUpdatePositions]);
 
-  // Điều chỉnh tỷ lệ kích thước (Scale)
+  // Điều chỉnh tỷ lệ kích thước: Thu Nhỏ (-) hoặc Phóng To (+)
   const handleScaleChange = (itemId: string, delta: number) => {
     const item = draggableItems.find((d) => d.id === itemId);
     if (!item) return;
     const current = getItemPos(item);
-    const newScale = Math.max(0.4, Math.min(2.5, Number(((current.scale || 1.0) + delta).toFixed(2))));
+    const newScale = Math.max(0.3, Math.min(3.0, Number(((current.scale || 1.0) + delta).toFixed(2))));
     onUpdatePositions(scene.id, {
       ...currentPositions,
       [itemId]: {
@@ -209,12 +231,19 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
     });
   };
 
+  // Cuộn chuột để phóng to / thu nhỏ (Mouse Wheel Zoom)
+  const handleWheel = (e: React.WheelEvent, itemId: string) => {
+    e.stopPropagation();
+    const delta = e.deltaY < 0 ? 0.08 : -0.08;
+    handleScaleChange(itemId, delta);
+  };
+
   // Điều chỉnh xoay (Rotate)
-  const handleRotate = (itemId: string) => {
+  const handleRotate = (itemId: string, deltaAngle: number = 15) => {
     const item = draggableItems.find((d) => d.id === itemId);
     if (!item) return;
     const current = getItemPos(item);
-    const newRotate = ((current.rotate || 0) + 15) % 360;
+    const newRotate = ((current.rotate || 0) + deltaAngle + 360) % 360;
     onUpdatePositions(scene.id, {
       ...currentPositions,
       [itemId]: {
@@ -238,13 +267,29 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
     onUpdatePositions(scene.id, {});
   };
 
+  // Cập nhật câu chữ mới cho phân cảnh
+  const handleSaveNarration = () => {
+    if (onUpdateNarration) {
+      onUpdateNarration(scene.id, editingTextValue);
+    }
+    setIsEditingText(false);
+  };
+
+  const selectedItem = draggableItems.find((d) => d.id === selectedId);
+  const isSelectedTextElement =
+    selectedItem &&
+    (selectedItem.type === 'text_effect' ||
+      selectedItem.type === 'text_template' ||
+      selectedItem.type === 'subtitles' ||
+      selectedItem.type === 'motion_text');
+
   return (
-    <div className="flex flex-col gap-2 w-full select-none animate-fadeIn">
-      {/* Top action bar: Hướng dẫn & Nút reset */}
+    <div className="flex flex-col gap-2.5 w-full select-none animate-fadeIn">
+      {/* Top action bar: Hướng dẫn, Điều khiển & Nút reset */}
       <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-gray-900/90 border border-gray-800 text-xs">
         <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
           <Move className="w-3.5 h-3.5" />
-          <span>Kéo & thả chuột trực tiếp vào khung chữ / sticker bên dưới để xếp lại vị trí</span>
+          <span>Kéo chuột để di chuyển • Cuộn con lăn để Phóng to/Thu nhỏ • Nhấp đúp để sửa chữ</span>
         </div>
 
         {Object.keys(currentPositions).length > 0 && (
@@ -254,16 +299,54 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 text-[11px] font-bold transition cursor-pointer"
             title="Đặt lại toàn bộ chữ và sticker về vị trí mặc định"
           >
-            <RotateCcw className="w-3 h-3" />
+            <ResetIcon className="w-3 h-3" />
             <span>Đặt Lại Mặc Định</span>
           </button>
         )}
       </div>
 
+      {/* Thanh Sửa Chữ Nhanh Trực Tiếp (Quick Inline Text Editor) */}
+      <div className="bg-gray-900/95 p-2 rounded-xl border border-indigo-500/40 flex items-center gap-2 shadow-lg">
+        <div className="flex items-center gap-1 text-indigo-300 text-xs font-bold whitespace-nowrap">
+          <Type className="w-4 h-4 text-indigo-400" />
+          <span>Sửa nội dung chữ:</span>
+        </div>
+        <input
+          type="text"
+          value={editingTextValue}
+          onChange={(e) => {
+            const val = e.target.value;
+            setEditingTextValue(val);
+            if (onUpdateNarration) {
+              onUpdateNarration(scene.id, val);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSaveNarration();
+            }
+          }}
+          className="flex-1 bg-gray-950 border border-gray-700 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 rounded-lg px-3 py-1 text-xs text-white placeholder-gray-500 outline-none transition"
+          placeholder="Nhập nội dung chữ hiển thị cho cảnh này..."
+        />
+        <button
+          type="button"
+          onClick={handleSaveNarration}
+          className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-md shadow-indigo-600/30"
+          title="Lưu chữ mới vào kịch bản"
+        >
+          <Check className="w-3.5 h-3.5" />
+          <span>Lưu</span>
+        </button>
+      </div>
+
       {/* Main Drag-and-Drop Canvas Container */}
       <div
         ref={containerRef}
-        onClick={() => setSelectedId(null)}
+        onClick={() => {
+          setSelectedId(null);
+          setIsEditingText(false);
+        }}
         className="relative bg-black/95 rounded-2xl overflow-hidden shadow-2xl border-2 border-dashed border-cyan-500/50 mx-auto w-full cursor-crosshair"
         style={{
           width: aspectRatio === '9:16' ? '320px' : '100%',
@@ -288,12 +371,18 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
           draggableItems.map((item) => {
             const pos = getItemPos(item);
             const isSelected = selectedId === item.id;
-            const isDragging = draggingId === item.id;
+            const currentScalePercent = Math.round((pos.scale || 1.0) * 100);
 
             return (
               <div
                 key={item.id}
                 onMouseDown={(e) => handleMouseDown(e, item.id)}
+                onWheel={(e) => handleWheel(e, item.id)}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedId(item.id);
+                  setIsEditingText(true);
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedId(item.id);
@@ -311,40 +400,103 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
               >
                 {/* Header Tag Bar khi được click chọn */}
                 {isSelected && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/90 px-2 py-0.5 rounded-lg border border-cyan-400 text-[10px] text-white whitespace-nowrap shadow-lg z-40 pointer-events-auto">
-                    <span className="font-bold text-cyan-300">{item.name}</span>
+                  <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-gray-950/95 px-2.5 py-1 rounded-xl border border-cyan-400 text-[11px] text-white whitespace-nowrap shadow-2xl z-50 pointer-events-auto backdrop-blur-md">
+                    <span className="font-bold text-cyan-300 mr-1">{item.name}</span>
+
+                    {/* Nút Thu Nhỏ (-) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleScaleChange(item.id, -0.15);
+                      }}
+                      className="p-1 rounded hover:bg-gray-800 text-gray-200 hover:text-cyan-300 transition"
+                      title="Thu nhỏ kích thước (-15%)"
+                    >
+                      <ZoomOut className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Hiển thị tỷ lệ scale % */}
+                    <span className="text-[10px] font-mono text-cyan-400 font-bold px-1">
+                      {currentScalePercent}%
+                    </span>
+
+                    {/* Nút Phóng To (+) */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleScaleChange(item.id, 0.15);
                       }}
-                      className="p-0.5 hover:text-cyan-400"
-                      title="Phóng to"
+                      className="p-1 rounded hover:bg-gray-800 text-gray-200 hover:text-cyan-300 transition"
+                      title="Phóng to kích thước (+15%)"
                     >
-                      <ZoomIn className="w-3 h-3" />
+                      <ZoomIn className="w-3.5 h-3.5" />
                     </button>
+
+                    <div className="w-[1px] h-3 bg-gray-700 mx-0.5" />
+
+                    {/* Nút Xoay Ngược (-15°) */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRotate(item.id);
+                        handleRotate(item.id, -15);
                       }}
-                      className="p-0.5 hover:text-cyan-400"
-                      title="Xoay 15°"
+                      className="p-1 rounded hover:bg-gray-800 text-gray-200 hover:text-cyan-300 transition"
+                      title="Xoay ngược -15°"
                     >
-                      <RotateCw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     </button>
+
+                    {/* Nút Xoay Thuận (+15°) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRotate(item.id, 15);
+                      }}
+                      className="p-1 rounded hover:bg-gray-800 text-gray-200 hover:text-cyan-300 transition"
+                      title="Xoay thuận +15°"
+                    >
+                      <RotateCw className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Nút Sửa Chữ Nhanh nếu là phần tử text */}
+                    {(item.type === 'text_effect' ||
+                      item.type === 'text_template' ||
+                      item.type === 'subtitles' ||
+                      item.type === 'motion_text') && (
+                      <>
+                        <div className="w-[1px] h-3 bg-gray-700 mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingText(true);
+                          }}
+                          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-bold transition"
+                          title="Sửa chữ cho phần tử này"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Sửa Chữ</span>
+                        </button>
+                      </>
+                    )}
+
+                    <div className="w-[1px] h-3 bg-gray-700 mx-0.5" />
+
+                    {/* Nút Đặt Lại Vị Trí Mặc Định */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleResetItem(item.id);
                       }}
-                      className="p-0.5 hover:text-rose-400"
-                      title="Đặt lại vị trí mặc định"
+                      className="p-1 rounded hover:bg-rose-900/50 text-gray-400 hover:text-rose-400 transition"
+                      title="Đặt lại vị trí ban đầu"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <ResetIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
@@ -355,7 +507,7 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
                     isSelected ? 'border-cyan-400 bg-cyan-950/30' : 'border-white/30 hover:border-white/70'
                   }`}
                 >
-                  {item.renderPreview()}
+                  {item.renderPreview(editingTextValue)}
                 </div>
               </div>
             );
@@ -363,9 +515,11 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
         )}
       </div>
 
-      {/* Helper text */}
-      <div className="text-center text-[11px] text-gray-400">
-        💡 Bạn có thể kéo thả bất kỳ lúc nào. Vị trí mới sẽ được lưu tự động và phát mượt mà trên video video 60fps!
+      {/* Helper footer */}
+      <div className="text-center text-[11px] text-gray-400 flex items-center justify-center gap-3">
+        <span>🔍 <b>Thu nhỏ / Phóng to:</b> Dùng nút [+] [-] trên thanh công cụ hoặc lăn con trỏ chuột</span>
+        <span>•</span>
+        <span>✍️ <b>Sửa chữ:</b> Gõ trực tiếp vào thanh gõ chữ ở trên hoặc nhấp đúp vào ô chữ</span>
       </div>
     </div>
   );
