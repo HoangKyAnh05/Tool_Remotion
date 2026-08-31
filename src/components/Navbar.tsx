@@ -18,6 +18,8 @@ interface NavbarProps {
   onOpenSettings: () => void;
   onOpenRender: () => void;
   isGenerating: boolean;
+  activeView: 'editor' | 'roadmap100';
+  setActiveView: (view: 'editor' | 'roadmap100') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,7 +27,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   setProject,
   onOpenSettings,
   onOpenRender,
-  isGenerating
+  isGenerating,
+  activeView,
+  setActiveView
 }) => {
   const handleRatioChange = (ratio: AspectRatio) => {
     setProject((prev) => ({
@@ -86,6 +90,36 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Aspect Ratio Switch & Actions */}
       <div className="flex items-center gap-3">
+        {/* View Switcher: Studio Video AI vs Đường Ray 100 Ngày */}
+        <div className="bg-gray-900/90 p-1 rounded-xl border border-gray-800 flex items-center shadow-inner">
+          <button
+            onClick={() => setActiveView('editor')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeView === 'editor'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+            title="Giao diện Studio biên tập Video Remotion"
+          >
+            <Film className="w-3.5 h-3.5" />
+            <span>🎬 Studio Video</span>
+          </button>
+          <button
+            onClick={() => setActiveView('roadmap100')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeView === 'roadmap100'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+            title="Đường ray xương cá lộ trình 100 ngày uốn lượn"
+          >
+            <span>🛣️ Đường Ray 100 Ngày</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+              HOT
+            </span>
+          </button>
+        </div>
+
         {/* Aspect Ratio Toggle */}
         <div className="bg-gray-900/80 p-1 rounded-xl border border-gray-800 flex items-center">
           <button

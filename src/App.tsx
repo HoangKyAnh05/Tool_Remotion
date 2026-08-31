@@ -6,6 +6,7 @@ import { PlayerStudio } from './components/PlayerStudio';
 import { RenderModal } from './components/RenderModal';
 import { SettingsModal } from './components/SettingsModal';
 import { BatchVocabularyModal } from './components/BatchVocabularyModal';
+import { Roadmap100Canvas } from './components/Roadmap100Canvas';
 import { VideoProject } from './types/video';
 import { defaultProject } from './remotion/Root';
 import { synthesizeEdgeTTS } from './services/edgeTtsService';
@@ -33,6 +34,7 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRenderOpen, setIsRenderOpen] = useState(false);
   const [isBatchVocabOpen, setIsBatchVocabOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'editor' | 'roadmap100'>('roadmap100');
 
   const [apiKeyGemini, setApiKeyGemini] = useState(
     () => localStorage.getItem('GEMINI_API_KEY') || ''
@@ -140,43 +142,55 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenRender={() => setIsRenderOpen(true)}
         isGenerating={isGenerating}
+        activeView={activeView}
+        setActiveView={setActiveView}
       />
 
-      {/* Main Studio Body with 2 independently scrollable columns */}
-      <main className="flex-1 overflow-hidden p-4 lg:p-6 max-w-[1750px] w-full mx-auto">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full items-stretch">
-          {/* Left Column: Script Generation & Storyboard Timeline (7 cols) - Independently scrollable */}
-          <div className="xl:col-span-7 h-full overflow-y-auto pr-3 space-y-6">
-            <ScriptGenerator
-              project={project}
-              setProject={setProject}
-              apiKeyGemini={apiKeyGemini}
-              apiKeyPexels={apiKeyPexels}
-              isGenerating={isGenerating}
-              setIsGenerating={setIsGenerating}
-              statusText={statusText}
-              setStatusText={setStatusText}
-              onOpenBatchVocab={() => setIsBatchVocabOpen(true)}
-            />
+      {/* Main Body: Either Roadmap 100 Days or Studio Video Editor */}
+      {activeView === 'roadmap100' ? (
+        <main className="flex-1 overflow-hidden">
+          <Roadmap100Canvas
+            project={project}
+            setProject={setProject}
+            onSwitchToStudio={() => setActiveView('editor')}
+          />
+        </main>
+      ) : (
+        <main className="flex-1 overflow-hidden p-4 lg:p-6 max-w-[1750px] w-full mx-auto">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full items-stretch">
+            {/* Left Column: Script Generation & Storyboard Timeline (7 cols) - Independently scrollable */}
+            <div className="xl:col-span-7 h-full overflow-y-auto pr-3 space-y-6">
+              <ScriptGenerator
+                project={project}
+                setProject={setProject}
+                apiKeyGemini={apiKeyGemini}
+                apiKeyPexels={apiKeyPexels}
+                isGenerating={isGenerating}
+                setIsGenerating={setIsGenerating}
+                statusText={statusText}
+                setStatusText={setStatusText}
+                onOpenBatchVocab={() => setIsBatchVocabOpen(true)}
+              />
 
-            <StoryboardTimeline
-              project={project}
-              setProject={setProject}
-              apiKeyGemini={apiKeyGemini}
-              apiKeyPexels={apiKeyPexels}
-              onOpenBatchVocab={() => setIsBatchVocabOpen(true)}
-            />
-          </div>
+              <StoryboardTimeline
+                project={project}
+                setProject={setProject}
+                apiKeyGemini={apiKeyGemini}
+                apiKeyPexels={apiKeyPexels}
+                onOpenBatchVocab={() => setIsBatchVocabOpen(true)}
+              />
+            </div>
 
-          {/* Right Column: Remotion Live Preview Studio & Customizer (5 cols) - Independently scrollable */}
-          <div className="xl:col-span-5 h-full overflow-y-auto pl-1 space-y-6">
-            <PlayerStudio
-              project={project}
-              setProject={setProject}
-            />
+            {/* Right Column: Remotion Live Preview Studio & Customizer (5 cols) - Independently scrollable */}
+            <div className="xl:col-span-5 h-full overflow-y-auto pl-1 space-y-6">
+              <PlayerStudio
+                project={project}
+                setProject={setProject}
+              />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      )}
 
       {/* Batch Vocabulary & Script Modal (Root Level to prevent Stacking Context clipping) */}
       <BatchVocabularyModal
