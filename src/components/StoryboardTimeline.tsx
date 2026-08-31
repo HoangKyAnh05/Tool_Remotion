@@ -4,6 +4,7 @@ import { synthesizeEdgeTTS } from '../services/edgeTtsService';
 import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideos, MediaAsset } from '../services/mediaService';
 import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
+import { GestureMotionEditorModal } from './GestureMotionEditorModal';
 import {
   Film,
   Image as ImageIcon,
@@ -31,7 +32,8 @@ import {
   CheckCircle2,
   Activity,
   Music,
-  ListPlus
+  ListPlus,
+  Hand
 } from 'lucide-react';
 
 interface StoryboardTimelineProps {
@@ -125,6 +127,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [isTranscribingFullAudio, setIsTranscribingFullAudio] = useState(false);
   const [fullAudioStatusText, setFullAudioStatusText] = useState('');
   const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
+  const [activeMotionEditorScene, setActiveMotionEditorScene] = useState<Scene | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1651,6 +1654,25 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                       <span>Từ PC</span>
                     </button>
                   </div>
+
+                  {/* Nút Motion Edit & Quét Cử Chỉ Chỉ Tay (Point / Depth Layering) */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveMotionEditorScene(scene)}
+                    className={`w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm ${
+                      scene.motionEdit?.enabled
+                        ? 'bg-gradient-to-r from-yellow-500/25 via-amber-500/25 to-orange-500/25 border-yellow-500/60 text-yellow-200 hover:text-white shadow-yellow-500/20'
+                        : 'bg-gray-950/80 hover:bg-gray-800/80 border-gray-800 hover:border-yellow-500/40 text-gray-400 hover:text-yellow-300'
+                    }`}
+                    title="Chỉnh chữ sau lưng người hoặc bám ngón tay theo cử chỉ video"
+                  >
+                    <Hand className="w-3.5 h-3.5 text-yellow-400" />
+                    <span>
+                      {scene.motionEdit?.enabled
+                        ? `✨ Motion Cử Chỉ: ${scene.motionEdit.layerOrder === 'behind_person' ? 'Sau Lưng' : 'Bám Ngón Tay'}`
+                        : '👆 + Motion Cử Chỉ / Quét Người'}
+                    </span>
+                  </button>
                 </div>
 
                 {/* Narration & Subtitles Editor (Col 5-8) */}
@@ -2490,6 +2512,16 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
           </div>
         );
       })()}
+
+      {/* Gesture & Depth Motion Editor Modal */}
+      <GestureMotionEditorModal
+        isOpen={Boolean(activeMotionEditorScene)}
+        onClose={() => setActiveMotionEditorScene(null)}
+        scene={activeMotionEditorScene}
+        onSave={(sceneId, config) => {
+          updateScene(sceneId, { motionEdit: config });
+        }}
+      />
     </div>
   );
 };

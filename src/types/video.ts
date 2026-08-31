@@ -85,6 +85,26 @@ export interface ChatMessage {
   text: string;
 }
 
+export interface MotionWordTag {
+  text: string;
+  size: 'small' | 'medium' | 'large' | 'huge';
+  color: string; // hex / rgb / gradient name
+  highlight?: boolean;
+}
+
+export interface MotionEditConfig {
+  enabled: boolean;
+  layerOrder: 'behind_person' | 'in_front'; // Chữ nằm sau lưng hay trước mặt người
+  gestureMode: 'none' | 'point_spawn' | 'finger_follow' | 'center_depth' | 'floating_sides'; // Chế độ cử chỉ
+  fingerAnchor: { x: number; y: number }; // Tọa độ tương đối 0-100% ngón tay chỉ
+  backgroundEffect: 'original' | 'blur_depth' | 'darken_glow' | 'cyber_neon' | 'monochrome_bg'; // Hiệu ứng xóa/làm mờ phông
+  words: MotionWordTag[];
+  customTitle?: string;
+  badgeIcon?: string;
+  popAnimation: 'spring_bounce' | 'slide_up' | 'elastic_pop' | 'glitch_reveal';
+  personCutoutUrl?: string; // Ảnh/video đã bóc tách phông người (nếu có)
+}
+
 export interface Scene {
   id: string;
   order: number;
@@ -109,6 +129,8 @@ export interface Scene {
   chatMessages?: ChatMessage[];
   orbitTitle?: string;
   orbitIcon?: string;
+  // Motion Edit & Gesture Layering
+  motionEdit?: MotionEditConfig;
 }
 
 export interface VideoProject {
