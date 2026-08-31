@@ -572,9 +572,90 @@ export const SOUND_EFFECTS_LIST: SoundEffectItem[] = [
   }
 ];
 
+// Quản lý Custom SFX do người dùng tải lên (lưu trữ trong localStorage)
+const STORAGE_KEY_CUSTOM_SFX = 'remotion_custom_sfx_list';
+
+export interface CustomSfxItem {
+  id: string;
+  name: string;
+  url: string; // Base64 Data URL hoặc link mp3
+  duration: number;
+}
+
+export function getCustomSoundEffects(): CustomSfxItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CUSTOM_SFX);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveCustomSoundEffect(name: string, url: string, duration: number = 1.0): CustomSfxItem {
+  const list = getCustomSoundEffects();
+  const newItem: CustomSfxItem = {
+    id: `custom_sfx_${Date.now()}`,
+    name,
+    url,
+    duration
+  };
+  const nextList = [newItem, ...list];
+  try {
+    localStorage.setItem(STORAGE_KEY_CUSTOM_SFX, JSON.stringify(nextList));
+  } catch (e) {
+    console.warn('Không thể lưu SFX vào localStorage:', e);
+  }
+  return newItem;
+}
+
+export function deleteCustomSoundEffect(id: string) {
+  const list = getCustomSoundEffects().filter((s) => s.id !== id);
+  try {
+    localStorage.setItem(STORAGE_KEY_CUSTOM_SFX, JSON.stringify(list));
+  } catch (e) {
+    console.warn('Lỗi khi xóa SFX:', e);
+  }
+}
+
 export function getSoundEffectById(id?: string): SoundEffectItem | undefined {
   if (!id) return undefined;
-  return SOUND_EFFECTS_LIST.find((s) => s.id === id);
+  
+  const found = SOUND_EFFECTS_LIST.find((s) => s.id === id);
+  if (found) return found;
+
+  // Tìm trong Custom SFX
+  const customList = getCustomSoundEffects();
+  const customFound = customList.find((c) => c.id === id);
+  if (customFound) {
+    return {
+      id: customFound.id,
+      name: customFound.name,
+      category: 'pops_clicks',
+      duration: customFound.duration,
+      description: 'Âm thanh tùy chỉnh của bạn',
+      play: () => {
+        const audio = new Audio(customFound.url);
+        audio.play().catch((err) => console.warn('Lỗi phát âm thanh custom:', err));
+      }
+    };
+  }
+
+  // Nếu là đường dẫn URL hoặc Data URL trực tiếp
+  if (id.startsWith('data:audio/') || id.startsWith('http://') || id.startsWith('https://') || id.startsWith('blob:')) {
+    return {
+      id,
+      name: 'Custom Sound MP3',
+      category: 'pops_clicks',
+      duration: 1.0,
+      description: 'Âm thanh tải lên',
+      play: () => {
+        const audio = new Audio(id);
+        audio.play().catch((err) => console.warn('Lỗi phát âm thanh:', err));
+      }
+    };
+  }
+
+  return undefined;
 }
 
 export function playSoundEffectById(id?: string) {
@@ -587,3 +668,4 @@ export function playSoundEffectById(id?: string) {
     }
   }
 }
+

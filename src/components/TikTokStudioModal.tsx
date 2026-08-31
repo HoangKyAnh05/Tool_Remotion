@@ -6,7 +6,14 @@ import { TIKTOK_TEXT_EFFECTS } from '../remotion/tiktok/tiktokTextEffects';
 import { TIKTOK_STICKERS } from '../remotion/tiktok/tiktokStickers';
 import { TIKTOK_VIDEO_EFFECTS } from '../remotion/tiktok/tiktokEffects';
 import { TIKTOK_FILTERS } from '../remotion/tiktok/tiktokFilters';
-import { SOUND_EFFECTS_LIST, playSoundEffectById } from '../services/soundEffectsService';
+import {
+  SOUND_EFFECTS_LIST,
+  playSoundEffectById,
+  getCustomSoundEffects,
+  saveCustomSoundEffect,
+  deleteCustomSoundEffect,
+  CustomSfxItem
+} from '../services/soundEffectsService';
 
 interface TikTokStudioModalProps {
   isOpen: boolean;
@@ -57,6 +64,7 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   const [selectedFilter, setSelectedFilter] = useState<string>(scene.tiktokFilter || 'filter_none');
   const [selectedSfx, setSelectedSfx] = useState<string>(scene.tiktokSfx || '');
   const [selectedTransition, setSelectedTransition] = useState<TransitionType>(scene.transition || 'none');
+  const [customSfxList, setCustomSfxList] = useState<CustomSfxItem[]>(() => getCustomSoundEffects());
 
   const toggleSticker = (stickerId: string) => {
     setSelectedStickers((prev) =>
@@ -575,20 +583,125 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
           {/* ========================================================================= */}
           {activeTab === 'sfx' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-gray-300 uppercase tracking-wide">
-                  Kho 50 Âm Thanh SFX Editor Triệu View (Web Audio Chân Thực 100%)
-                </span>
-                {selectedSfx && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSfx('')}
-                    className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
-                  >
-                    Tắt âm thanh SFX cho cảnh này
-                  </button>
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-[#181A20] rounded-2xl border border-gray-800">
+                <div>
+                  <span className="text-xs font-black text-gray-200 uppercase tracking-wide block">
+                    Kho Âm Thanh SFX Editor Triệu View & Tải Âm Thanh MP3
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    Tải lên file MP3 / WAV của riêng bạn hoặc chọn trong 50 âm thanh chuẩn Editor
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Nút Tải Sound MP3 */}
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-black cursor-pointer shadow-lg shadow-cyan-600/20 active:scale-95 transition">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>+ Tải Lên Âm Thanh MP3</span>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const dataUrl = ev.target?.result as string;
+                            if (dataUrl) {
+                              const cleanName = file.name.replace(/\.[^/.]+$/, '');
+                              const newSfx = saveCustomSoundEffect(`🎵 ${cleanName}`, dataUrl, 1.5);
+                              setCustomSfxList(getCustomSoundEffects());
+                              setSelectedSfx(newSfx.id);
+                              playSoundEffectById(newSfx.id);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {selectedSfx && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSfx('')}
+                      className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer px-2 py-1"
+                    >
+                      Tắt âm thanh SFX
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Danh sách Âm Thanh MP3 Tự Tải Lên (Custom SFX) */}
+              {customSfxList.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1">
+                    <span>🌟 Âm Thanh MP3 Đã Tải Lên & Lưu Lại ({customSfxList.length}):</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-black/40 rounded-2xl border border-cyan-500/30">
+                    {customSfxList.map((cSound) => {
+                      const isSelected = selectedSfx === cSound.id;
+                      return (
+                        <div
+                          key={cSound.id}
+                          className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                            isSelected
+                              ? 'bg-[#242938] border-cyan-400 ring-2 ring-cyan-400/40 shadow-lg shadow-cyan-500/20'
+                              : 'bg-[#181A20] border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          <div
+                            onClick={() => {
+                              setSelectedSfx(cSound.id);
+                              playSoundEffectById(cSound.id);
+                            }}
+                            className="flex-1 min-w-0 pr-2 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-black text-cyan-200 truncate">{cSound.name}</span>
+                              {isSelected && (
+                                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                              )}
+                            </div>
+                            <span className="text-[10px] text-gray-400 block truncate">
+                              Âm thanh MP3 cá nhân đã lưu
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playSoundEffectById(cSound.id);
+                              }}
+                              className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-cyan-500 text-gray-300 hover:text-black flex items-center justify-center transition shadow cursor-pointer active:scale-90"
+                              title="Bấm để nghe thử âm thanh"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCustomSoundEffect(cSound.id);
+                                setCustomSfxList(getCustomSoundEffects());
+                                if (selectedSfx === cSound.id) setSelectedSfx('');
+                              }}
+                              className="w-7 h-7 rounded-lg bg-gray-900 hover:bg-rose-900 text-gray-400 hover:text-rose-200 flex items-center justify-center transition cursor-pointer"
+                              title="Xóa âm thanh này"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {SOUND_EFFECTS_LIST.map((sound) => {
