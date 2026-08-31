@@ -1680,6 +1680,24 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                         : '🟩 Bật Chữ Motion 3D (Phông Xanh)'}
                     </span>
                   </button>
+
+                  {/* Nút Tắt / Bật Dòng Chữ Phụ Đề Ngang Mặc Định Ở Dưới */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateScene(scene.id, {
+                        hideSubtitles: !scene.hideSubtitles
+                      });
+                    }}
+                    className={`w-full py-1 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all border cursor-pointer ${
+                      scene.hideSubtitles || scene.isGreenScreenMotion
+                        ? 'bg-amber-950/40 border-amber-500/50 text-amber-300'
+                        : 'bg-gray-900/60 hover:bg-gray-800 border-gray-800 text-gray-400 hover:text-white'
+                    }`}
+                    title="Bật/Tắt dòng chữ phụ đề ngang ở dưới cùng màn hình để nhìn mỗi chữ motion"
+                  >
+                    <span>{scene.hideSubtitles || scene.isGreenScreenMotion ? '🚫 Đã Tắt Chữ Ngang Dưới' : '👁️ Đang Hiện Chữ Ngang Dưới'}</span>
+                  </button>
                 </div>
 
                 {/* Narration & Subtitles Editor (Col 5-8) */}

@@ -196,8 +196,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles */}
-      {scene.visualType !== 'chat_bubble' && (
+      {/* Synchronized Word-Level Subtitles: Tự động ẩn khi bật Motion Phông Xanh hoặc khi chọn ẩn phụ đề */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
