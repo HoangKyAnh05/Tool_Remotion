@@ -209,8 +209,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Unified single render (except chat_bubble where text is in chat bubbles) */}
-      {scene.visualType !== 'chat_bubble' && (
+      {/* Synchronized Word-Level Subtitles: Tự động ẩn nếu đang bật Motion Edit (tránh đè chữ), nếu tắt thì chạy chữ bình thường */}
+      {scene.visualType !== 'chat_bubble' && !scene.motionEdit?.enabled && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
