@@ -10,6 +10,7 @@ interface SubtitlesRendererProps {
   enableDynamicEmojis?: boolean;
   textEffect?: string;
   textEffectsMix?: string[];
+  customPos?: { x: number; y: number; scale?: number; rotate?: number };
 }
 
 // Dictionary mapping common keywords to expressive emojis
@@ -85,7 +86,8 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
   fallbackText,
   enableDynamicEmojis = true,
   textEffect,
-  textEffectsMix
+  textEffectsMix,
+  customPos
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -95,14 +97,21 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
   const AUDIO_LEAD_OFFSET = 0.16;
   const effectiveTime = currentTime + AUDIO_LEAD_OFFSET;
 
+  const finalTop = customPos ? `${customPos.y}%` : `${subtitleStyle.positionY}%`;
+  const finalLeft = customPos ? `${customPos.x}%` : '50%';
+  const finalTransform = customPos
+    ? `translate(-50%, -50%) scale(${customPos.scale ?? 1}) rotate(${customPos.rotate ?? 0}deg)`
+    : 'translate(-50%, -50%)';
+
   if (!words || words.length === 0) {
     if (fallbackText) {
       return (
         <div
-          className="absolute left-0 right-0 px-6 flex justify-center items-center pointer-events-none z-30"
+          className="absolute flex justify-center items-center pointer-events-none z-30 transition-transform"
           style={{
-            top: `${subtitleStyle.positionY}%`,
-            transform: 'translateY(-50%)'
+            top: finalTop,
+            left: finalLeft,
+            transform: finalTransform
           }}
         >
           <div
@@ -154,10 +163,11 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
 
   return (
     <div
-      className="absolute left-0 right-0 px-6 flex justify-center items-center pointer-events-none z-30"
+      className="absolute flex justify-center items-center pointer-events-none z-30 transition-transform"
       style={{
-        top: `${subtitleStyle.positionY}%`,
-        transform: 'translateY(-50%)'
+        top: finalTop,
+        left: finalLeft,
+        transform: finalTransform
       }}
     >
       <div

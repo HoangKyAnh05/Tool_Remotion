@@ -226,19 +226,21 @@ export const SceneItem: React.FC<SceneItemProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 3. TIKTOK & CAPCUT CREATIVE OVERLAYS                                     */}
+      {/* 3. TIKTOK & CAPCUT CREATIVE OVERLAYS (Stickers, Video Effects, Templates) */}
       {/* ========================================================================= */}
-      {/* A. TikTok Video Effect Overlay */}
+      {/* A. TikTok Video Effect Overlay (Glow, Sparks, Film Grain, Vignette...) */}
       {scene.tiktokVideoEffect && (
-        getTikTokVideoEffectById(scene.tiktokVideoEffect)?.renderOverlay(frame, fps)
+        <div className="absolute inset-0 z-35 pointer-events-none overflow-hidden">
+          {getTikTokVideoEffectById(scene.tiktokVideoEffect)?.renderOverlay(frame, fps)}
+        </div>
       )}
 
-      {/* B. TikTok Text Template */}
+      {/* B. TikTok Text Template (Đi nào, Năng động, Tiêu đề...) */}
       {scene.tiktokTextTemplate && (() => {
         const customPos = scene.elementPositions?.['text_template'];
         return (
           <div
-            className="absolute z-25 pointer-events-none transition-all"
+            className="absolute z-40 pointer-events-none transition-all"
             style={
               customPos
                 ? {
@@ -258,12 +260,12 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         );
       })()}
 
-      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Khi đã có phụ đề chạy theo từ thì chỉ render nếu người dùng ẩn phụ đề hoặc chỉnh vị trí kéo thả riêng */}
-      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && (scene.hideSubtitles || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
+      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Khi ẩn dòng phụ đề thì render khối chữ tĩnh này theo tọa độ kéo thả */}
+      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && scene.hideSubtitles && (() => {
         const customPos = scene.elementPositions?.['text_effect'];
         return (
           <div
-            className="absolute z-25 pointer-events-none transition-all"
+            className="absolute z-40 pointer-events-none transition-all"
             style={
               customPos
                 ? {
@@ -283,9 +285,9 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         );
       })()}
 
-      {/* C. TikTok Stickers Overlay */}
+      {/* C. TikTok Stickers Overlay (Meme, Emojis, Icons...) */}
       {scene.tiktokStickers && scene.tiktokStickers.length > 0 && (
-        <div className="absolute inset-0 z-28 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
           {scene.tiktokStickers.map((stkId, i) => {
             const stickerItem = getTikTokStickerById(stkId);
             if (!stickerItem) return null;
@@ -326,6 +328,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           enableDynamicEmojis={enableDynamicEmojis}
           textEffect={scene.tiktokTextEffect}
           textEffectsMix={scene.textEffectsMix}
+          customPos={scene.elementPositions?.['text_effect'] || scene.elementPositions?.['subtitles']}
         />
       )}
 
