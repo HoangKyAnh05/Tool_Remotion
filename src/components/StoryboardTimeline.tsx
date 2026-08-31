@@ -2813,19 +2813,24 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
       />
 
       {/* Modal TikTok & CapCut Studio (Text Templates, Stickers, Effects, Transitions, Filters, SFX) */}
-      <TikTokStudioModal
-        isOpen={Boolean(activeTikTokStudioScene)}
-        onClose={() => setActiveTikTokStudioScene(null)}
-        scene={activeTikTokStudioScene}
-        onApply={(sceneId, updates) => {
-          updateScene(sceneId, updates);
-        }}
-        onApplyAll={(updates) => {
-          project.scenes.forEach((sc) => {
-            updateScene(sc.id, updates);
-          });
-        }}
-      />
+      {activeTikTokStudioScene && (() => {
+        const currentScene = project.scenes.find((s) => s.id === activeTikTokStudioScene.id) || activeTikTokStudioScene;
+        return (
+          <TikTokStudioModal
+            isOpen={Boolean(activeTikTokStudioScene)}
+            onClose={() => setActiveTikTokStudioScene(null)}
+            scene={currentScene}
+            onApply={(sceneId, updates) => {
+              updateScene(sceneId, updates);
+            }}
+            onApplyAll={(updates) => {
+              project.scenes.forEach((sc) => {
+                updateScene(sc.id, updates);
+              });
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };

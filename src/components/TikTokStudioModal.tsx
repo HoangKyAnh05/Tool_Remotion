@@ -864,22 +864,33 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                   return (
                     <div
                       key={fx.id}
-                      onClick={() => setSelectedEffect(fx.id)}
-                      className={`h-36 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
+                      onClick={() => {
+                        setSelectedEffect(isSelected ? '' : fx.id);
+                      }}
+                      className={`h-40 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
                         isSelected
-                          ? 'bg-[#242938] border-indigo-400 shadow-xl shadow-indigo-500/20 ring-2 ring-indigo-400/40'
+                          ? 'bg-[#242938] border-indigo-400 shadow-2xl shadow-indigo-500/30 ring-2 ring-indigo-400/50 scale-[1.02]'
                           : 'bg-[#181A20] border-gray-800/80 hover:border-gray-700 hover:bg-[#1E2028]'
                       }`}
                     >
                       <span className="absolute top-2 left-2 text-[10px] text-indigo-400">💎</span>
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
+                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-md z-10">
                           ✓
                         </div>
                       )}
-                      <div className="flex-1 flex items-center justify-center text-5xl">
-                        {fx.previewIcon}
+                      
+                      {/* Interactive Mini Canvas Preview */}
+                      <div className="relative flex-1 w-full h-full rounded-xl overflow-hidden bg-black/50 flex items-center justify-center border border-white/5 my-1">
+                        <div className="text-4xl filter drop-shadow z-0">
+                          {fx.previewIcon}
+                        </div>
+                        {/* Live effect simulation overlay */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          {fx.renderOverlay(30, 30)}
+                        </div>
                       </div>
+
                       <span className="text-[11px] font-extrabold text-gray-300 truncate w-full">
                         {fx.name}
                       </span>
