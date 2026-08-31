@@ -1,217 +1,203 @@
 import { VideoProject, DEFAULT_SUBTITLE_STYLE, DEFAULT_WATERMARK, DEFAULT_SOUND_FX } from '../types/video';
 
 export const maxShowcaseProject: VideoProject = {
-  id: 'max-showcase-showdown',
-  title: '🔥 SHOWCASE TỐI ĐA: VIDEO PHÔNG XANH & TRỌN BỘ MOTION EDIT 60FPS',
-  topic: 'Phát huy tối đa toàn bộ kho tàng Motion, Green Screen, SFX và CapCut Studio',
+  id: 'max-showcase-storytelling',
+  title: '✨ KỂ CHUYỆN ĐỈNH CAO: BẢN LĨNH TỰ THÂN (MINIMALIST CINEMATIC)',
+  topic: 'Kể chuyện tự giới thiệu bản thân phong cách điện ảnh cao cấp, chữ chạy mượt mà, không rối mắt',
   aspectRatio: '9:16',
   fps: 30,
-  totalDuration: 23.5,
+  totalDuration: 22.0,
   voice: {
     name: 'vi-VN-NamMinhNeural',
     rate: '+0%',
     pitch: '+0Hz'
   },
-  subtitleStyle: DEFAULT_SUBTITLE_STYLE,
+  subtitleStyle: {
+    ...DEFAULT_SUBTITLE_STYLE,
+    fontSize: 42,
+    highlightColor: '#FBBF24',
+    textColor: '#FFFFFF',
+    strokeWidth: 2,
+    strokeColor: '#000000',
+    positionY: 80,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)'
+  },
   watermark: DEFAULT_WATERMARK,
   showProgressBar: true,
   soundFx: DEFAULT_SOUND_FX,
   bgm: {
     url: '/audio/bgm-lofi.wav',
-    volume: 0.35,
-    duckingVolume: 0.12
+    volume: 0.28,
+    duckingVolume: 0.10
   },
   status: 'idle',
   scenes: [
     // =========================================================================
-    // PHÂN CẢNH 1: MOTION GRAPHICS BIỂU ĐỒ CHỨNG KHOÁN NẾN XANH TĂNG VỌT (+328%)
+    // CẢNH 1: CÚ HOOK 3 GIÂY - MỞ ĐẦU ĐIỆN ẢNH ĐĨNH ĐẠC
     // =========================================================================
     {
-      id: 'showcase-scene-1',
+      id: 'story-scene-1',
       order: 1,
-      narration: 'Dừng lại 3 giây! Bạn sắp chứng kiến sức mạnh tối đa của CapCut Motion!',
-      visualType: 'stock_chart',                     // Motion Graphics Biểu Đồ Nến Tăng Vọt
-      headerBadge: '📈 BÙNG NỔ LỢI NHUẬN +328%',
-      searchKeyword: 'action cyber explosion neon city',
+      narration: 'Xin chào, tôi không phải là một chuyên gia nói đạo lý suông.',
+      searchKeyword: 'young man working focused desk laptop warm light cinema',
       mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80',
-      audioDuration: 4.5,
+      mediaUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1200&q=80',
+      audioDuration: 4.2,
       words: [
-        { word: 'Dừng', start: 0.1, end: 0.35 },
-        { word: 'lại', start: 0.35, end: 0.6 },
-        { word: '3', start: 0.6, end: 0.9 },
-        { word: 'giây!', start: 0.9, end: 1.25 },
-        { word: 'Bạn', start: 1.35, end: 1.6 },
-        { word: 'sắp', start: 1.6, end: 1.85 },
-        { word: 'chứng', start: 1.85, end: 2.1 },
-        { word: 'kiến', start: 2.1, end: 2.35 },
-        { word: 'sức', start: 2.45, end: 2.7 },
-        { word: 'mạnh', start: 2.7, end: 2.95 },
-        { word: 'tối', start: 2.95, end: 3.2 },
-        { word: 'đa', start: 3.2, end: 3.5 },
-        { word: 'của', start: 3.5, end: 3.75 },
-        { word: 'CapCut', start: 3.75, end: 4.1 },
-        { word: 'Motion!', start: 4.1, end: 4.5 }
+        { word: 'Xin', start: 0.1, end: 0.35 },
+        { word: 'chào,', start: 0.35, end: 0.7 },
+        { word: 'tôi', start: 0.8, end: 1.05 },
+        { word: 'không', start: 1.05, end: 1.35 },
+        { word: 'phải', start: 1.35, end: 1.65 },
+        { word: 'là', start: 1.65, end: 1.9 },
+        { word: 'chuyên', start: 1.9, end: 2.25 },
+        { word: 'gia', start: 2.25, end: 2.55 },
+        { word: 'nói', start: 2.65, end: 2.95 },
+        { word: 'đạo', start: 2.95, end: 3.25 },
+        { word: 'lý', start: 3.25, end: 3.55 },
+        { word: 'suông.', start: 3.55, end: 4.2 }
       ],
-      tiktokTextEffect: 'tfx_fire_inferno',          // Lửa bốc cháy bập bùng
-      tiktokStickers: ['stk_shocked_cat', 'stk_red_arrow'], // Mèo ôm đầu hoảng hốt + Mũi tên đỏ ⬇️
-      tiktokVideoEffect: 'fx_glitch_scan',           // Quét nhiễu sóng gián đoạn
-      tiktokFilter: 'filter_cyberpunk_neon',         // Tím dạ quang viễn tưởng
-      tiktokSfx: 'sfx_vine_boom',                    // Trống nổ kịch tính Vine Boom!
-      transition: 'zoom_in',
-      kenBurns: 'crash_zoom'
+      textLayerMode: 'front',                         // Chữ nổi ở TRƯỚC video rõ nét
+      tiktokTextEffect: 'tfx_golden_aura_black',     // Chữ đen tuyền viền hào quang vàng hổ phách dịu
+      tiktokFilter: 'filter_cinema_warm',            // Tone màu điện ảnh ấm áp
+      tiktokSfx: 'sfx_whoosh_clean_air',             // Gió lướt êm dịu khi mở đầu
+      transition: 'fade',
+      kenBurns: 'zoom_in'
     },
 
     // =========================================================================
-    // PHÂN CẢNH 2: VIDEO PHÔNG XANH THẬT SỰ (CHROMA-KEY TÁCH NỀN 3 TẦNG CHỮ 3D)
+    // CẢNH 2: XUẤT PHÁT ĐIỂM - HÀNH TRÌNH TỪ CON SỐ 0 TRÒN TRĨNH
     // =========================================================================
     {
-      id: 'showcase-scene-2',
+      id: 'story-scene-2',
       order: 2,
-      narration: 'Video phông xanh thật sự, chữ 3D xuyên sau lưng và trước ngực người!',
-      searchKeyword: 'green screen video presenter host portrait',
-      mediaType: 'video',                            // VIDEO PHÔNG XANH CHUẨN MP4
-      mediaUrl: '/video/greenscreen_presenter.mp4',   // Video MP4 phông xanh chuẩn 1080x1920
-      audioDuration: 4.8,
+      narration: 'Tôi từng bắt đầu mọi thứ từ con số không tròn trĩnh.',
+      searchKeyword: 'empty desk notebook late night studying work hard',
+      mediaType: 'image',
+      mediaUrl: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80',
+      audioDuration: 4.0,
       words: [
-        { word: 'Video', start: 0.1, end: 0.4 },
-        { word: 'phông', start: 0.4, end: 0.7 },
-        { word: 'xanh', start: 0.7, end: 1.0 },
-        { word: 'thật', start: 1.0, end: 1.3 },
-        { word: 'sự,', start: 1.3, end: 1.6 },
-        { word: 'chữ', start: 1.7, end: 2.0 },
-        { word: '3D', start: 2.0, end: 2.3 },
-        { word: 'xuyên', start: 2.3, end: 2.6 },
-        { word: 'sau', start: 2.6, end: 2.9 },
-        { word: 'lưng', start: 2.9, end: 3.2 },
-        { word: 'và', start: 3.3, end: 3.6 },
-        { word: 'trước', start: 3.6, end: 3.9 },
-        { word: 'ngực', start: 3.9, end: 4.2 },
-        { word: 'người!', start: 4.2, end: 4.8 }
+        { word: 'Tôi', start: 0.1, end: 0.4 },
+        { word: 'từng', start: 0.4, end: 0.7 },
+        { word: 'bắt', start: 0.7, end: 1.0 },
+        { word: 'đầu', start: 1.0, end: 1.3 },
+        { word: 'mọi', start: 1.4, end: 1.7 },
+        { word: 'thứ', start: 1.7, end: 2.0 },
+        { word: 'từ', start: 2.0, end: 2.3 },
+        { word: 'con', start: 2.3, end: 2.6 },
+        { word: 'số', start: 2.6, end: 2.9 },
+        { word: 'không', start: 2.9, end: 3.3 },
+        { word: 'tròn', start: 3.3, end: 3.6 },
+        { word: 'trĩnh.', start: 3.6, end: 4.0 }
       ],
-      isGreenScreenMotion: true,                     // BẬT TÁCH NỀN PHÔNG XANH CHROMA KEY SVG
-      hideSubtitles: true,                           // Ẩn phụ đề ngang mặc định để nhìn chữ 3D
-      motionTypographyLayout: 'creator_mrbeast_titan', // MrBeast Titan 3D Khổng Lồ
-      motionTypographyEffect: 'fx_neon_glow_flicker',   // Nhấp nháy hào quang phát sáng
-      tiktokStickers: ['stk_like_follow', 'stk_manga_speedlines'], // Like&Follow + Tia tốc độ Manga
-      tiktokFilter: 'filter_teal_orange',              // Hollywood điện ảnh xanh cam
-      tiktokSfx: 'sfx_ka_ching',                       // Máy đếm tiền nổ số Ka-Ching!
+      textLayerMode: 'front',
+      tiktokTextEffect: 'tfx_torn_paper_mono',       // Chữ trên dải giấy xé thủ công tối giản kiểu Studio
+      tiktokFilter: 'filter_vintage_retro',          // Lọc màu hoài niệm trầm lắng
+      tiktokSfx: 'sfx_camera_snap',                  // Tiếng chụp màn trập nhẹ
+      transition: 'fade',
+      kenBurns: 'pan_right'
+    },
+
+    // =========================================================================
+    // CẢNH 3: BƯỚC NGOẶT THỨC TỈNH - NĂNG LƯỢNG TÍCH CỰC
+    // =========================================================================
+    {
+      id: 'story-scene-3',
+      order: 3,
+      narration: 'Cho đến khi tôi nhận ra: Kỷ luật quan trọng hơn cảm hứng!',
+      searchKeyword: 'modern city sunrise street walking confidently success',
+      mediaType: 'image',
+      mediaUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+      audioDuration: 4.5,
+      words: [
+        { word: 'Cho', start: 0.1, end: 0.35 },
+        { word: 'đến', start: 0.35, end: 0.65 },
+        { word: 'khi', start: 0.65, end: 0.95 },
+        { word: 'tôi', start: 0.95, end: 1.25 },
+        { word: 'nhận', start: 1.25, end: 1.55 },
+        { word: 'ra:', start: 1.55, end: 1.85 },
+        { word: 'Kỷ', start: 2.0, end: 2.35 },
+        { word: 'luật', start: 2.35, end: 2.75 },
+        { word: 'quan', start: 2.85, end: 3.2 },
+        { word: 'trọng', start: 3.2, end: 3.55 },
+        { word: 'hơn', start: 3.55, end: 3.85 },
+        { word: 'cảm', start: 3.85, end: 4.15 },
+        { word: 'hứng!', start: 4.15, end: 4.5 }
+      ],
+      textLayerMode: 'front',
+      tiktokTextEffect: 'tfx_cyan_double_glow',      // Chữ trắng viền dạ quang xanh băng tuyết sắc sảo
+      tiktokFilter: 'filter_fresh_glow',             // Tươi sáng rạng ngời
+      tiktokSfx: 'sfx_cinematic_impact',             // Tiếng đệm trầm vang dứt khoát
       transition: 'flash_white',
       kenBurns: 'zoom_in'
     },
 
     // =========================================================================
-    // PHÂN CẢNH 3: MOTION GRAPHICS THÔNG BÁO TIỀN VỀ NGÂN HÀNG (+50.000.000Đ)
+    // CẢNH 4: THÀNH QUẢ & GIÁ TRỊ THỰC TẾ
     // =========================================================================
     {
-      id: 'showcase-scene-3',
-      order: 3,
-      narration: 'Ối dồi ôi! Tiền về nổ số ngân hàng cùng mèo cười hả hê cực bựa!',
-      visualType: 'bank_notification',               // Motion Graphics Ngân Hàng Nổ Số
-      headerBadge: '💰 THÔNG BÁO BIẾN ĐỘNG SỐ DƯ',
-      searchKeyword: 'funny pet animal meme laugh money',
-      mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=1200&q=80',
-      audioDuration: 4.6,
-      words: [
-        { word: 'Ối', start: 0.1, end: 0.3 },
-        { word: 'dồi', start: 0.3, end: 0.5 },
-        { word: 'ôi!', start: 0.5, end: 0.8 },
-        { word: 'Tiền', start: 0.9, end: 1.15 },
-        { word: 'về', start: 1.15, end: 1.4 },
-        { word: 'nổ', start: 1.4, end: 1.65 },
-        { word: 'số', start: 1.65, end: 1.9 },
-        { word: 'cùng', start: 2.0, end: 2.25 },
-        { word: 'chó', start: 2.25, end: 2.5 },
-        { word: 'hét', start: 2.5, end: 2.75 },
-        { word: 'và', start: 2.8, end: 3.0 },
-        { word: 'mèo', start: 3.0, end: 3.3 },
-        { word: 'cười', start: 3.3, end: 3.6 },
-        { word: 'hả', start: 3.6, end: 3.9 },
-        { word: 'hê!', start: 3.9, end: 4.6 }
-      ],
-      tiktokTextTemplate: 'tpl_wow_orange',          // wow! Cam đùn khối vui nhộn
-      tiktokStickers: ['stk_screaming_chihuahua', 'stk_cat_pointing_laugh'], // Chó hét AAAAA + Mèo cười 🫵
-      tiktokVideoEffect: 'fx_snapshot_3x',           // Chớp flash máy ảnh chụp 3 lần
-      tiktokFilter: 'filter_retro_vhs',              // Băng từ thập niên 80
-      tiktokSfx: 'sfx_cartoon_boing',                // Tiếng lò xo tưng tưng Tom & Jerry
-      transition: 'digital_glitch',
-      kenBurns: 'pan_right'
-    },
-
-    // =========================================================================
-    // PHÂN CẢNH 4: MOTION GRAPHICS SO GĂNG ĐỐI ĐẦU VS BATTLE BỐC LỬA
-    // =========================================================================
-    {
-      id: 'showcase-scene-4',
+      id: 'story-scene-4',
       order: 4,
-      narration: 'Đại chiến so găng đối đầu nảy lửa rung chuyển cả khán phòng!',
-      visualType: 'vs_battle',                       // Motion Graphics VS Battle Đối Đầu
-      headerBadge: '⚔️ ĐẠI CHIẾN CÔNG NGHỆ',
-      searchKeyword: 'versus battle fire lightning arena',
+      narration: 'Tôi ở đây để giúp bạn rút ngắn con đường đi đến thành công.',
+      searchKeyword: 'business meeting collaboration handshake success modern office',
       mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
-      audioDuration: 4.6,
+      mediaUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80',
+      audioDuration: 4.5,
       words: [
-        { word: 'Đại', start: 0.1, end: 0.35 },
-        { word: 'chiến', start: 0.35, end: 0.65 },
-        { word: 'so', start: 0.65, end: 0.95 },
-        { word: 'găng', start: 0.95, end: 1.25 },
-        { word: 'đối', start: 1.35, end: 1.65 },
-        { word: 'đầu', start: 1.65, end: 1.95 },
-        { word: 'nảy', start: 1.95, end: 2.25 },
-        { word: 'lửa', start: 2.25, end: 2.6 },
-        { word: 'rung', start: 2.7, end: 3.0 },
-        { word: 'chuyển', start: 3.0, end: 3.4 },
-        { word: 'cả', start: 3.4, end: 3.7 },
-        { word: 'khán', start: 3.7, end: 4.1 },
-        { word: 'phòng!', start: 4.1, end: 4.6 }
+        { word: 'Tôi', start: 0.1, end: 0.35 },
+        { word: 'ở', start: 0.35, end: 0.6 },
+        { word: 'đây', start: 0.6, end: 0.85 },
+        { word: 'để', start: 0.95, end: 1.2 },
+        { word: 'giúp', start: 1.2, end: 1.5 },
+        { word: 'bạn', start: 1.5, end: 1.8 },
+        { word: 'rút', start: 1.9, end: 2.2 },
+        { word: 'ngắn', start: 2.2, end: 2.5 },
+        { word: 'con', start: 2.5, end: 2.8 },
+        { word: 'đường', start: 2.8, end: 3.1 },
+        { word: 'đi', start: 3.2, end: 3.5 },
+        { word: 'đến', start: 3.5, end: 3.8 },
+        { word: 'thành', start: 3.8, end: 4.1 },
+        { word: 'công.', start: 4.1, end: 4.5 }
       ],
-      tiktokTextEffect: 'tfx_layered_blue_red',      // Đùn khối 3D xanh đỏ đối lập
-      tiktokStickers: ['stk_red_arrow', 'stk_manga_speedlines'], // Mũi tên đỏ + Tia tốc độ Manga
-      tiktokVideoEffect: 'fx_penta_disco',           // Ánh đèn vũ trường Disco ngũ giác
-      tiktokFilter: 'filter_horror_dark',            // U tối kịch tính nghẹt thở
-      tiktokSfx: 'sfx_cinematic_hit_braam',          // Tiếng kèn Inception Horn chấn động phòng vé
-      transition: 'slide_left',
-      kenBurns: 'crash_zoom'
+      textLayerMode: 'front',
+      tiktokTextEffect: 'tfx_oscar_gold',            // Chữ vàng óng ánh sang trọng chuẩn Hollywood
+      tiktokFilter: 'filter_teal_orange',            // Màu điện ảnh Teal & Orange
+      tiktokSfx: 'sfx_level_up',                     // Tiếng thăng hạng Level-Up
+      transition: 'zoom_in',
+      kenBurns: 'pan_left'
     },
 
     // =========================================================================
-    // PHÂN CẢNH 5: KẾT THÚC HOÀNH TRÁNG & KÊU GỌI TRIỆU TIM (CALL TO ACTION)
+    // CẢNH 5: LỜI KÊU GỌI ĐỒNG HÀNH TINH TẾ (OUTRO)
     // =========================================================================
     {
-      id: 'showcase-scene-5',
+      id: 'story-scene-5',
       order: 5,
-      narration: 'Đăng ký kênh và thả tim ngay để sở hữu công cụ biên tập video vô địch này!',
-      searchKeyword: 'golden trophy winner celebration confetti',
+      narration: 'Nếu bạn sẵn sàng thay đổi, hãy cùng tôi bắt đầu ngay hôm nay!',
+      searchKeyword: 'smiling confident mentor friendly portrait looking at camera',
       mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1519751138087-5bf79df62d5b?auto=format&fit=crop&w=1200&q=80',
-      audioDuration: 4.6,
+      mediaUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1200&q=80',
+      audioDuration: 4.8,
       words: [
-        { word: 'Đăng', start: 0.1, end: 0.35 },
-        { word: 'ký', start: 0.35, end: 0.6 },
-        { word: 'kênh', start: 0.6, end: 0.85 },
-        { word: 'và', start: 0.95, end: 1.15 },
-        { word: 'thả', start: 1.15, end: 1.4 },
-        { word: 'tim', start: 1.4, end: 1.65 },
-        { word: 'ngay', start: 1.65, end: 1.9 },
-        { word: 'để', start: 2.0, end: 2.2 },
-        { word: 'sở', start: 2.2, end: 2.45 },
-        { word: 'hữu', start: 2.45, end: 2.7 },
-        { word: 'công', start: 2.7, end: 2.95 },
-        { word: 'cụ', start: 2.95, end: 3.2 },
-        { word: 'biên', start: 3.3, end: 3.55 },
-        { word: 'tập', start: 3.55, end: 3.8 },
-        { word: 'video', start: 3.8, end: 4.1 },
-        { word: 'vô', start: 4.1, end: 4.35 },
-        { word: 'địch!', start: 4.35, end: 4.6 }
+        { word: 'Nếu', start: 0.1, end: 0.35 },
+        { word: 'bạn', start: 0.35, end: 0.65 },
+        { word: 'sẵn', start: 0.65, end: 0.95 },
+        { word: 'sàng', start: 0.95, end: 1.25 },
+        { word: 'thay', start: 1.35, end: 1.65 },
+        { word: 'đổi,', start: 1.65, end: 2.0 },
+        { word: 'hãy', start: 2.1, end: 2.4 },
+        { word: 'cùng', start: 2.4, end: 2.7 },
+        { word: 'tôi', start: 2.7, end: 3.0 },
+        { word: 'bắt', start: 3.1, end: 3.4 },
+        { word: 'đầu', start: 3.4, end: 3.7 },
+        { word: 'ngay', start: 3.7, end: 4.1 },
+        { word: 'hôm', start: 4.1, end: 4.4 },
+        { word: 'nay!', start: 4.4, end: 4.8 }
       ],
-      tiktokTextTemplate: 'tpl_di_nao',              // Đi nào hào quang vàng
-      tiktokTextEffect: 'tfx_oscar_gold',            // Mạ vàng nguyên khối tượng Oscar
-      tiktokStickers: ['stk_subscribe_bell', 'stk_cat_heart_hands', 'stk_hand_pointer_3d'], // Chuông đỏ + Mèo bắn tim + Bàn tay chỉ 3D
-      tiktokVideoEffect: 'fx_glittery_love',         // Trái tim bay dập dờn
-      tiktokFilter: 'filter_fresh_glow',             // Sáng mịn tươi tắn da
-      tiktokSfx: 'sfx_success_chime',                // Hợp âm chiến thắng Đô-Mi-Sol
+      textLayerMode: 'front',
+      tiktokTextEffect: 'tfx_warm_gold_aura',        // Đỏ Hào Quang Vàng ấm áp, gắn kết
+      tiktokFilter: 'filter_cinema_warm',            // Tone màu ấm chân thực
+      tiktokSfx: 'sfx_success_chime',                // Chuông ngân kết thúc viên mãn
       transition: 'fade',
       kenBurns: 'zoom_out'
     }
