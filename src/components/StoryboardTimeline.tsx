@@ -1607,6 +1607,50 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
               </button>
             )}
 
+            {/* NÚT 1-CLICK BẬT/TẮT PHỤ ĐỀ TIKTOK CHO TẤT CẢ PHÂN ĐOẠN */}
+            {(() => {
+              const hasTikTokSubtitles = project.scenes.some(
+                (sc) => sc.tiktokTextTemplate || sc.tiktokTextEffect || (sc.textEffectsMix && sc.textEffectsMix.length > 0)
+              );
+              return (
+                <button
+                  onClick={() => {
+                    if (hasTikTokSubtitles) {
+                      // Tắt phụ đề TikTok
+                      setProject((prev) => ({
+                        ...prev,
+                        scenes: prev.scenes.map((sc) => ({
+                          ...sc,
+                          tiktokTextTemplate: undefined,
+                          tiktokTextEffect: undefined,
+                          textEffectsMix: []
+                        }))
+                      }));
+                    } else {
+                      // Bật phụ đề TikTok thịnh hành (Dynamic Kinetic Subtitles)
+                      setProject((prev) => ({
+                        ...prev,
+                        scenes: prev.scenes.map((sc) => ({
+                          ...sc,
+                          tiktokTextTemplate: 'tpl_dynamic_kinetic',
+                          hideSubtitles: true // Tắt phụ đề thường để nhường chỗ cho chữ TikTok chạy đẹp
+                        }))
+                      }));
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer border shadow-md ${
+                    hasTikTokSubtitles
+                      ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-400 shadow-rose-600/30'
+                      : 'bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border-rose-500/40 shadow-rose-950/20'
+                  }`}
+                  title="Bấm 1 click để BẬT hoặc TẮT phong cách Chữ Chạy TikTok / CapCut thịnh hành cho toàn bộ video"
+                >
+                  <span className="text-sm">🎬</span>
+                  <span>{hasTikTokSubtitles ? '✓ Đang Bật Phụ Đề TikTok' : '🎬 Bật Phụ Đề TikTok'}</span>
+                </button>
+              );
+            })()}
+
             {/* NÚT 1-CLICK TẮT/BẬT CHỮ NGANG DƯỚI CHO TẤT CẢ PHÂN ĐOẠN */}
             {(() => {
               const allHidden = project.scenes.every((sc) => sc.hideSubtitles !== false);
@@ -1855,6 +1899,34 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     title="Bật/Tắt dòng chữ phụ đề ngang ở dưới cùng màn hình để nhìn mỗi chữ motion"
                   >
                     <span>{scene.hideSubtitles || scene.isGreenScreenMotion ? '🚫 Đã Tắt Chữ Ngang Dưới' : '👁️ Đang Hiện Chữ Ngang Dưới'}</span>
+                  </button>
+
+                  {/* Nút Bật Nhanh Phụ Đề TikTok Cho Riêng Cảnh Này */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (scene.tiktokTextTemplate || scene.tiktokTextEffect) {
+                        updateScene(scene.id, {
+                          tiktokTextTemplate: undefined,
+                          tiktokTextEffect: undefined,
+                          textEffectsMix: []
+                        });
+                      } else {
+                        updateScene(scene.id, {
+                          tiktokTextTemplate: 'tpl_dynamic_kinetic',
+                          hideSubtitles: true
+                        });
+                      }
+                    }}
+                    className={`w-full py-1 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all border cursor-pointer active:scale-95 ${
+                      scene.tiktokTextTemplate || scene.tiktokTextEffect
+                        ? 'bg-rose-600/30 border-rose-500/50 text-rose-200'
+                        : 'bg-gray-900/60 hover:bg-gray-800 border-gray-800 text-gray-400 hover:text-white'
+                    }`}
+                    title="Bật/Tắt nhanh chữ chạy TikTok sôi động cho phân cảnh này"
+                  >
+                    <span>🎬</span>
+                    <span>{scene.tiktokTextTemplate || scene.tiktokTextEffect ? '✓ Đang Dùng Chữ TikTok' : '🎬 Bật Phụ Đề TikTok'}</span>
                   </button>
 
                   {/* Nút Mở Modal 100 Kiểu Sắp Xếp & 100 Hiệu Ứng Chữ Motion */}
