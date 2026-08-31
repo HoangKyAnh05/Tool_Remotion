@@ -3,6 +3,7 @@ import { Scene, ElementPosition } from '../types/video';
 import { getTikTokTemplateById } from '../remotion/tiktok/tiktokTemplates';
 import { getTikTokTextEffectById } from '../remotion/tiktok/tiktokTextEffects';
 import { getTikTokStickerById } from '../remotion/tiktok/tiktokStickers';
+import { getTikTokVideoEffectById } from '../remotion/tiktok/tiktokEffects';
 import {
   Move,
   RotateCw,
@@ -461,6 +462,13 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
 
         {/* Lớp phủ gradient tối mỏng để giữ độ tương phản cho thao tác kéo thả */}
         <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+
+        {/* Video Effect Live Preview */}
+        {scene.tiktokVideoEffect && (
+          <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
+            {getTikTokVideoEffectById(scene.tiktokVideoEffect)?.renderOverlay(30, 30)}
+          </div>
+        )}
 
         {/* Lưới tọa độ hướng dẫn (Grid lines) */}
         <div className="absolute inset-0 pointer-events-none opacity-20">
