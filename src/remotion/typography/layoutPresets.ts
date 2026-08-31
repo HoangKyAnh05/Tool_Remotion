@@ -187,6 +187,188 @@ export const TYPOGRAPHY_LAYOUT_PRESETS: TypographyLayoutPreset[] = [
     }
   },
   {
+    id: 'horiz_youtube_action_tilt',
+    name: '8. YouTube Viral Bold Tilt (Nghiêng -4° Hành Động)',
+    category: 'horizontal',
+    icon: '🔥',
+    desc: 'Theo chuẩn Thumbnail triệu view: Chữ chạy ngang nghiêng dốc -4°, in hoa dứt khoát cực hút mắt',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const topPercent = 80 - step * 5; // Dốc nghiêng nhẹ lên
+        return {
+          top: `${topPercent}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: -4.5,
+          sizeClass: 'text-6xl sm:text-7xl md:text-8xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_red_tag_badge',
+    name: '9. Thẻ Đỏ Nhãn Dán Thumbnail (Red Tag Stagger)',
+    category: 'horizontal',
+    icon: '🏷️',
+    desc: 'Dòng chữ ngang có từ khóa đóng khung đỏ nổi bật (như IN 3 HOURS / WITH 12 HOURS)',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const isLastFew = i >= Math.floor(total * 0.6);
+        return {
+          top: isLastFew ? '81%' : '76%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: isLastFew ? 2 : -2,
+          sizeClass: isLastFew ? 'text-7xl sm:text-8xl md:text-9xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_comic_explosion_arc',
+    name: '10. Vòm Cung Truyện Tranh Comic (Explosion Arc)',
+    category: 'horizontal',
+    icon: '💥',
+    desc: 'Chữ chạy ngang uốn cong nhẹ như vòm chớp bùng nổ, 2 bên mở rộng ôm trọn tâm điểm',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 16 + step * 68;
+        // Parabol úp: ở giữa vồng lên cao 5%
+        const normalized = (step - 0.5) * 2; // từ -1 đến 1
+        const arcY = -Math.cos(normalized * (Math.PI / 2)) * 6; // Đỉnh cong nhô lên
+        return {
+          top: `${78 + arcY}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: normalized * 5, // Nghiêng tản ra 2 bên
+          sizeClass: Math.abs(normalized) < 0.4 ? 'text-7xl sm:text-8xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_brush_street_slant',
+    name: '11. Đường Phố Graffiti Slant (Cọ Quét Vát Chéo)',
+    category: 'horizontal',
+    icon: '🖌️',
+    desc: 'Chữ xếp ngang xoay so le ngẫu nhiên góc -6° đến +6°, phong cách cọ vẽ bụi bặm',
+    getPositions: (total) => {
+      const angles = [-5, 3, -6, 4, -3, 6, -4, 2];
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const yNudge = (i % 3 - 1) * 2.5; // -2.5%, 0%, +2.5%
+        return {
+          top: `${77 + yNudge}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: angles[i % angles.length],
+          sizeClass: i % 2 === 0 ? 'text-6xl sm:text-7xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_giant_hero_word',
+    name: '12. Từ Khóa Hero Khổng Lồ Đè Hàng (Giant Hero Word)',
+    category: 'horizontal',
+    icon: '👑',
+    desc: 'Chữ chạy ngang, từ chính giữa to gấp đôi (Titan Size) như chữ YOUTUBE trong Thumbnail',
+    getPositions: (total) => {
+      const heroIdx = Math.floor(total / 2);
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const isHero = i === heroIdx;
+        return {
+          top: isHero ? '75%' : '79%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: isHero ? -1 : (i < heroIdx ? -3 : 3),
+          sizeClass: isHero ? 'text-8xl sm:text-9xl' : 'text-4xl sm:text-5xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_script_subtext_flow',
+    name: '13. Kết Hợp Chữ In & Chữ Ký Uốn Lượn (Design Flow)',
+    category: 'horizontal',
+    icon: '✨',
+    desc: 'Lấy cảm hứng từ từ "Design" viết tay: Chữ chạy ngang uốn lượn mềm mại theo đường sóng',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const wave = Math.sin(step * Math.PI * 2) * 4;
+        return {
+          top: `${78 + wave}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: Math.cos(step * Math.PI * 2) * 4,
+          sizeClass: 'text-5xl sm:text-6xl md:text-7xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_perspective_forward_zoom',
+    name: '14. Chiều Sâu 3D Lao Về Phía Trước (Perspective Zoom)',
+    category: 'horizontal',
+    icon: '🔭',
+    desc: 'Chữ xếp ngang có phối cảnh 3D: từ bên trái nhỏ sâu, từ bên phải phóng to lao về phía mắt',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 15 + step * 70;
+        // Kích thước từ nhỏ đến cực đại
+        const sizeClasses = ['text-3xl sm:text-4xl', 'text-5xl sm:text-6xl', 'text-7xl sm:text-8xl', 'text-8xl sm:text-9xl'];
+        const sIdx = Math.min(sizeClasses.length - 1, Math.floor(step * sizeClasses.length));
+        return {
+          top: `${80 - step * 4}%`,
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: (step - 0.5) * 6,
+          sizeClass: sizeClasses[sIdx],
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
+    id: 'horiz_staccato_snappy',
+    name: '15. Nhịp Ngắt Staccato Dồn Dập (Punchy Beats)',
+    category: 'horizontal',
+    icon: '⚡',
+    desc: 'Các từ khóa chạy ngang với nhịp độ giật nảy dồn dập, tạo cảm giác thôi thúc click xem ngay',
+    getPositions: (total) => {
+      return Array.from({ length: total }, (_, i) => {
+        const step = total > 1 ? i / (total - 1) : 0.5;
+        const leftPercent = 18 + step * 64;
+        const isImpact = i % 3 === 0;
+        return {
+          top: isImpact ? '75%' : '78.5%',
+          left: `${leftPercent}%`,
+          transform: 'translate(-50%, -50%)',
+          rotate: isImpact ? -3 : 1.5,
+          sizeClass: isImpact ? 'text-7xl sm:text-8xl' : 'text-5xl sm:text-6xl',
+          isBehind: false
+        };
+      });
+    }
+  },
+  {
     id: 'geo_halo_orbit',
     name: '1. Halo Vòng Hào Quang Trên Đầu',
     category: 'geometric',
