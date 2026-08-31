@@ -92,6 +92,13 @@ export interface MotionWordTag {
   highlight?: boolean;
 }
 
+export type MotionPresetStyle =
+  | 'mrbeast_tycoon'      // Ảnh 1: Chữ 2 tầng khổng lồ (Trắng & Vàng Cam Gradient), Lưới Grid xanh neon sau lưng, vương miện
+  | 'golden_cinematic'     // Ảnh 2: Chữ vàng 3D Bevel ánh kim sang trọng, 2 đồng hồ/props bay 2 bên, rèm ánh sáng
+  | 'netflix_glass'        // Ảnh 3: Hộp kính mờ Frosted Glass khổng lồ chuẩn phim tài liệu cao cấp
+  | 'callout_pills'        // Ảnh 4: Các viên thuốc Gradient cam Neon (Pill Badges) trôi nổi phát sáng
+  | 'custom';
+
 export interface MotionEditConfig {
   enabled: boolean;
   layerOrder: 'behind_person' | 'in_front'; // Chữ nằm sau lưng hay trước mặt người
@@ -103,6 +110,12 @@ export interface MotionEditConfig {
   badgeIcon?: string;
   popAnimation: 'spring_bounce' | 'slide_up' | 'elastic_pop' | 'glitch_reveal';
   personCutoutUrl?: string; // Ảnh/video đã bóc tách phông người (nếu có)
+  // Các Preset Phong Cách Đỉnh Cao (Theo 4 ảnh mẫu)
+  motionStyle?: MotionPresetStyle;
+  showCrownProp?: boolean;      // Đội vương miện vàng trên đầu
+  showFloatingProps?: boolean;  // 2 đồng hồ 3D bay 2 bên
+  showCyberGrid?: boolean;      // Lưới tọa độ Cyber Grid xanh neon
+  pillBadges?: { icon: string; text: string }[];
 }
 
 export interface Scene {

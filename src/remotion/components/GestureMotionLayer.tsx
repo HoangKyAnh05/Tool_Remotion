@@ -20,26 +20,35 @@ export const GestureMotionLayer: React.FC<GestureMotionLayerProps> = ({
 
   if (!config || !config.enabled) return null;
 
-  // Kiểm tra thứ tự layer
-  if (config.layerOrder === 'behind_person' && !isBehindLayer) return null;
-  if (config.layerOrder === 'in_front' && isBehindLayer) return null;
+  const style = config.motionStyle || 'mrbeast_tycoon';
 
-  // Spring animation nảy chữ cực kỳ mượt và bốc
+  // Phân tầng layer logic
+  // Với mrbeast_tycoon và golden_cinematic: Chữ chính nằm ở BEHIND layer (sau lưng), các props/vương miện nằm ở IN FRONT layer
+  // Với netflix_glass và callout_pills: Nằm ở IN FRONT layer (trước mặt)
+  if (style === 'mrbeast_tycoon' || style === 'golden_cinematic') {
+    if (config.layerOrder === 'behind_person' && !isBehindLayer) return null;
+    if (config.layerOrder === 'in_front' && isBehindLayer) return null;
+  } else {
+    // netflix_glass và callout_pills luôn là in_front layer
+    if (isBehindLayer) return null;
+  }
+
+  // Hiệu ứng nảy lò xo điện ảnh
   const enterSpring = spring({
     frame,
     fps,
     config: {
       damping: 10,
-      stiffness: 120,
+      stiffness: 130,
       mass: 0.7
     }
   });
 
-  // Chuyển động thở nhẹ (Breathing / Subtle floating motion)
-  const floatY = Math.sin((frame / fps) * Math.PI * 1.5) * 6;
-  const floatScale = 1.0 + Math.sin((frame / fps) * Math.PI * 1.2) * 0.03;
+  // Nhịp thở và uốn lượn nhẹ
+  const floatY = Math.sin((frame / fps) * Math.PI * 1.6) * 7;
+  const floatScale = 1.0 + Math.sin((frame / fps) * Math.PI * 1.2) * 0.025;
 
-  // Lấy toàn bộ từ khóa (nếu chưa có thì nạp 100% từ của câu thoại)
+  // Lấy toàn bộ từ khóa câu thoại
   const allWords: MotionWordTag[] =
     config.words && config.words.length > 0
       ? config.words
@@ -48,178 +57,285 @@ export const GestureMotionLayer: React.FC<GestureMotionLayerProps> = ({
           .split(/\s+/)
           .filter(Boolean)
           .map((w, idx) => ({
-            text: w.replace(/[.,?!]/g, ''),
+            text: w.replace(/[.,!?;:"'()]/g, ''),
             size: idx === 0 ? 'huge' : 'large',
             color: idx === 0 ? '#facc15' : '#ffffff',
             highlight: idx === 0
           }));
 
   // =========================================================================
-  // 1. CHẾ ĐỘ 1: CHỮ KHỔNG LỒ SAU LƯNG NGƯỜI (GIANT 3D DEPTH TYPOGRAPHY)
+  // PHONG CÁCH 1: MR BEAST / YOUTUBE TYCOON (ẢNH 1 THAM CHIẾU)
+  // Lưới Cyber Grid xanh sau lưng + Chữ 2 tầng khổng lồ (Trắng & Vàng Cam Gradient) + Vương miện
   // =========================================================================
-  if (config.layerOrder === 'behind_person' || config.gestureMode === 'center_depth') {
-    const highlightWords = allWords.filter((w) => w.highlight);
-    const regularWords = allWords.filter((w) => !w.highlight);
+  if (style === 'mrbeast_tycoon') {
+    // Tách từ thành 2 cụm: Cụm 1 (Top Line: Trắng) và Cụm 2 (Bottom Line: Vàng Cam Khổng Lồ)
+    const midPoint = Math.max(1, Math.ceil(allWords.length / 2));
+    const topWords = allWords.slice(0, midPoint);
+    const bottomWords = allWords.slice(midPoint);
 
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 select-none overflow-hidden p-6">
-        {/* Volumetric Backlight Halo (Hào quang phát sáng rực rỡ sau lưng người) */}
-        <div
-          className="absolute w-[750px] h-[750px] rounded-full blur-3xl opacity-60 mix-blend-screen pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(250,204,21,0.55) 0%, rgba(236,72,153,0.45) 40%, rgba(99,102,241,0.3) 65%, transparent 80%)',
-            transform: `scale(${enterSpring * floatScale}) translateY(${floatY}px)`
-          }}
-        />
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden">
+        {/* 1. Lưới Cyber Grid Xanh Neon Sau Lưng (Blue Grid Backdrop) */}
+        {isBehindLayer && (
+          <div
+            className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(37, 99, 235, 0.4) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(37, 99, 235, 0.4) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
+              transform: `scale(${floatScale})`
+            }}
+          />
+        )}
 
-        {/* Khung chữ 3D khổng lồ */}
-        <div
-          className="relative z-10 flex flex-col items-center justify-center gap-2 max-w-[96%] text-center"
-          style={{
-            opacity: enterSpring,
-            transform: `scale(${enterSpring * floatScale}) translateY(${floatY}px)`
-          }}
-        >
-          {/* Hàng 1: TỪ KHÓA CHỦ ĐẠO CỰC ĐẠI (GIANT POWER WORD) */}
-          {highlightWords.length > 0 && (
+        {/* 2. Ánh Hào Quang Viền Xanh & Vàng (Blue & Gold Rim Backlight) */}
+        {isBehindLayer && (
+          <div
+            className="absolute w-[800px] h-[800px] rounded-full blur-3xl opacity-50 mix-blend-screen pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(6, 182, 212, 0.6) 0%, rgba(245, 158, 11, 0.4) 45%, transparent 75%)',
+              transform: `scale(${enterSpring * floatScale}) translateY(${floatY}px)`
+            }}
+          />
+        )}
+
+        {/* 3. Chữ 2 Tầng Khổng Lồ Sau Lưng Người (Giant 2-Tier Typography) */}
+        {isBehindLayer && (
+          <div
+            className="relative z-10 flex flex-col items-center justify-center w-full px-4 text-center"
+            style={{
+              opacity: enterSpring,
+              transform: `scale(${enterSpring * floatScale}) translateY(${floatY - 20}px) rotate(-1.5deg)`
+            }}
+          >
+            {/* DÒNG TRÊN: CHỮ TRẮNG TUYẾT KHỔNG LỒ (CUSTOM YOUTUBE) */}
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {highlightWords.map((word, idx) => (
+              {topWords.map((w, idx) => (
                 <span
-                  key={`hi-${idx}`}
-                  className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase inline-block transition-transform"
+                  key={`top-${idx}`}
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter inline-block text-white"
                   style={{
-                    color: word.color || '#facc15',
                     WebkitTextStroke: '3px #000000',
                     textShadow:
-                      '0 2px 0 #000, 0 4px 0 #000, 0 6px 0 #111, 0 8px 0 #222, 0 12px 25px rgba(0,0,0,0.9), 0 0 50px rgba(250,204,21,0.9), 0 0 20px rgba(250,204,21,0.6)',
-                    letterSpacing: '-0.03em'
+                      '0 2px 0 #000, 0 4px 0 #000, 0 6px 0 #000, 0 8px 0 #111, 0 12px 25px rgba(0,0,0,0.95), 0 0 35px rgba(255,255,255,0.7)',
+                    transform: 'skewX(-4deg)'
                   }}
                 >
-                  {word.text}
+                  {w.text}
                 </span>
               ))}
             </div>
-          )}
 
-          {/* Hàng 2: CÁC TỪ CÒN LẠI CỦA PHÂN ĐOẠN (ĐỦ 100% CÂU THOẠI, TO ĐẬM SẮC NÉT) */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 max-w-4xl px-2">
-            {(highlightWords.length === 0 ? allWords : regularWords).map((word, idx) => {
-              const isLarge = word.size === 'huge' || word.size === 'large';
-              return (
+            {/* DÒNG DƯỚI: CHỮ VÀNG CAM GRADIENT CỰC ĐẠI (THUMBNAIL) */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+              {(bottomWords.length > 0 ? bottomWords : topWords).map((w, idx) => (
                 <span
-                  key={`reg-${idx}`}
-                  className={`${
-                    isLarge
-                      ? 'text-3xl sm:text-4xl md:text-5xl font-black'
-                      : 'text-2xl sm:text-3xl font-extrabold'
-                  } uppercase tracking-tight inline-block`}
+                  key={`bot-${idx}`}
+                  className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter inline-block"
                   style={{
-                    color: word.color || '#ffffff',
-                    WebkitTextStroke: '2px #000000',
-                    textShadow:
-                      '0 2px 0 #000, 0 4px 0 #000, 0 8px 18px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.4)'
+                    background: 'linear-gradient(180deg, #fff000 0%, #ff8800 50%, #ea580c 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    WebkitTextStroke: '3px #000000',
+                    filter: 'drop-shadow(0 4px 0 #000) drop-shadow(0 8px 0 #000) drop-shadow(0 14px 20px rgba(0,0,0,0.95)) drop-shadow(0 0 40px rgba(255,136,0,0.8))',
+                    transform: 'skewX(-4deg)'
                   }}
                 >
-                  {word.text}
+                  {w.text}
                 </span>
-              );
-            })}
-          </div>
-
-          {/* Tag Tiêu Đề Nhỏ Nhấn Mạnh */}
-          {config.customTitle && (
-            <div className="mt-2 px-5 py-1 rounded-full bg-black/80 backdrop-blur-xl border border-yellow-400/60 text-xs sm:text-sm font-mono font-black tracking-widest text-yellow-300 uppercase shadow-2xl">
-              ★ {config.customTitle} ★
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* 4. Vương Miện Vàng Hoàng Gia Trên Đầu (Golden Crown Prop) */}
+        {!isBehindLayer && config.showCrownProp !== false && (
+          <div
+            className="absolute top-12 z-40 pointer-events-none transition-transform"
+            style={{
+              opacity: enterSpring,
+              transform: `scale(${enterSpring * floatScale}) translateY(${floatY}px)`
+            }}
+          >
+            <div className="relative text-6xl sm:text-7xl filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] drop-shadow-[0_0_25px_rgba(250,204,21,0.8)] animate-pulse">
+              👑
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // PHONG CÁCH 2: GOLDEN 3D CINEMATIC (ẢNH 2 THAM CHIẾU)
+  // Chữ vàng 3D ánh kim sang trọng (FROM ZERO) + 2 Đồng hồ 3D bay 2 bên
+  // =========================================================================
+  if (style === 'golden_cinematic') {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden">
+        {/* Rèm sân khấu xanh đậm viền 2 bên */}
+        {isBehindLayer && (
+          <>
+            <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-blue-950/80 to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-blue-950/80 to-transparent pointer-events-none" />
+            {/* Luồng sáng vàng ấm sau lưng người */}
+            <div
+              className="absolute w-[700px] h-[700px] rounded-full blur-3xl opacity-65 mix-blend-screen pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(250,204,21,0.7) 0%, rgba(217,119,6,0.4) 45%, transparent 70%)',
+                transform: `scale(${enterSpring}) translateY(${floatY}px)`
+              }}
+            />
+          </>
+        )}
+
+        {/* Chữ Vàng Kim 3D Nổi Khối (3D Golden Metallic Emboss) */}
+        {isBehindLayer && (
+          <div
+            className="relative z-10 flex flex-wrap items-center justify-center gap-4 px-6 text-center max-w-5xl"
+            style={{
+              opacity: enterSpring,
+              transform: `scale(${enterSpring * floatScale}) translateY(${floatY - 30}px)`
+            }}
+          >
+            {allWords.map((w, idx) => (
+              <span
+                key={idx}
+                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black uppercase tracking-tight inline-block"
+                style={{
+                  background: 'linear-gradient(180deg, #fffbeb 0%, #fef08a 25%, #eab308 60%, #ca8a04 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  WebkitTextStroke: '2.5px #78350f',
+                  filter:
+                    'drop-shadow(0 2px 0 #78350f) drop-shadow(0 5px 0 #451a03) drop-shadow(0 10px 20px rgba(0,0,0,0.9)) drop-shadow(0 0 35px rgba(250,204,21,0.85))'
+                }}
+              >
+                {w.text}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* 2 Chiếc Đồng Hồ 3D Bay 2 Bên (Dual Floating 3D Clocks) */}
+        {!isBehindLayer && config.showFloatingProps !== false && (
+          <>
+            {/* Đồng hồ bên trái */}
+            <div
+              className="absolute left-6 top-1/4 z-30 pointer-events-none transition-transform"
+              style={{
+                opacity: enterSpring,
+                transform: `scale(${enterSpring}) translateY(${-floatY * 1.5}px) rotate(-12deg)`
+              }}
+            >
+              <div className="text-6xl sm:text-7xl filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] drop-shadow-[0_0_20px_rgba(34,197,94,0.7)]">
+                ⏰
+              </div>
+            </div>
+
+            {/* Đồng hồ bên phải */}
+            <div
+              className="absolute right-6 top-1/4 z-30 pointer-events-none transition-transform"
+              style={{
+                opacity: enterSpring,
+                transform: `scale(${enterSpring}) translateY(${floatY * 1.5}px) rotate(12deg)`
+              }}
+            >
+              <div className="text-6xl sm:text-7xl filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] drop-shadow-[0_0_20px_rgba(34,197,94,0.7)]">
+                ⏰
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // PHONG CÁCH 3: NETFLIX / DOCUMENTARY FROSTED GLASS (ẢNH 3 THAM CHIẾU)
+  // Hộp kính mờ Frosted Glass khổng lồ chuẩn phim tài liệu cao cấp
+  // =========================================================================
+  if (style === 'netflix_glass') {
+    const fullSentence = allWords.map((w) => w.text).join(' ');
+
+    return (
+      <div className="absolute inset-x-4 sm:inset-x-12 bottom-12 z-30 pointer-events-none select-none flex justify-center">
+        {/* Hộp Kính Mờ Frosted Glass Bo Góc Khổng Lồ */}
+        <div
+          className="w-full max-w-2xl px-8 py-7 rounded-3xl backdrop-blur-2xl bg-black/60 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center text-center"
+          style={{
+            opacity: enterSpring,
+            transform: `scale(${enterSpring}) translateY(${interpolate(enterSpring, [0, 1], [40, 0])}px)`
+          }}
+        >
+          <h2
+            className="text-2xl sm:text-3xl md:text-4xl font-black uppercase text-white tracking-wider leading-relaxed"
+            style={{
+              textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.4)',
+              letterSpacing: '0.04em'
+            }}
+          >
+            {fullSentence || 'HOW TO CREATE ADVANCE LEVEL MOTION GRAPHICS'}
+          </h2>
         </div>
       </div>
     );
   }
 
   // =========================================================================
-  // 2. CHẾ ĐỘ 2: CHỮ BÁM THEO NGÓN TAY TRỎ / CHỈ TAY (FINGER POINT TRACKING)
+  // PHONG CÁCH 4: CALLOUT PILLS & PROJECTOR BEAM (ẢNH 4 THAM CHIẾU)
+  // Các viên thuốc Gradient Cam Neon 3D trôi nổi phát sáng bên cạnh người
   // =========================================================================
-  const anchorX = config.fingerAnchor?.x ?? 50;
-  const anchorY = config.fingerAnchor?.y ?? 45;
+  if (style === 'callout_pills') {
+    const defaultPills = [
+      { icon: '🔥', text: allWords[0]?.text || 'MOTION GFX' },
+      { icon: '📱', text: allWords.slice(1).map((w) => w.text).join(' ') || 'MOBILE ??' }
+    ];
 
-  let currentX = anchorX;
-  let currentY = anchorY;
+    const pills = config.pillBadges && config.pillBadges.length > 0 ? config.pillBadges : defaultPills;
 
-  if (config.gestureMode === 'finger_follow') {
-    const wave = Math.sin((frame / fps) * Math.PI * 1.5) * 10;
-    const waveY = Math.cos((frame / fps) * Math.PI * 1.2) * 6;
-    currentX = Math.max(10, Math.min(90, anchorX + wave));
-    currentY = Math.max(15, Math.min(85, anchorY + waveY));
-  }
+    return (
+      <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-end pr-8 sm:pr-16 z-30">
+        {/* Luồng sáng Projector Beam chiếu từ trái sang phải */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen"
+          style={{
+            background:
+              'radial-gradient(ellipse at 25% 50%, rgba(245, 158, 11, 0.45) 0%, rgba(234, 88, 12, 0.2) 40%, transparent 70%)'
+          }}
+        />
 
-  const isLeft = currentX < 50;
-
-  return (
-    <div
-      className="absolute pointer-events-none z-30 select-none transition-all duration-75"
-      style={{
-        left: `${currentX}%`,
-        top: `${currentY}%`,
-        transform: `translate(${isLeft ? '8%' : '-108%'}, -50%) scale(${enterSpring})`,
-        opacity: enterSpring
-      }}
-    >
-      {/* Vòng tròn Radar Laser phát xung tại đầu ngón trỏ */}
-      <div className="absolute -left-3 -top-3 w-8 h-8 rounded-full border-2 border-yellow-400 bg-yellow-300/40 animate-ping" />
-      <div className="absolute -left-1.5 -top-1.5 w-4 h-4 rounded-full bg-yellow-400 shadow-[0_0_20px_#facc15]" />
-
-      {/* Tia laser kết nối từ ngón tay đến card chữ */}
-      <div
-        className="absolute top-0 h-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 shadow-[0_0_10px_#facc15]"
-        style={{
-          width: '30px',
-          left: isLeft ? '-30px' : 'auto',
-          right: isLeft ? 'auto' : '-30px'
-        }}
-      />
-
-      {/* Card Chữ To Nổi Bật Nở Rộ Tại Vị Trí Chỉ Tay */}
-      <div className="flex flex-col gap-2 p-4 rounded-3xl bg-black/90 backdrop-blur-2xl border-2 border-yellow-400 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(250,204,21,0.6)] min-w-[280px] max-w-md">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-yellow-400/30 pb-1.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-base">👆</span>
-            <span className="text-xs font-black uppercase tracking-wider text-yellow-300">
-              {config.customTitle || 'ĐIỂM NHẤN QUAN TRỌNG'}
-            </span>
-          </div>
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-yellow-400/20 text-yellow-300 border border-yellow-400/40">
-            MOTION
-          </span>
-        </div>
-
-        {/* Danh sách toàn bộ các từ của câu thoại (To, đậm, màu sắc phân cấp rực rỡ) */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {allWords.map((w, idx) => (
-            <span
+        {/* Danh sách các Viên Thuốc Pill Badges */}
+        <div
+          className="relative z-10 flex flex-col gap-4 max-w-sm"
+          style={{
+            opacity: enterSpring,
+            transform: `scale(${enterSpring}) translateY(${floatY}px)`
+          }}
+        >
+          {pills.map((pill, idx) => (
+            <div
               key={idx}
-              className={`px-2.5 py-1 rounded-xl font-black uppercase tracking-tight inline-block ${
-                w.size === 'huge'
-                  ? 'text-3xl sm:text-4xl'
-                  : w.size === 'large'
-                  ? 'text-xl sm:text-2xl'
-                  : 'text-base sm:text-lg'
-              }`}
+              className="flex items-center gap-3 px-6 py-3 rounded-2xl border-2 border-orange-400/80 shadow-[0_15px_35px_rgba(0,0,0,0.85),0_0_30px_rgba(249,115,22,0.65)] backdrop-blur-md transition-transform"
               style={{
-                color: w.color || '#ffffff',
-                backgroundColor: w.highlight ? 'rgba(250, 204, 21, 0.35)' : 'rgba(255,255,255,0.1)',
-                border: w.highlight ? '2px solid #facc15' : '1px solid rgba(255,255,255,0.15)',
-                textShadow: '0 2px 10px rgba(0,0,0,0.9)',
-                WebkitTextStroke: '1px #000000'
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%)',
+                transform: `translateX(${idx * 15}px)`
               }}
             >
-              {w.text}
-            </span>
+              <span className="text-2xl filter drop-shadow-md">{pill.icon}</span>
+              <span className="text-lg sm:text-xl font-black uppercase tracking-wider text-white drop-shadow-md">
+                {pill.text}
+              </span>
+            </div>
           ))}
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Fallback: Chế độ thông thường
+  return null;
 };
