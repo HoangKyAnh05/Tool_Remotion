@@ -884,6 +884,65 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                 </button>
               </div>
 
+              {/* LIVE MINI PREVIEW CỦA PHÂN CẢNH VỚI HIỆU ỨNG BEAUTY ĐƯỢC ÁP DỤNG TRỰC TIẾP */}
+              <div className="bg-[#12141C] p-3 rounded-2xl border border-pink-500/30 flex flex-col md:flex-row items-center gap-4">
+                <div className="relative w-48 h-48 rounded-xl overflow-hidden bg-black border border-white/10 flex items-center justify-center shrink-0 shadow-lg">
+                  {scene.mediaUrl ? (
+                    scene.mediaType === 'video' ? (
+                      <video
+                        src={scene.mediaUrl}
+                        className="w-full h-full object-cover transition-all"
+                        style={{
+                          transform: `scale(${1 + (beautyRetouch.eyeEnlarge || 0) * 0.0005}) scaleX(${1 - (beautyRetouch.slimBody || 0) * 0.0012 - (beautyRetouch.slimFace || 0) * 0.0006}) scaleY(${1 + (beautyRetouch.longLegs || 0) * 0.0022})`,
+                          filter: `brightness(${1 + (beautyRetouch.brightenSkin || 0) * 0.0035}) contrast(${1 + (beautyRetouch.sharpness || 0) * 0.0025 - (beautyRetouch.smoothSkin || 0) * 0.0008}) saturate(${1 + (beautyRetouch.brightenSkin || 0) * 0.0015}) ${beautyRetouch.smoothSkin ? `blur(${beautyRetouch.smoothSkin * 0.008}px)` : ''}`
+                        }}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={scene.mediaUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover transition-all"
+                        style={{
+                          transform: `scale(${1 + (beautyRetouch.eyeEnlarge || 0) * 0.0005}) scaleX(${1 - (beautyRetouch.slimBody || 0) * 0.0012 - (beautyRetouch.slimFace || 0) * 0.0006}) scaleY(${1 + (beautyRetouch.longLegs || 0) * 0.0022})`,
+                          filter: `brightness(${1 + (beautyRetouch.brightenSkin || 0) * 0.0035}) contrast(${1 + (beautyRetouch.sharpness || 0) * 0.0025 - (beautyRetouch.smoothSkin || 0) * 0.0008}) saturate(${1 + (beautyRetouch.brightenSkin || 0) * 0.0015}) ${beautyRetouch.smoothSkin ? `blur(${beautyRetouch.smoothSkin * 0.008}px)` : ''}`
+                        }}
+                      />
+                    )
+                  ) : (
+                    <div className="text-gray-500 text-xs">Cảnh chưa có video/ảnh</div>
+                  )}
+
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur text-[10px] font-bold text-pink-300 border border-pink-500/30">
+                    👁️ Xem Thử Trực Tiếp
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-1 text-xs">
+                  <div className="font-bold text-gray-200">🎬 Phân Cảnh {scene.order}: {scene.narration?.slice(0, 60)}...</div>
+                  <div className="text-[11px] text-gray-400">
+                    Kéo các thanh trượt bên dưới và nhìn ngay khung hình bên cạnh để theo dõi mức độ mịn da, thon mặt, kéo chân và sáng nét thay đổi theo thời gian thực!
+                  </div>
+                  <div className="pt-2 flex flex-wrap gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-pink-950/60 border border-pink-500/40 text-[10px] text-pink-300 font-mono">
+                      Mịn da: {beautyRetouch.smoothSkin || 0}%
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-950/60 border border-amber-500/40 text-[10px] text-amber-300 font-mono">
+                      Sáng da: {beautyRetouch.brightenSkin || 0}%
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/40 text-[10px] text-purple-300 font-mono">
+                      Thon mặt: {beautyRetouch.slimFace || 0}%
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/40 text-[10px] text-emerald-300 font-mono">
+                      Kéo chân: {beautyRetouch.longLegs || 0}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Grid các thanh trượt điều chỉnh */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 1. Mịn Da & Xóa Mụn */}

@@ -1576,6 +1576,21 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             </button>
           )}
 
+          {/* NÚT ĐỒNG BỘ & CẬP NHẬT PHÂN CẢNH LÊN VIDEO PLAYER */}
+          <button
+            onClick={() => {
+              setProject((prev) => ({
+                ...prev,
+                scenes: [...prev.scenes]
+              }));
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-black shadow-lg shadow-cyan-500/25 transition-all active:scale-95 cursor-pointer"
+            title="Bấm để làm mới và cập nhật ngay lập tức toàn bộ video, ảnh và hiệu ứng vừa chỉnh sửa lên màn hình xem video bên phải"
+          >
+            <span className="animate-spin text-sm">🔄</span>
+            <span>Cập Nhật Phân Cảnh Lên Video</span>
+          </button>
+
           <button
             onClick={handleAddScene}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-700 text-xs font-semibold transition-all"

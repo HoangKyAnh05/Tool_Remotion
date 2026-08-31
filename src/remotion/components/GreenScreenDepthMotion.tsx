@@ -219,12 +219,12 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* TẦNG 2: VẬT THỂ / CON NGƯỜI (VIDEO PHÔNG XANH ĐÃ KHỬ NỀN CHROMA-KEY)       */}
+      {/* TẦNG 2: VẬT THỂ / CON NGƯỜI (VIDEO PHÔNG XANH HOẶC VIDEO/ẢNH ĐÃ CHỌN)     */}
       {/* ========================================================================= */}
       <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
         {isVideo ? (
           <Video
-            src={mediaSource}
+            src={mediaSource || 'video/greenscreen_character.mp4'}
             className="w-full h-full object-cover"
             style={{
               filter: scene.isGreenScreenMotion
@@ -236,7 +236,7 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
           />
         ) : (
           <Img
-            src={mediaSource}
+            src={mediaSource || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80'}
             className="w-full h-full object-cover"
             style={{
               filter: scene.isGreenScreenMotion
