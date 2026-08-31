@@ -125,7 +125,7 @@ export const maxShowcaseProject: VideoProject = {
         { word: 'hứng!', start: 4.15, end: 4.5 }
       ],
       textLayerMode: 'front',
-      tiktokTextEffect: 'tfx_cyan_double_glow',      // Chữ trắng viền dạ quang xanh băng tuyết sắc sảo
+      tiktokTextEffect: 'tfx_fire_inferno',          // Chữ rực lửa viền đen đậm nét, tương phản cực mạnh trên nền sáng
       tiktokFilter: 'filter_fresh_glow',             // Tươi sáng rạng ngời
       tiktokSfx: 'sfx_cinematic_impact',             // Tiếng đệm trầm vang dứt khoát
       transition: 'flash_white',
