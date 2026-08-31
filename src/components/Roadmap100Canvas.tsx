@@ -28,6 +28,7 @@ import {
 import { RoadmapDayItem, Roadmap100Data } from '../types/roadmap100';
 import { roadmap100Service } from '../services/roadmap100Service';
 import { PasteRoadmapJsonModal } from './PasteRoadmapJsonModal';
+import { DayScriptPromptModal } from './DayScriptPromptModal';
 import { VideoProject, Scene } from '../types/video';
 
 interface Roadmap100CanvasProps {
@@ -53,6 +54,8 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [activeMediaModal, setActiveMediaModal] = useState<{ url: string; type: 'image' | 'video'; title: string } | null>(null);
+  const [activeScriptDay, setActiveScriptDay] = useState<RoadmapDayItem | null>(null);
+  const [copiedStudioDay, setCopiedStudioDay] = useState<number | null>(null);
 
   // Hidden File Inputs references
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -214,6 +217,15 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  };
+
+  // Handle Studio button click: copy 3 scripts prompt and open preview modal
+  const handleStudioClick = (item: RoadmapDayItem) => {
+    const prompt = roadmap100Service.generateDayScriptPrompt(item, topicInput);
+    navigator.clipboard.writeText(prompt);
+    setCopiedStudioDay(item.day);
+    setActiveScriptDay(item);
+    setTimeout(() => setCopiedStudioDay(null), 2500);
   };
 
   // Convert Day to Remotion Video Scene
@@ -494,16 +506,28 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
                                 {item.category || 'Video ngắn'}
                               </span>
 
-                              {/* Nút gửi vào Remotion Studio */}
-                              {setProject && (
-                                <button
-                                  onClick={() => handleSendToRemotionStudio(item)}
-                                  className="text-[9px] font-bold px-2 py-0.5 rounded bg-pink-500/20 hover:bg-pink-500 text-pink-300 hover:text-white border border-pink-500/40 transition shadow-sm"
-                                  title="Biến nội dung ngày này thành cảnh Video trong Studio Remotion"
-                                >
-                                  🎬 Studio
-                                </button>
-                              )}
+                              {/* Nút Studio: Copy Prompt 3 Kịch Bản Video 2 Phút (Chuẩn Điện Ảnh & Quảng Cáo) */}
+                              <button
+                                onClick={() => handleStudioClick(item)}
+                                className={`text-[9px] font-extrabold px-2 py-0.5 rounded transition shadow-sm flex items-center gap-1 cursor-pointer transform active:scale-95 ${
+                                  copiedStudioDay === item.day
+                                    ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                    : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-md shadow-pink-600/30 border border-pink-400/40'
+                                }`}
+                                title="Copy Prompt tạo 3 Kịch bản Video 2 Phút (Nhiều nghiệp vụ quay phim, làm video, quảng cáo cuốn hút)"
+                              >
+                                {copiedStudioDay === item.day ? (
+                                  <>
+                                    <Check className="w-2.5 h-2.5" />
+                                    <span>Đã copy 3 kịch bản</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Film className="w-2.5 h-2.5 text-pink-200" />
+                                    <span>🎬 Studio</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
                           </div>
 
@@ -733,6 +757,17 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
         onClose={() => setIsPasteModalOpen(false)}
         onApplyDays={handleApplyJsonDays}
         currentTopic={topicInput}
+      />
+
+      {/* ========================================================================= */}
+      {/* 5. DAY SCRIPT PROMPT MODAL (Bộ 3 Kịch Bản Video 2 Phút)                  */}
+      {/* ========================================================================= */}
+      <DayScriptPromptModal
+        isOpen={!!activeScriptDay}
+        onClose={() => setActiveScriptDay(null)}
+        dayItem={activeScriptDay}
+        generalTopic={topicInput}
+        onSendToStudio={(item) => handleSendToRemotionStudio(item)}
       />
     </div>
   );

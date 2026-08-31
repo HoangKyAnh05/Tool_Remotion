@@ -37,6 +37,62 @@ YÊU CẦU BẮT BUỘC VỀ KẾT QUẢ ĐẦU RA:
   },
 
   /**
+   * Tạo Prompt AI chuyên sâu để viết 3 kịch bản video chuẩn điện ảnh & quảng cáo (2 phút, không cần JSON)
+   */
+  generateDayScriptPrompt(item: RoadmapDayItem, generalTopic: string): string {
+    return `Bạn là một ĐẠO DIỄN SẢN XUẤT VIDEO & BẬC THẦY QUẢNG CÁO NỘI DUNG (Content Creative Director) hàng đầu.
+Hãy dựa vào thông tin của Ngày ${item.day} dưới đây để sáng tạo ngay BỘ 3 KỊCH BẢN VIDEO THẬT HAY, ĐẦY ĐỦ VÀ CUỐN HÚT (Thời lượng mỗi kịch bản khoảng 2 PHÚT, tương đương 280 - 350 từ đọc truyền cảm):
+
+==================================================
+THÔNG TIN NGÀY ${item.day}:
+- CHỦ ĐỀ CHUNG: "${generalTopic}"
+- TIÊU ĐỀ NGÀY: "${item.title}"
+- NHIỆM VỤ QUAY / CHỤP: "${item.taskAction}"
+- THỂ LOẠI: "${item.category || 'Video ngắn'}"
+- HẬU TRƯỜNG & SETUP: "${item.bts.description}"
+- LỢI ÍCH & MỤC TIÊU ĐẠT ĐƯỢC: "${item.benefit}"
+==================================================
+
+YÊU CẦU ĐỊNH DẠNG:
+- TUYỆT ĐỐI KHÔNG TRẢ VỀ DẠNG JSON.
+- Trả về dạng VĂN BẢN ĐẠO DIỄN MARKDOWN RÕ RÀNG, phân tách theo từng mốc thời gian (0-15s, 15-45s, 45-80s, 80-120s), có chỉ đạo nghiệp vụ làm phim chi tiết.
+
+HÃY VIẾT ĐỦ 3 PHONG CÁCH KỊCH BẢN KHÁC NHAU:
+
+---
+🎬 KỊCH BẢN 1: PHONG CÁCH KỂ CHUYỆN ĐIỆN ẢNH (Cinematic Storytelling & Emotional Hook)
+- Mở đầu bằng một xung đột, tình huống đời thực hoặc bí mật ít ai dám nói.
+- Chi tiết nghiệp vụ:
+  + Góc máy & Thị giác (Visual & Camera Movement): Cận cảnh (Close-up), Góc nhìn thứ nhất (POV), Toàn cảnh không gian, Chuyển động lia máy (Pan/Tilt).
+  + Thiết kế âm thanh (Sound Design): Nhạc nền (BGM) trầm lắng rồi cao trào, tiếng SFX (Whoosh, tiếng tim đập, bass drop).
+  + Lời thoại / Voiceover: Câu từ xúc động, tự nhiên, kết nối tâm can người xem.
+  + Chỉ đạo diễn xuất: Ánh mắt, tông giọng thì thầm chuyển sang quyết liệt.
+  + Đúc kết bài học & Kêu gọi hành động tự nhiên.
+
+---
+🔥 KỊCH BẢN 2: PHONG CÁCH CHUYÊN GIA THỰC CHIẾN & BẺ GÃY ĐỊNH KIẾN (Expert Myth-Busters & Deep Value)
+- Đi thẳng vào vấn đề, đập tan 1 sai lầm tai hại mà 90% mọi người đang mắc phải.
+- Chi tiết nghiệp vụ:
+  + Góc máy & Thị giác: Góc chính diện uy lực (Direct to camera), chèn B-roll thao tác thực tế, zoom crash nhấn mạnh từ khóa đắt giá.
+  + Thiết kế âm thanh: Nhịp điệu sôi động, tiếng click chuột, tiếng ting thông báo, âm thanh lật sách/gõ bàn phím.
+  + Lời thoại / Voiceover: Lập luận sắc bén, dẫn chứng số liệu/kết quả thực tế, nhịp nói dứt khoát, chắc chắn.
+  + Đồ họa màn hình: Vị trí xuất hiện Text Motion, Callout, mũi tên chỉ dẫn.
+  + Lời kêu gọi hành động: Thách thức khán giả áp dụng ngay trong 24h tới.
+
+---
+🚀 KỊCH BẢN 3: PHONG CÁCH QUẢNG CÁO VIRAL GIỮ CHÂN CAO (High-Converting Viral Retention & CTA)
+- Hook 3 giây "giật nổ" khiến người xem không thể lướt qua (Pattern Interrupt).
+- Chi tiết nghiệp vụ:
+  + Góc máy & Thị giác: Nhịp cắt nhanh (Fast-paced editing 2-3s đổi cảnh), hiệu ứng thị giác tương phản mạnh, cận cảnh sản phẩm/kết quả.
+  + Thiết kế âm thanh: Nhạc nền bắt trend nhịp nhanh, âm thanh Risers tăng kịch tính.
+  + Lời thoại / Voiceover: Ngôn từ thôi miên, dùng công thức PAS (Problem - Agitate - Solution) hoặc AIDA.
+  + Tâm lý khán giả: Đánh trúng nỗi sợ bỏ lỡ (FOMO) và lòng khao khát nâng cấp bản thân.
+  + Kêu gọi hành động (CTA) bùng nổ: Kích thích để lại bình luận để nhận tài liệu/ưu đãi đặc biệt.
+
+Hãy viết chi tiết từng câu thoại, từng giây hành động của cả 3 kịch bản để tôi chỉ cần cầm máy lên là quay được ngay!`;
+  },
+
+  /**
    * Sinh thuật toán 100 ngày mẫu sinh động theo chủ đề người dùng nhập
    */
   generateSample100Days(topic: string): Roadmap100Data {
