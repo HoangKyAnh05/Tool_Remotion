@@ -125,6 +125,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           <GreenScreenDepthMotion
             scene={scene}
             durationInFrames={durationInFrames}
+            subtitleStyle={subtitleStyle}
           />
         );
       default:
@@ -134,6 +135,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
             <GreenScreenDepthMotion
               scene={scene}
               durationInFrames={durationInFrames}
+              subtitleStyle={subtitleStyle}
             />
           );
         }

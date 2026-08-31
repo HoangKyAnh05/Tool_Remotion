@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCurrentFrame, useVideoConfig, Video, Img, interpolate, spring } from 'remotion';
-import { Scene } from '../../types/video';
+import { Scene, SubtitleStyle } from '../../types/video';
 import { getLayoutPresetById } from '../typography/layoutPresets';
 import { getEffectPresetById } from '../typography/motionEffects';
 import { getStylePresetByIndex, FONT_AND_FRAME_STYLES } from '../typography/fontAndFrameStyles';
@@ -9,6 +9,7 @@ import { getTikTokTextEffectById } from '../tiktok/tiktokTextEffects';
 interface GreenScreenDepthMotionProps {
   scene: Scene;
   durationInFrames: number;
+  subtitleStyle?: SubtitleStyle;
 }
 
 // Bảng màu tương phản rực rỡ nghệ thuật
@@ -24,7 +25,8 @@ const VIBRANT_COLORS = [
 
 export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
   scene,
-  durationInFrames
+  durationInFrames,
+  subtitleStyle
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -71,9 +73,15 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
 
   // Tọa độ tùy chỉnh do người dùng kéo thả chuột (nếu có)
   const customPos = scene.elementPositions?.['green_screen_text'];
+  
+  // Tính toán vị trí Y: Nếu có kéo thả riêng thì ưu tiên, nếu không thì lấy theo slider Vị trí phụ đề Trục Y (subtitleStyle.positionY - 50)
+  const basePositionYOffset = subtitleStyle ? (subtitleStyle.positionY - 50) : 0;
   const offsetXPercent = customPos ? customPos.x - 50 : 0;
-  const offsetYPercent = customPos ? customPos.y - 50 : 0;
-  const customScale = customPos?.scale ?? 1.0;
+  const offsetYPercent = customPos ? (customPos.y - 50) : basePositionYOffset;
+
+  // Tính toán tỷ lệ kích thước: Nếu có slider kích thước chữ fontSize (mặc định 42px)
+  const baseFontScale = subtitleStyle ? subtitleStyle.fontSize / 42 : 1.0;
+  const customScale = (customPos?.scale ?? 1.0) * baseFontScale;
   const customRotate = customPos?.rotate ?? 0;
 
   // Nhịp thở bồng bềnh
