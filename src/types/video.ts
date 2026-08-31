@@ -132,6 +132,10 @@ export interface Scene {
   hideSubtitles?: boolean;       // Tùy chọn ẩn dòng phụ đề ngang mặc định ở dưới
   motionTypographyLayout?: string; // ID preset trong 100 kiểu sắp xếp vị trí
   motionTypographyEffect?: string; // ID preset trong 100 hiệu ứng xuất hiện
+  // TikTok & CapCut Creative Pack
+  tiktokTextTemplate?: string;     // ID Text Template CapCut
+  tiktokStickers?: string[];       // Danh sách ID Stickers CapCut
+  tiktokVideoEffect?: string;      // ID Video FX CapCut
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];

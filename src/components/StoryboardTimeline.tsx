@@ -6,6 +6,7 @@ import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarrat
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import { CreateCustomVisualModal } from './CreateCustomVisualModal';
 import { MotionTypographyModal } from './MotionTypographyModal';
+import { TikTokStudioModal } from './TikTokStudioModal';
 import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
 import {
   Film,
@@ -132,6 +133,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [visualStylesList, setVisualStylesList] = useState<CustomVisualItem[]>(() => visualStylesService.getAll());
   const [isCreateVisualModalOpen, setIsCreateVisualModalOpen] = useState(false);
   const [activeMotionTypographyScene, setActiveMotionTypographyScene] = useState<Scene | null>(null);
+  const [activeTikTokStudioScene, setActiveTikTokStudioScene] = useState<Scene | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1711,6 +1713,20 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     <span>🔤</span>
                     <span>100 Kiểu Xếp Chữ & Hiệu Ứng FX</span>
                   </button>
+
+                  {/* Nút Mở Kho TikTok & CapCut Studio (Text, Sticker, FX) */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTikTokStudioScene(scene)}
+                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black transition-all border shadow-sm cursor-pointer active:scale-95 bg-gradient-to-r from-rose-600/30 to-cyan-600/30 hover:from-rose-600/50 hover:to-cyan-600/50 border-rose-500/40 text-rose-200 hover:text-white"
+                    title="Kho Text Template CapCut (Đi nào, Năng động...), Sticker Meme, Hiệu ứng & Chuyển cảnh"
+                  >
+                    <span>🎬</span>
+                    <span>TikTok / CapCut Studio</span>
+                    {(scene.tiktokTextTemplate || (scene.tiktokStickers && scene.tiktokStickers.length > 0) || scene.tiktokVideoEffect) && (
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    )}
+                  </button>
                 </div>
 
                 {/* Narration & Subtitles Editor (Col 5-8) */}
@@ -2584,6 +2600,16 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
             motionTypographyEffect: effectId,
             isGreenScreenMotion: true // Tự động kích hoạt chế độ motion
           });
+        }}
+      />
+
+      {/* Modal TikTok & CapCut Studio (Text Templates, Stickers, Effects, Transitions) */}
+      <TikTokStudioModal
+        isOpen={Boolean(activeTikTokStudioScene)}
+        onClose={() => setActiveTikTokStudioScene(null)}
+        scene={activeTikTokStudioScene}
+        onApply={(sceneId, updates) => {
+          updateScene(sceneId, updates);
         }}
       />
     </div>

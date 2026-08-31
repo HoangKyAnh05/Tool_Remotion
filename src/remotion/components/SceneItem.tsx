@@ -1,5 +1,5 @@
 import React from 'react';
-import { Audio, AbsoluteFill, useVideoConfig, Img, Video } from 'remotion';
+import { Audio, AbsoluteFill, useVideoConfig, useCurrentFrame, Img, Video } from 'remotion';
 import { Scene, SubtitleStyle } from '../../types/video';
 import { SceneMedia } from './SceneMedia';
 import { SubtitlesRenderer } from './SubtitlesRenderer';
@@ -20,6 +20,9 @@ import {
 } from './visuals/AdvancedVisuals';
 import { ExtendedVisualOverlay } from './visuals/ExtendedVisualOverlay';
 import { GreenScreenDepthMotion } from './GreenScreenDepthMotion';
+import { getTikTokTemplateById } from '../tiktok/tiktokTemplates';
+import { getTikTokStickerById } from '../tiktok/tiktokStickers';
+import { getTikTokVideoEffectById } from '../tiktok/tiktokEffects';
 
 interface SceneItemProps {
   scene: Scene;
@@ -37,6 +40,7 @@ export const SceneItem: React.FC<SceneItemProps> = ({
   enableDynamicEmojis = true
 }) => {
   const { fps } = useVideoConfig();
+  const frame = useCurrentFrame();
 
   const renderVisualContent = () => {
     switch (scene.visualType) {
@@ -196,8 +200,49 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* 3. TIKTOK & CAPCUT CREATIVE OVERLAYS                                     */}
+      {/* ========================================================================= */}
+      {/* A. TikTok Video Effect Overlay */}
+      {scene.tiktokVideoEffect && (
+        getTikTokVideoEffectById(scene.tiktokVideoEffect)?.renderOverlay(frame, fps)
+      )}
+
+      {/* B. TikTok Text Template */}
+      {scene.tiktokTextTemplate && (
+        <div className="absolute top-[20%] inset-x-0 flex justify-center z-25 pointer-events-none">
+          {getTikTokTemplateById(scene.tiktokTextTemplate)?.render(scene.narration)}
+        </div>
+      )}
+
+      {/* C. TikTok Stickers Overlay */}
+      {scene.tiktokStickers && scene.tiktokStickers.length > 0 && (
+        <div className="absolute inset-0 z-28 pointer-events-none overflow-hidden">
+          {scene.tiktokStickers.map((stkId, i) => {
+            const stickerItem = getTikTokStickerById(stkId);
+            if (!stickerItem) return null;
+            const positions = [
+              { top: '15%', right: '8%' },
+              { bottom: '22%', left: '8%' },
+              { top: '35%', left: '8%' },
+              { bottom: '18%', right: '8%' }
+            ];
+            const pos = positions[i % positions.length];
+            return (
+              <div
+                key={stkId}
+                className="absolute pointer-events-none transition-transform"
+                style={{ ...pos }}
+              >
+                {stickerItem.render()}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Synchronized Word-Level Subtitles: Tự động ẩn khi bật Motion Phông Xanh hoặc khi chọn ẩn phụ đề */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
