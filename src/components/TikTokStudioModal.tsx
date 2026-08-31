@@ -26,19 +26,19 @@ interface TikTokStudioModalProps {
       tiktokTextEffect?: string;
       textEffectsMix?: string[];
       tiktokStickers?: string[];
-      tiktokVideoEffect?: string;
       tiktokFilter?: string;
       tiktokSfx?: string;
       transition?: TransitionType;
+      beautyRetouch?: import('../types/video').BeautyRetouchConfig;
     }
   ) => void;
   onApplyAll?: (updates: {
     tiktokTextEffect?: string;
     textEffectsMix?: string[];
-    tiktokVideoEffect?: string;
     tiktokFilter?: string;
     tiktokSfx?: string;
     transition?: TransitionType;
+    beautyRetouch?: import('../types/video').BeautyRetouchConfig;
   }) => void;
 }
 
@@ -52,7 +52,7 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   if (!isOpen || !scene) return null;
 
   const [activeTab, setActiveTab] = useState<
-    'effects_text' | 'text' | 'stickers' | 'filters' | 'sfx' | 'effects' | 'transitions'
+    'effects_text' | 'text' | 'stickers' | 'filters' | 'sfx' | 'beauty' | 'transitions'
   >('effects_text');
 
   // State cục bộ
@@ -61,11 +61,21 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
   const [selectedMixEffects, setSelectedMixEffects] = useState<string[]>(scene.textEffectsMix || []);
   const [isMixMode, setIsMixMode] = useState<boolean>((scene.textEffectsMix && scene.textEffectsMix.length > 0) || false);
   const [selectedStickers, setSelectedStickers] = useState<string[]>(scene.tiktokStickers || []);
-  const [selectedEffect, setSelectedEffect] = useState<string>(scene.tiktokVideoEffect || '');
   const [selectedFilter, setSelectedFilter] = useState<string>(scene.tiktokFilter || 'filter_none');
   const [selectedSfx, setSelectedSfx] = useState<string>(scene.tiktokSfx || '');
   const [selectedTransition, setSelectedTransition] = useState<TransitionType>(scene.transition || 'none');
   const [customSfxList, setCustomSfxList] = useState<CustomSfxItem[]>(() => getCustomSoundEffects());
+
+  // State Chỉnh Sửa Khuôn Mặt & Body (Beauty Retouch)
+  const [beautyRetouch, setBeautyRetouch] = useState<import('../types/video').BeautyRetouchConfig>({
+    smoothSkin: scene.beautyRetouch?.smoothSkin ?? 0,
+    brightenSkin: scene.beautyRetouch?.brightenSkin ?? 0,
+    slimFace: scene.beautyRetouch?.slimFace ?? 0,
+    longLegs: scene.beautyRetouch?.longLegs ?? 0,
+    slimBody: scene.beautyRetouch?.slimBody ?? 0,
+    sharpness: scene.beautyRetouch?.sharpness ?? 0,
+    eyeEnlarge: scene.beautyRetouch?.eyeEnlarge ?? 0
+  });
 
   const toggleSticker = (stickerId: string) => {
     setSelectedStickers((prev) =>
@@ -98,10 +108,10 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
       tiktokTextEffect: isMixMode ? '' : selectedTextEffect,
       textEffectsMix: isMixMode && selectedMixEffects.length > 0 ? selectedMixEffects : [],
       tiktokStickers: selectedStickers,
-      tiktokVideoEffect: selectedEffect,
       tiktokFilter: selectedFilter,
       tiktokSfx: selectedSfx,
-      transition: selectedTransition
+      transition: selectedTransition,
+      beautyRetouch
     });
     onClose();
   };
@@ -111,10 +121,10 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
       onApplyAll({
         tiktokTextEffect: isMixMode ? '' : selectedTextEffect,
         textEffectsMix: isMixMode && selectedMixEffects.length > 0 ? selectedMixEffects : [],
-        tiktokVideoEffect: selectedEffect,
         tiktokFilter: selectedFilter,
         tiktokSfx: selectedSfx,
-        transition: selectedTransition
+        transition: selectedTransition,
+        beautyRetouch
       });
     }
     handleConfirmSingle();
@@ -211,14 +221,15 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
 
             <button
               type="button"
-              onClick={() => setActiveTab('effects')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                activeTab === 'effects'
-                  ? 'bg-[#2E323E] text-white shadow-sm font-black'
+              onClick={() => setActiveTab('beauty')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'beauty'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30 font-black'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
-              ✨ Video FX
+              <span>💄</span>
+              <span>Chỉnh Mặt & Body</span>
             </button>
 
             <button
@@ -839,64 +850,191 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 6: VIDEO EFFECTS                                                      */}
+          {/* TAB 6: BEAUTY & BODY RETOUCH (Chỉnh Khuôn Mặt, Body, Kéo Chân, Xóa Mụn)  */}
           {/* ========================================================================= */}
-          {activeTab === 'effects' && (
-            <div className="space-y-4">
+          {activeTab === 'beauty' && (
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-gray-300 uppercase tracking-wide">
-                  Hiệu Ứng Video CapCut (Video Effects)
-                </span>
-                {selectedEffect && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedEffect('')}
-                    className="text-xs text-rose-400 hover:text-rose-300 font-bold transition cursor-pointer"
-                  >
-                    Tắt hiệu ứng video
-                  </button>
-                )}
+                <div>
+                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <span>💄</span>
+                    <span>Làm Đẹp Khuôn Mặt & Body (AI Beauty & Body Retouch)</span>
+                  </h3>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Tùy chỉnh thông số làm mịn da, xóa mụn, thon gọn cằm V-line, kéo chân dài, tăng nét và sáng da
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBeautyRetouch({
+                      smoothSkin: 0,
+                      brightenSkin: 0,
+                      slimFace: 0,
+                      longLegs: 0,
+                      slimBody: 0,
+                      sharpness: 0,
+                      eyeEnlarge: 0
+                    });
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-bold text-gray-300 hover:text-white transition cursor-pointer"
+                >
+                  🔄 Đặt Lại Mặc Định
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-                {TIKTOK_VIDEO_EFFECTS.map((fx) => {
-                  const isSelected = selectedEffect === fx.id;
-                  return (
-                    <div
-                      key={fx.id}
-                      onClick={() => {
-                        setSelectedEffect(isSelected ? '' : fx.id);
-                      }}
-                      className={`h-40 rounded-2xl border p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all relative overflow-hidden group ${
-                        isSelected
-                          ? 'bg-[#242938] border-indigo-400 shadow-2xl shadow-indigo-500/30 ring-2 ring-indigo-400/50 scale-[1.02]'
-                          : 'bg-[#181A20] border-gray-800/80 hover:border-gray-700 hover:bg-[#1E2028]'
-                      }`}
-                    >
-                      <span className="absolute top-2 left-2 text-[10px] text-indigo-400">💎</span>
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-md z-10">
-                          ✓
-                        </div>
-                      )}
-                      
-                      {/* Interactive Mini Canvas Preview */}
-                      <div className="relative flex-1 w-full h-full rounded-xl overflow-hidden bg-black/50 flex items-center justify-center border border-white/5 my-1">
-                        <div className="text-4xl filter drop-shadow z-0">
-                          {fx.previewIcon}
-                        </div>
-                        {/* Live effect simulation overlay */}
-                        <div className="absolute inset-0 pointer-events-none">
-                          {fx.renderOverlay(30, 30)}
-                        </div>
-                      </div>
-
-                      <span className="text-[11px] font-extrabold text-gray-300 truncate w-full">
-                        {fx.name}
-                      </span>
+              {/* Grid các thanh trượt điều chỉnh */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. Mịn Da & Xóa Mụn */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-pink-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">✨</span>
+                      <span className="text-xs font-black text-gray-200">Mịn Da & Xóa Mụn</span>
                     </div>
-                  );
-                })}
+                    <span className="text-xs font-mono font-bold text-pink-400">
+                      {beautyRetouch.smoothSkin || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.smoothSkin || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, smoothSkin: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>Tự nhiên</span>
+                    <span>Mịn màng không tì vết</span>
+                  </div>
+                </div>
+
+                {/* 2. Tăng Sáng & Trắng Da */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-amber-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">💡</span>
+                      <span className="text-xs font-black text-gray-200">Tăng Sáng & Trắng Da</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-400">
+                      {beautyRetouch.brightenSkin || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.brightenSkin || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, brightenSkin: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>Gốc</span>
+                    <span>Trắng sáng rạng rỡ</span>
+                  </div>
+                </div>
+
+                {/* 3. Thon Gọn Mặt V-Line */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-purple-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">👱‍♀️</span>
+                      <span className="text-xs font-black text-gray-200">Thon Gọn Khuôn Mặt (V-Line)</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-purple-400">
+                      {beautyRetouch.slimFace || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.slimFace || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, slimFace: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>Chuẩn</span>
+                    <span>Thon nhỏ cằm nhọn</span>
+                  </div>
+                </div>
+
+                {/* 4. Kéo Dài Chân & Chiều Cao */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-emerald-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">🦵</span>
+                      <span className="text-xs font-black text-gray-200">Kéo Dài Chân (Tăng Chiều Cao)</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-emerald-400">
+                      {beautyRetouch.longLegs || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.longLegs || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, longLegs: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>1:1</span>
+                    <span>Chân dài tỷ lệ chuẩn người mẫu</span>
+                  </div>
+                </div>
+
+                {/* 5. Thon Gọn Body (Eo Thon) */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-rose-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">💃</span>
+                      <span className="text-xs font-black text-gray-200">Thon Gọn Vóc Dáng (Eo Thon)</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-rose-400">
+                      {beautyRetouch.slimBody || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.slimBody || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, slimBody: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>Bình thường</span>
+                    <span>Thon gọn body đồng hồ cát</span>
+                  </div>
+                </div>
+
+                {/* 6. Tăng Độ Nét & Chi Tiết */}
+                <div className="bg-[#181A20] p-4 rounded-2xl border border-gray-800/80 hover:border-cyan-500/40 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">💎</span>
+                      <span className="text-xs font-black text-gray-200">Tăng Độ Nét (HD Clarity)</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-cyan-400">
+                      {beautyRetouch.sharpness || 0}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={beautyRetouch.sharpness || 0}
+                    onChange={(e) => setBeautyRetouch((prev) => ({ ...prev, sharpness: Number(e.target.value) }))}
+                    className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>Mềm mại</span>
+                    <span>Sắc nét 4K căng bóng</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -127,6 +127,16 @@ export interface MotionEditConfig {
   pillBadges?: { icon: string; text: string }[];
 }
 
+export interface BeautyRetouchConfig {
+  smoothSkin?: number;      // 0 - 100: Làm mịn da & Xóa mụn tàn nhang
+  brightenSkin?: number;    // 0 - 100: Tăng sáng & Trắng da
+  slimFace?: number;        // 0 - 100: Gọt cằm V-line & Thon gọn khuôn mặt
+  longLegs?: number;        // 0 - 100: Kéo dài chân & Tăng chiều cao Body
+  slimBody?: number;        // 0 - 100: Thon gọn vóc dáng Body
+  sharpness?: number;       // 0 - 100: Tăng độ nét chi tiết & Căng bóng da
+  eyeEnlarge?: number;      // 0 - 100: Làm to mắt & Long lanh
+}
+
 export interface Scene {
   id: string;
   order: number;
@@ -149,6 +159,7 @@ export interface Scene {
   tiktokVideoEffect?: string;      // ID Video FX CapCut
   tiktokFilter?: string;           // ID Bộ Lọc Màu Điện Ảnh CapCut
   tiktokSfx?: string;              // ID Âm Thanh SFX Editor CapCut
+  beautyRetouch?: BeautyRetouchConfig; // Chỉnh sửa khuôn mặt, Body, Kéo chân, Xóa mụn, Tăng nét, Sáng da CapCut
   elementPositions?: Record<string, ElementPosition>; // Vị trí tự do kéo thả chuột (x, y, scale, rotate)
   audioUrl?: string;
   audioDuration: number; // in seconds

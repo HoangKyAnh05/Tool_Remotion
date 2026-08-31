@@ -183,12 +183,37 @@ export const SceneMedia: React.FC<SceneMediaProps> = ({
 
   const mediaSource = scene.localMediaPath || scene.mediaUrl || FALLBACK_IMG;
 
+  // =========================================================================
+  // 3. BEAUTY & BODY RETOUCH (Làm Mịn Da, Xóa Mụn, Kéo Chân, Thon Mặt, Sáng Da, Tăng Nét)
+  // =========================================================================
+  const beauty = scene.beautyRetouch || {};
+  const smoothVal = beauty.smoothSkin || 0;     // 0 - 100
+  const brightenVal = beauty.brightenSkin || 0; // 0 - 100
+  const slimFaceVal = beauty.slimFace || 0;     // 0 - 100
+  const longLegsVal = beauty.longLegs || 0;     // 0 - 100
+  const slimBodyVal = beauty.slimBody || 0;     // 0 - 100
+  const sharpnessVal = beauty.sharpness || 0;   // 0 - 100
+  const eyeEnlargeVal = beauty.eyeEnlarge || 0; // 0 - 100
+
+  // 1. Bộ lọc sắc thái & Làn da (Skin Brightness, Smoothing & Sharpness)
+  const brightnessFilter = 1 + (brightenVal / 100) * 0.35; // Tăng sáng da đến 1.35x
+  const contrastFilter = 1 + (sharpnessVal / 100) * 0.25 - (smoothVal / 100) * 0.08; // Căng bóng & Nét
+  const saturateFilter = 1 + (brightenVal / 100) * 0.15; // Hồng hào tự nhiên
+  const beautyBlur = smoothVal > 0 ? (smoothVal / 100) * 0.8 : 0; // Mịn da mờ mụn tự nhiên
+
+  // 2. Kéo dài chân & Thon gọn Body/Mặt (Aspect ratio & Scale warping)
+  const legStretchY = 1 + (longLegsVal / 100) * 0.22; // Kéo dài chiều dọc chân 1.22x
+  const bodySlimX = 1 - (slimBodyVal / 100) * 0.12 - (slimFaceVal / 100) * 0.06; // Bóp thon chiều ngang
+  const faceZoom = 1 + (eyeEnlargeVal / 100) * 0.05; // Tinh chỉnh cận cảnh mắt
+
+  const finalBlur = Math.max(blurAmount, beautyBlur);
+
   const mediaStyle: React.CSSProperties = {
-    transform: `scale(${scale * transScale}) translate(${finalTranslateX + transTranslateX}px, ${finalTranslateY + transTranslateY}px) rotate(${rotate}deg) rotateY(${transRotateY}deg)`,
-    filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
+    transform: `scale(${scale * transScale * faceZoom}) scaleX(${bodySlimX}) scaleY(${legStretchY}) translate(${finalTranslateX + transTranslateX}px, ${finalTranslateY + transTranslateY}px) rotate(${rotate}deg) rotateY(${transRotateY}deg)`,
+    filter: `brightness(${brightnessFilter}) contrast(${contrastFilter}) saturate(${saturateFilter}) ${finalBlur > 0 ? `blur(${finalBlur}px)` : ''}`,
     opacity: transOpacity,
     perspective: '1000px',
-    transition: 'filter 0.05s linear'
+    transition: 'filter 0.05s linear, transform 0.05s ease-out'
   };
 
   const isVideo = scene.mediaType === 'video';
