@@ -361,17 +361,37 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Khi Đang Hiện Chữ Ngang Dưới (hideSubtitles = false) -> Chạy chữ phụ đề chuẩn đẹp, không dùng kiểu chạy của tiktok studio */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
-        <SubtitlesRenderer
-          words={scene.words}
-          subtitleStyle={subtitleStyle}
-          fallbackText={scene.narration}
-          enableDynamicEmojis={enableDynamicEmojis}
-          customPos={
-            scene.elementPositions?.['subtitles']
-          }
-        />
+      {/* Synchronized Word-Level Typography & Subtitles:
+          1. Nếu có chọn Text Template / Text Effect của TikTok Studio -> Chạy chữ theo phong cách TikTok Studio.
+          2. Nếu không có Text Template / Text Effect và Đang Bật Chữ Ngang Dưới (!hideSubtitles) -> Chạy phụ đề chuẩn ở dưới.
+      */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && (
+        Boolean(scene.tiktokTextTemplate || scene.tiktokTextEffect || (scene.textEffectsMix && scene.textEffectsMix.length > 0)) ? (
+          <SubtitlesRenderer
+            words={scene.words}
+            subtitleStyle={subtitleStyle}
+            fallbackText={scene.narration}
+            enableDynamicEmojis={enableDynamicEmojis}
+            textTemplate={scene.tiktokTextTemplate}
+            textEffect={scene.tiktokTextEffect}
+            textEffectsMix={scene.textEffectsMix}
+            customPos={
+              scene.elementPositions?.['text_template'] ||
+              scene.elementPositions?.['text_effect'] ||
+              scene.elementPositions?.['subtitles']
+            }
+          />
+        ) : !scene.hideSubtitles ? (
+          <SubtitlesRenderer
+            words={scene.words}
+            subtitleStyle={subtitleStyle}
+            fallbackText={scene.narration}
+            enableDynamicEmojis={enableDynamicEmojis}
+            customPos={
+              scene.elementPositions?.['subtitles']
+            }
+          />
+        ) : null
       )}
 
       {/* Custom Scene Transition Sound FX */}
