@@ -68,6 +68,12 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
   // Tọa độ tính toán theo preset bố cục
   const computedPositions = layoutPreset.getPositions(wordTokens.length);
 
+  // Tọa độ tùy chỉnh do người dùng kéo thả chuột (nếu có)
+  const customPos = scene.elementPositions?.['green_screen_text'];
+  const offsetX = customPos ? (customPos.x - 50) * 10 : 0;
+  const offsetY = customPos ? (customPos.y - 50) * 12 : 0;
+  const customScale = customPos?.scale ?? 1.0;
+
   // Nhịp thở bồng bềnh
   const floatY = Math.sin((frame / fps) * Math.PI * 1.5) * 5;
 
@@ -135,7 +141,7 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
                 bottom: pos.bottom,
                 left: pos.left,
                 right: pos.right,
-                transform: `${pos.transform || ''} ${fxStyle.transform} rotate(${pos.rotate}deg) translateY(${floatY}px)`,
+                transform: `${pos.transform || ''} translate(${offsetX}px, ${offsetY + floatY}px) scale(${customScale}) ${fxStyle.transform} rotate(${pos.rotate}deg)`,
                 opacity: fxStyle.opacity * exitOpacity,
                 filter: fxStyle.filter
               }}
@@ -225,7 +231,7 @@ export const GreenScreenDepthMotion: React.FC<GreenScreenDepthMotionProps> = ({
                 bottom: pos.bottom,
                 left: pos.left,
                 right: pos.right,
-                transform: `${pos.transform || ''} ${fxStyle.transform} rotate(${pos.rotate}deg)`,
+                transform: `${pos.transform || ''} translate(${offsetX}px, ${offsetY}px) scale(${customScale}) ${fxStyle.transform} rotate(${pos.rotate}deg)`,
                 opacity: fxStyle.opacity * exitOpacity,
                 filter: fxStyle.filter
               }}

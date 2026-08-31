@@ -233,18 +233,55 @@ export const SceneItem: React.FC<SceneItemProps> = ({
       )}
 
       {/* B. TikTok Text Template */}
-      {scene.tiktokTextTemplate && (
-        <div className="absolute top-[20%] inset-x-0 flex justify-center z-25 pointer-events-none">
-          {getTikTokTemplateById(scene.tiktokTextTemplate)?.render(scene.narration)}
-        </div>
-      )}
+      {scene.tiktokTextTemplate && (() => {
+        const customPos = scene.elementPositions?.['text_template'];
+        return (
+          <div
+            className="absolute z-25 pointer-events-none transition-all"
+            style={
+              customPos
+                ? {
+                    left: `${customPos.x}%`,
+                    top: `${customPos.y}%`,
+                    transform: `translate(-50%, -50%) scale(${customPos.scale ?? 1}) rotate(${customPos.rotate ?? 0}deg)`
+                  }
+                : {
+                    top: '20%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)'
+                  }
+            }
+          >
+            {getTikTokTemplateById(scene.tiktokTextTemplate)?.render(scene.narration)}
+          </div>
+        );
+      })()}
 
       {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) */}
-      {scene.tiktokTextEffect && (
-        <div className="absolute top-[22%] inset-x-0 flex justify-center z-25 pointer-events-none">
-          {getTikTokTextEffectById(scene.tiktokTextEffect)?.applyStyle(scene.narration)}
-        </div>
-      )}
+      {/* Khi bật Motion Phông Xanh, chỉ render nếu người dùng đã đặt vị trí riêng để tránh đè chữ */}
+      {scene.tiktokTextEffect && (!scene.isGreenScreenMotion || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
+        const customPos = scene.elementPositions?.['text_effect'];
+        return (
+          <div
+            className="absolute z-25 pointer-events-none transition-all"
+            style={
+              customPos
+                ? {
+                    left: `${customPos.x}%`,
+                    top: `${customPos.y}%`,
+                    transform: `translate(-50%, -50%) scale(${customPos.scale ?? 1}) rotate(${customPos.rotate ?? 0}deg)`
+                  }
+                : {
+                    top: '22%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)'
+                  }
+            }
+          >
+            {getTikTokTextEffectById(scene.tiktokTextEffect)?.applyStyle(scene.narration)}
+          </div>
+        );
+      })()}
 
       {/* C. TikTok Stickers Overlay */}
       {scene.tiktokStickers && scene.tiktokStickers.length > 0 && (
@@ -252,18 +289,26 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           {scene.tiktokStickers.map((stkId, i) => {
             const stickerItem = getTikTokStickerById(stkId);
             if (!stickerItem) return null;
-            const positions = [
-              { top: '15%', right: '8%' },
-              { bottom: '22%', left: '8%' },
-              { top: '35%', left: '8%' },
-              { bottom: '18%', right: '8%' }
+
+            const customPos = scene.elementPositions?.[`stk_${stkId}`] || scene.elementPositions?.[stkId];
+
+            const defaultPositions = [
+              { x: 80, y: 18 },
+              { x: 20, y: 82 },
+              { x: 20, y: 35 },
+              { x: 80, y: 78 }
             ];
-            const pos = positions[i % positions.length];
+            const def = defaultPositions[i % defaultPositions.length];
+
             return (
               <div
                 key={stkId}
-                className="absolute pointer-events-none transition-transform"
-                style={{ ...pos }}
+                className="absolute pointer-events-none transition-all"
+                style={{
+                  left: `${customPos ? customPos.x : def.x}%`,
+                  top: `${customPos ? customPos.y : def.y}%`,
+                  transform: `translate(-50%, -50%) scale(${customPos?.scale ?? 1}) rotate(${customPos?.rotate ?? 0}deg)`
+                }}
               >
                 {stickerItem.render()}
               </div>

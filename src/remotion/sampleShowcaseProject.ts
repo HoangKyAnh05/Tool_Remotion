@@ -94,7 +94,6 @@ export const maxShowcaseProject: VideoProject = {
       hideSubtitles: true,                           // Ẩn phụ đề ngang mặc định để nhìn chữ 3D
       motionTypographyLayout: 'creator_mrbeast_titan', // MrBeast Titan 3D Khổng Lồ
       motionTypographyEffect: 'fx_neon_glow_flicker',   // Nhấp nháy hào quang phát sáng
-      tiktokTextEffect: 'tfx_golden_glow',             // Vàng cam hạt bụi lấp lánh
       tiktokStickers: ['stk_like_follow', 'stk_manga_speedlines'], // Like&Follow + Tia tốc độ Manga
       tiktokFilter: 'filter_teal_orange',              // Hollywood điện ảnh xanh cam
       tiktokSfx: 'sfx_ka_ching',                       // Máy đếm tiền nổ số Ka-Ching!

@@ -28,6 +28,13 @@ export type KenBurnsEffect =
   | 'subtle_float'
   | 'none';
 
+export interface ElementPosition {
+  x: number;      // percentage from 0 to 100
+  y: number;      // percentage from 0 to 100
+  scale?: number; // scale multiplier e.g. 1.0
+  rotate?: number;// rotation in degrees
+}
+
 export interface WordTimestamp {
   word: string;
   start: number; // in seconds
@@ -139,6 +146,7 @@ export interface Scene {
   tiktokVideoEffect?: string;      // ID Video FX CapCut
   tiktokFilter?: string;           // ID Bộ Lọc Màu Điện Ảnh CapCut
   tiktokSfx?: string;              // ID Âm Thanh SFX Editor CapCut
+  elementPositions?: Record<string, ElementPosition>; // Vị trí tự do kéo thả chuột (x, y, scale, rotate)
   audioUrl?: string;
   audioDuration: number; // in seconds
   words: WordTimestamp[];

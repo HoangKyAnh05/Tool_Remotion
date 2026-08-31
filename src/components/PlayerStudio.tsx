@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Player } from '@remotion/player';
 import { MainComposition } from '../remotion/Composition';
-import { VideoProject, SubtitleStyle, WatermarkConfig, SoundFxConfig } from '../types/video';
+import { VideoProject, SubtitleStyle, WatermarkConfig, SoundFxConfig, ElementPosition } from '../types/video';
+import { InteractiveCanvasOverlay } from './InteractiveCanvasOverlay';
 import {
   Type,
   Palette,
@@ -14,7 +15,10 @@ import {
   Tag,
   Volume2,
   Activity,
-  FolderOpen
+  FolderOpen,
+  Move,
+  Layers,
+  Play
 } from 'lucide-react';
 
 interface PlayerStudioProps {
@@ -73,6 +77,16 @@ export const PlayerStudio: React.FC<PlayerStudioProps> = ({ project, setProject 
 
   const compositionWidth = project.aspectRatio === '9:16' ? 1080 : 1920;
   const compositionHeight = project.aspectRatio === '9:16' ? 1920 : 1080;
+
+  const [studioMode, setStudioMode] = useState<'preview' | 'interactive_canvas'>('preview');
+  const [selectedSceneIndex, setSelectedSceneIndex] = useState<number>(0);
+
+  const handleUpdatePositions = (sceneId: string, positions: Record<string, ElementPosition>) => {
+    setProject((prev) => ({
+      ...prev,
+      scenes: prev.scenes.map((s) => (s.id === sceneId ? { ...s, elementPositions: positions } : s))
+    }));
+  };
 
   const updateSubtitleStyle = (updates: Partial<SubtitleStyle>) => {
     setProject((prev) => ({
@@ -146,48 +160,104 @@ export const PlayerStudio: React.FC<PlayerStudioProps> = ({ project, setProject 
       {/* Player Frame Card */}
       <div className="bg-gray-900/80 rounded-2xl p-4 border border-gray-800 glass-panel flex flex-col items-center">
         <div className="w-full flex items-center justify-between pb-3 border-b border-gray-800/80 mb-3">
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Remotion Live Studio ({project.aspectRatio})
-            </span>
+          {/* Mode Switcher: Xem Video vs Kéo Thả Chuột */}
+          <div className="flex items-center gap-1.5 bg-gray-950 p-1 rounded-xl border border-gray-800">
+            <button
+              type="button"
+              onClick={() => setStudioMode('preview')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                studioMode === 'preview'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>🎬 Xem Video</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStudioMode('interactive_canvas')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                studioMode === 'interactive_canvas'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/30'
+                  : 'text-gray-400 hover:text-cyan-300'
+              }`}
+              title="Click và kéo di chuyển các ô chữ, icon, sticker tự do bằng chuột"
+            >
+              <Move className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+              <span>✋ Kéo Thả Vị Trí (Chuột)</span>
+              <span className="text-[9px] bg-cyan-400/20 text-cyan-300 px-1 rounded border border-cyan-400/30">MỚI</span>
+            </button>
           </div>
+
           <span className="text-xs text-gray-400 font-mono">
             {totalFrames} Frames • {(totalFrames / (project.fps || 30)).toFixed(1)}s
           </span>
         </div>
 
-        {/* Remotion Player Container */}
-        <div
-          className="relative bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-800 flex items-center justify-center"
-          style={{
-            width: project.aspectRatio === '9:16' ? '280px' : '100%',
-            aspectRatio: project.aspectRatio === '9:16' ? '9/16' : '16/9',
-            maxHeight: '480px'
-          }}
-        >
-          {project.scenes.length > 0 ? (
-            <Player
-              component={MainComposition}
-              inputProps={{ project }}
-              durationInFrames={totalFrames}
-              compositionWidth={compositionWidth}
-              compositionHeight={compositionHeight}
-              fps={project.fps || 30}
-              style={{
-                width: '100%',
-                height: '100%'
-              }}
-              controls
-              autoPlay={false}
-              loop
-            />
-          ) : (
-            <div className="text-center p-6 text-gray-500 text-xs">
-              Chưa có phân cảnh nào. Hãy nhấn tạo kịch bản ở trên!
+        {/* Chế độ 1: Kéo thả vị trí bằng chuột */}
+        {studioMode === 'interactive_canvas' ? (
+          <div className="w-full flex flex-col items-center gap-3">
+            {/* Bộ chọn phân cảnh để kéo thả */}
+            <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1">
+              <span className="text-xs text-gray-400 font-bold whitespace-nowrap">Chọn cảnh xếp:</span>
+              {project.scenes.map((s, idx) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelectedSceneIndex(idx)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                    selectedSceneIndex === idx
+                      ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  Cảnh {idx + 1}
+                </button>
+              ))}
             </div>
-          )}
-        </div>
+
+            {project.scenes[selectedSceneIndex] ? (
+              <InteractiveCanvasOverlay
+                scene={project.scenes[selectedSceneIndex]}
+                aspectRatio={project.aspectRatio}
+                onUpdatePositions={handleUpdatePositions}
+              />
+            ) : null}
+          </div>
+        ) : (
+          /* Chế độ 2: Remotion Player Container */
+          <div
+            className="relative bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-800 flex items-center justify-center"
+            style={{
+              width: project.aspectRatio === '9:16' ? '280px' : '100%',
+              aspectRatio: project.aspectRatio === '9:16' ? '9/16' : '16/9',
+              maxHeight: '480px'
+            }}
+          >
+            {project.scenes.length > 0 ? (
+              <Player
+                component={MainComposition}
+                inputProps={{ project }}
+                durationInFrames={totalFrames}
+                compositionWidth={compositionWidth}
+                compositionHeight={compositionHeight}
+                fps={project.fps || 30}
+                style={{
+                  width: '100%',
+                  height: '100%'
+                }}
+                controls
+                autoPlay={false}
+                loop
+              />
+            ) : (
+              <div className="text-center p-6 text-gray-500 text-xs">
+                Chưa có phân cảnh nào. Hãy nhấn tạo kịch bản ở trên!
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Retention Elements Customizer (Watermark, Progress Bar, Sound FX) */}
