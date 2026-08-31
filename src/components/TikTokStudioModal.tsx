@@ -905,10 +905,13 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                   { id: 'fade', name: 'Black Fade (Mờ Đen)', icon: '🌑' },
                   { id: 'slide_left', name: 'Slide Left (Trượt Trái)', icon: '⬅️' },
                   { id: 'slide_right', name: 'Slide Right (Trượt Phải)', icon: '➡️' },
+                  { id: 'slide_up', name: 'Slide Up (Trượt Lên)', icon: '⬆️' },
+                  { id: 'whip_pan', name: 'Whip Pan (Quất Roi Chớp)', icon: '💨' },
                   { id: 'zoom_in', name: 'Crash Zoom In (Phóng To)', icon: '🔍' },
                   { id: 'zoom_out', name: 'Zoom Out (Thu Nhỏ)', icon: '🔎' },
                   { id: 'flash_white', name: 'Flash White (Chớp Trắng)', icon: '⚡' },
-                  { id: 'digital_glitch', name: 'Digital Glitch (Nhòe Sóng)', icon: '🌫️' }
+                  { id: 'digital_glitch', name: 'Digital Glitch (Nhòe Sóng)', icon: '🌫️' },
+                  { id: 'cube_flip', name: '3D Cube Flip (Lật Khối 3D)', icon: '🎲' }
                 ].map((tr) => {
                   const isSelected = selectedTransition === tr.id;
                   return (

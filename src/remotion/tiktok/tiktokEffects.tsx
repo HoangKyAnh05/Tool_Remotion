@@ -151,21 +151,158 @@ export const TIKTOK_VIDEO_EFFECTS: TikTokVideoEffect[] = [
     }
   },
 
-  // 6. LIGHT MATRIX (Ma Trận Ánh Sáng)
+  // 7. LASER NEON BEAMS (Tia Laser Neon)
   {
-    id: 'fx_light_matrix',
-    name: 'Light Matrix (Hào Quang Ánh Sáng Xanh)',
+    id: 'fx_laser_neon',
+    name: 'Laser Neon Beams (Chùm Tia Laser Cyber)',
     category: 'lighting',
-    previewIcon: '💡',
+    previewIcon: '⚡',
+    renderOverlay: (frame) => {
+      const beamX = (Math.sin(frame * 0.1) + 1) * 50;
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-35 mix-blend-screen">
+          <div
+            className="absolute top-0 bottom-0 w-24 bg-gradient-to-r from-transparent via-cyan-400 to-transparent blur-md transform -skew-x-12 opacity-70"
+            style={{ left: `${beamX}%` }}
+          />
+          <div
+            className="absolute top-0 bottom-0 w-16 bg-gradient-to-r from-transparent via-pink-500 to-transparent blur-sm transform skew-x-12 opacity-60"
+            style={{ right: `${beamX * 0.8}%` }}
+          />
+        </div>
+      );
+    }
+  },
+
+  // 8. FILM BURN & LIGHT LEAK (Vệt Cháy Phim Cam Đỏ)
+  {
+    id: 'fx_film_burn',
+    name: 'Film Burn (Vệt Cháy Phim Cam Đỏ Vintage)',
+    category: 'retro',
+    previewIcon: '🔥',
+    renderOverlay: (frame) => {
+      const cycle = Math.sin(frame * 0.15);
+      const leakPos = (frame * 3) % 120;
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-35 mix-blend-screen">
+          <div
+            className="absolute -inset-10 bg-gradient-to-tr from-orange-600/40 via-amber-400/50 to-transparent blur-2xl transform"
+            style={{
+              transform: `translate(${Math.sin(frame * 0.05) * 40}px, ${Math.cos(frame * 0.05) * 30}px) scale(${1 + cycle * 0.15})`
+            }}
+          />
+          <div
+            className="absolute top-0 bottom-0 w-48 bg-gradient-to-r from-transparent via-yellow-300/40 to-transparent blur-xl"
+            style={{ left: `${leakPos}%` }}
+          />
+        </div>
+      );
+    }
+  },
+
+  // 9. CYBER DIGITAL GRID (Lưới Điện Tử 3D)
+  {
+    id: 'fx_cyber_grid',
+    name: 'Cyber Grid (Lưới Không Gian Điện Tử)',
+    category: 'trending',
+    previewIcon: '🌐',
+    renderOverlay: (frame) => {
+      const offsetY = (frame * 2) % 40;
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-35 opacity-40 mix-blend-screen">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'linear-gradient(to right, rgba(6,182,212,0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(6,182,212,0.3) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+              backgroundPosition: `0px ${offsetY}px`,
+              transform: 'perspective(300px) rotateX(25deg)',
+              transformOrigin: 'bottom center'
+            }}
+          />
+        </div>
+      );
+    }
+  },
+
+  // 10. SNOW & MAGIC PARTICLES (Tuyết Rơi Băng Tuyết)
+  {
+    id: 'fx_snow_magic',
+    name: 'Snow Magic (Hạt Tuyết Băng Bay)',
+    category: 'lighting',
+    previewIcon: '❄️',
     renderOverlay: (frame, fps) => {
-      const pulse = (Math.sin((frame / fps) * 5) + 1) * 0.5;
+      const flakes = [
+        { x: 10, speed: 2, size: 14 },
+        { x: 25, speed: 3.5, size: 20 },
+        { x: 45, speed: 2.2, size: 16 },
+        { x: 60, speed: 4, size: 24 },
+        { x: 75, speed: 2.8, size: 18 },
+        { x: 90, speed: 3.2, size: 15 }
+      ];
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-35">
+          {flakes.map((flk, i) => {
+            const y = ((frame * flk.speed * 1.5) + i * 80) % 105;
+            const sway = Math.sin((frame / fps) * 2 + i) * 15;
+            return (
+              <div
+                key={i}
+                className="absolute text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] opacity-80"
+                style={{
+                  left: `${flk.x}%`,
+                  top: `${y}%`,
+                  fontSize: `${flk.size}px`,
+                  transform: `translateX(${sway}px)`
+                }}
+              >
+                ❄️
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+  },
+
+  // 11. NEON EDGE GLOW (Viền Khung Neon Phát Sáng)
+  {
+    id: 'fx_edge_neon',
+    name: 'Edge Neon Glow (Viền Khung Tỏa Sáng)',
+    category: 'lighting',
+    previewIcon: '🔲',
+    renderOverlay: (frame) => {
+      const glow = (Math.sin(frame * 0.15) + 1) * 0.3 + 0.4;
       return (
         <div
-          className="absolute inset-0 pointer-events-none mix-blend-screen z-35"
+          className="absolute inset-2 rounded-3xl pointer-events-none border-2 border-cyan-400 z-35 transition-all"
           style={{
-            background: `radial-gradient(circle at 50% 30%, rgba(56,189,248,${0.45 + pulse * 0.35}) 0%, transparent 75%)`
+            boxShadow: `inset 0 0 30px rgba(6,182,212,${glow}), 0 0 35px rgba(236,72,153,${glow})`
           }}
         />
+      );
+    }
+  },
+
+  // 12. TV STATIC (Nhiễu Sóng Truyền Hình Cũ)
+  {
+    id: 'fx_tv_static',
+    name: 'TV Static (Nhiễu Sóng Truyền Hình Analog)',
+    category: 'retro',
+    previewIcon: '📺',
+    renderOverlay: (frame) => {
+      const shift = (frame * 13) % 100;
+      return (
+        <div className="absolute inset-0 pointer-events-none z-35 opacity-30 mix-blend-screen overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'repeating-radial-gradient(circle at 50% 50%, #fff 0, #000 2px, #fff 3px)',
+              backgroundSize: '6px 6px',
+              transform: `translateY(${shift}px)`
+            }}
+          />
+        </div>
       );
     }
   }
