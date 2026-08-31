@@ -5,6 +5,7 @@ import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideo
 import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
 import { CreateCustomVisualModal } from './CreateCustomVisualModal';
+import { RemoveBackgroundModal } from './RemoveBackgroundModal';
 import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
 import {
   Film,
@@ -130,7 +131,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
   const [visualStylesList, setVisualStylesList] = useState<CustomVisualItem[]>(() => visualStylesService.getAll());
   const [isCreateVisualModalOpen, setIsCreateVisualModalOpen] = useState(false);
-  const [isRemovingBgSceneId, setIsRemovingBgSceneId] = useState<string | null>(null);
+  const [activeRemoveBgScene, setActiveRemoveBgScene] = useState<Scene | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1022,27 +1023,6 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     }
   };
 
-  // Quét xóa phông vật thể / nhân vật trong ảnh hoặc video ngắn
-  const handleRemoveBackground = async (scene: Scene) => {
-    if (!scene.mediaUrl) {
-      alert('Phân cảnh này chưa có ảnh hoặc video để quét xóa phông!');
-      return;
-    }
-
-    setIsRemovingBgSceneId(scene.id);
-    try {
-      const cutoutUrl = await visualStylesService.removeBackgroundAI(scene.mediaUrl);
-      updateScene(scene.id, {
-        mediaUrl: cutoutUrl,
-        mediaType: 'image'
-      });
-    } catch (err) {
-      console.warn('Lỗi khi quét xóa phông vật thể:', err);
-      alert('Không thể quét xóa phông media này. Vui lòng thử lại với ảnh hoặc video khác.');
-    } finally {
-      setIsRemovingBgSceneId(null);
-    }
-  };
 
   const handleAddScene = async () => {
     const newOrder = project.scenes.length + 1;
@@ -1683,15 +1663,18 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                   {/* Nút Quét Xóa Phông Vật Thể AI */}
                   <button
                     type="button"
-                    onClick={() => handleRemoveBackground(scene)}
-                    disabled={isRemovingBgSceneId === scene.id}
-                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-600/50 hover:to-blue-600/50 border-cyan-500/50 text-cyan-200 hover:text-white cursor-pointer active:scale-95 disabled:opacity-50"
-                    title="Quét và xóa phông nền của ảnh hoặc video, giữ lại người/vật thể trong suốt"
+                    onClick={() => {
+                      if (!scene.mediaUrl) {
+                        alert('Phân cảnh này chưa có ảnh hoặc video để xóa phông! Hãy chọn ảnh trước.');
+                        return;
+                      }
+                      setActiveRemoveBgScene(scene);
+                    }}
+                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-600/50 hover:to-blue-600/50 border-cyan-500/50 text-cyan-200 hover:text-white cursor-pointer active:scale-95"
+                    title="Mở bảng quét xóa phông nền AI, xem trước và bóc tách vật thể / người"
                   >
-                    <Scissors className={`w-3.5 h-3.5 text-cyan-300 ${isRemovingBgSceneId === scene.id ? 'animate-spin' : ''}`} />
-                    <span>
-                      {isRemovingBgSceneId === scene.id ? 'Đang quét xóa phông...' : '✂️ Quét Xóa Phông Vật Thể'}
-                    </span>
+                    <Scissors className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>✂️ Quét Xóa Phông Vật Thể</span>
                   </button>
                 </div>
 
@@ -2552,6 +2535,19 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         onCreated={(newVisual) => {
           const updated = visualStylesService.getAll();
           setVisualStylesList(updated);
+        }}
+      />
+
+      {/* Modal Quét Xóa Phông Vật Thể AI */}
+      <RemoveBackgroundModal
+        isOpen={Boolean(activeRemoveBgScene)}
+        onClose={() => setActiveRemoveBgScene(null)}
+        scene={activeRemoveBgScene}
+        onApply={(sceneId, newMediaUrl) => {
+          updateScene(sceneId, {
+            mediaUrl: newMediaUrl,
+            mediaType: 'image'
+          });
         }}
       />
     </div>
