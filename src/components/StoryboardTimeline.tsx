@@ -124,6 +124,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [transcribeStatusText, setTranscribeStatusText] = useState<string>('');
   const [isTranscribingFullAudio, setIsTranscribingFullAudio] = useState(false);
   const [fullAudioStatusText, setFullAudioStatusText] = useState('');
+  const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -762,7 +763,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                 audioDuration: sc.audioDuration,
                 searchKeyword: sc.searchKeyword || sc.narration.slice(0, 30),
                 mediaType: 'image',
-                mediaUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+                mediaUrl: generateAiImageUrl(sc.searchKeyword || sc.narration, project.aspectRatio),
                 transition: 'fade',
                 kenBurns: 'zoom_in',
                 words: sc.words
@@ -839,7 +840,7 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                 audioDuration: sc.audioDuration,
                 searchKeyword: sc.searchKeyword || sc.narration.slice(0, 30),
                 mediaType: 'image',
-                mediaUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+                mediaUrl: generateAiImageUrl(sc.searchKeyword || sc.narration, project.aspectRatio),
                 transition: 'fade',
                 kenBurns: 'zoom_in',
                 words: sc.words
@@ -977,6 +978,44 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   };
 
   // Add new scene
+  // Tự động tìm / vẽ lại ảnh AI cho tất cả cảnh đang dùng ảnh mặc định photo-1451187580459-43490279c0fa hoặc chưa có ảnh
+  const handleAutoFixDefaultMedia = async () => {
+    setIsAutoFixingDefaultMedia(true);
+    try {
+      const updatedScenes = await Promise.all(
+        project.scenes.map(async (sc) => {
+          const isDefault = !sc.mediaUrl || sc.mediaUrl.includes('photo-1451187580459-43490279c0fa');
+          if (isDefault) {
+            const kw = sc.searchKeyword || sc.narration.slice(0, 40);
+            try {
+              const webRes = await searchWebMedia(kw, project.aspectRatio);
+              if (webRes && webRes.length > 0 && webRes[0].url) {
+                return {
+                  ...sc,
+                  mediaUrl: webRes[0].url,
+                  mediaType: webRes[0].type || 'image'
+                };
+              }
+            } catch {}
+            return {
+              ...sc,
+              mediaUrl: generateAiImageUrl(kw, project.aspectRatio),
+              mediaType: 'image' as const
+            };
+          }
+          return sc;
+        })
+      );
+
+      setProject((prev) => ({
+        ...prev,
+        scenes: updatedScenes
+      }));
+    } finally {
+      setIsAutoFixingDefaultMedia(false);
+    }
+  };
+
   const handleAddScene = async () => {
     const newOrder = project.scenes.length + 1;
     const narrationText = 'Khám phá những điều tuyệt vời tiếp theo trong hành trình này...';
@@ -1453,6 +1492,23 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
           >
             <span>✈️ + Máy Bay</span>
           </button>
+
+          {/* Nút tự động đổi ảnh cho các cảnh đang dùng ảnh mặc định */}
+          {project.scenes.some((sc) => !sc.mediaUrl || sc.mediaUrl.includes('photo-1451187580459-43490279c0fa')) && (
+            <button
+              onClick={handleAutoFixDefaultMedia}
+              disabled={isAutoFixingDefaultMedia}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-pink-600 hover:from-amber-400 hover:to-pink-500 text-white text-xs font-black transition-all shadow-md shadow-amber-500/20 active:scale-95 animate-pulse"
+              title="Tự động vẽ/tìm ảnh mới phù hợp với câu thoại cho các cảnh đang dùng ảnh mặc định"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-yellow-200" />
+              <span>
+                {isAutoFixingDefaultMedia
+                  ? 'Đang đổi ảnh AI...'
+                  : `✨ Đổi Ảnh Cho ${project.scenes.filter((sc) => !sc.mediaUrl || sc.mediaUrl.includes('photo-1451187580459-43490279c0fa')).length} Cảnh Mặc Định`}
+              </span>
+            </button>
+          )}
 
           <button
             onClick={handleAddScene}
