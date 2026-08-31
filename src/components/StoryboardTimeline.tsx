@@ -4,7 +4,8 @@ import { synthesizeEdgeTTS } from '../services/edgeTtsService';
 import { searchPexelsMedia, searchWebMedia, generateAiImageUrl, searchStockVideos, MediaAsset } from '../services/mediaService';
 import { transcribeCustomAudio, transcribeAndSplitFullAudio, syncWordsFromNarration, extractAudioBase64 } from '../services/speechToTextService';
 import { BatchVocabularyModal } from './BatchVocabularyModal';
-import { GestureMotionEditorModal } from './GestureMotionEditorModal';
+import { CreateCustomVisualModal } from './CreateCustomVisualModal';
+import { visualStylesService, CustomVisualItem } from '../services/visualStylesService';
 import {
   Film,
   Image as ImageIcon,
@@ -33,7 +34,7 @@ import {
   Activity,
   Music,
   ListPlus,
-  Hand
+  Scissors
 } from 'lucide-react';
 
 interface StoryboardTimelineProps {
@@ -127,7 +128,9 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
   const [isTranscribingFullAudio, setIsTranscribingFullAudio] = useState(false);
   const [fullAudioStatusText, setFullAudioStatusText] = useState('');
   const [isAutoFixingDefaultMedia, setIsAutoFixingDefaultMedia] = useState(false);
-  const [activeMotionEditorScene, setActiveMotionEditorScene] = useState<Scene | null>(null);
+  const [visualStylesList, setVisualStylesList] = useState<CustomVisualItem[]>(() => visualStylesService.getAll());
+  const [isCreateVisualModalOpen, setIsCreateVisualModalOpen] = useState(false);
+  const [isRemovingBgSceneId, setIsRemovingBgSceneId] = useState<string | null>(null);
 
   // States for Live Microphone Recording (Ghi âm trực tiếp từ Mic)
   const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
@@ -1019,6 +1022,28 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
     }
   };
 
+  // Quét xóa phông vật thể / nhân vật trong ảnh hoặc video ngắn
+  const handleRemoveBackground = async (scene: Scene) => {
+    if (!scene.mediaUrl) {
+      alert('Phân cảnh này chưa có ảnh hoặc video để quét xóa phông!');
+      return;
+    }
+
+    setIsRemovingBgSceneId(scene.id);
+    try {
+      const cutoutUrl = await visualStylesService.removeBackgroundAI(scene.mediaUrl);
+      updateScene(scene.id, {
+        mediaUrl: cutoutUrl,
+        mediaType: 'image'
+      });
+    } catch (err) {
+      console.warn('Lỗi khi quét xóa phông vật thể:', err);
+      alert('Không thể quét xóa phông media này. Vui lòng thử lại với ảnh hoặc video khác.');
+    } finally {
+      setIsRemovingBgSceneId(null);
+    }
+  };
+
   const handleAddScene = async () => {
     const newOrder = project.scenes.length + 1;
     const narrationText = 'Khám phá những điều tuyệt vời tiếp theo trong hành trình này...';
@@ -1655,22 +1680,17 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                     </button>
                   </div>
 
-                  {/* Nút Motion Edit & Quét Cử Chỉ Chỉ Tay (Point / Depth Layering) */}
+                  {/* Nút Quét Xóa Phông Vật Thể AI */}
                   <button
                     type="button"
-                    onClick={() => setActiveMotionEditorScene(scene)}
-                    className={`w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm ${
-                      scene.motionEdit?.enabled
-                        ? 'bg-gradient-to-r from-yellow-500/25 via-amber-500/25 to-orange-500/25 border-yellow-500/60 text-yellow-200 hover:text-white shadow-yellow-500/20'
-                        : 'bg-gray-950/80 hover:bg-gray-800/80 border-gray-800 hover:border-yellow-500/40 text-gray-400 hover:text-yellow-300'
-                    }`}
-                    title="Chỉnh chữ sau lưng người hoặc bám ngón tay theo cử chỉ video"
+                    onClick={() => handleRemoveBackground(scene)}
+                    disabled={isRemovingBgSceneId === scene.id}
+                    className="w-full py-1.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold transition-all border shadow-sm bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-600/50 hover:to-blue-600/50 border-cyan-500/50 text-cyan-200 hover:text-white cursor-pointer active:scale-95 disabled:opacity-50"
+                    title="Quét và xóa phông nền của ảnh hoặc video, giữ lại người/vật thể trong suốt"
                   >
-                    <Hand className="w-3.5 h-3.5 text-yellow-400" />
+                    <Scissors className={`w-3.5 h-3.5 text-cyan-300 ${isRemovingBgSceneId === scene.id ? 'animate-spin' : ''}`} />
                     <span>
-                      {scene.motionEdit?.enabled
-                        ? `✨ Motion Cử Chỉ: ${scene.motionEdit.layerOrder === 'behind_person' ? 'Sau Lưng' : 'Bám Ngón Tay'}`
-                        : '👆 + Motion Cử Chỉ / Quét Người'}
+                      {isRemovingBgSceneId === scene.id ? 'Đang quét xóa phông...' : '✂️ Quét Xóa Phông Vật Thể'}
                     </span>
                   </button>
                 </div>
@@ -1939,27 +1959,39 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
                 <div className="md:col-span-3 flex flex-col gap-2.5">
                   {/* Visual Style Layout Selector */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-indigo-400 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-pink-400" />
-                      <span>Kiểu Trình Diễn Visual:</span>
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-indigo-400 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-pink-400" />
+                        <span>Kiểu Trình Diễn Visual:</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateVisualModalOpen(true)}
+                        className="text-[10px] font-black text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-0.5 cursor-pointer"
+                        title="Tự do thêm kiểu trình diễn mới không giới hạn"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>+ Thêm Kiểu Mới</span>
+                      </button>
+                    </div>
+
                     <select
                       value={scene.visualType || 'media'}
-                      onChange={(e) => updateScene(scene.id, { visualType: e.target.value as any })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const matched = visualStylesList.find((v) => v.id === val);
+                        updateScene(scene.id, {
+                          visualType: val as any,
+                          headerBadge: matched?.badgeText || scene.headerBadge
+                        });
+                      }}
                       className="bg-gray-950 border border-indigo-500/40 rounded-lg px-2.5 py-1.5 text-xs text-indigo-200 focus:outline-none focus:border-indigo-400 font-semibold"
                     >
-                      <option value="media">🖼️ Media Thường (Ảnh/Video)</option>
-                      <option value="chat_bubble">💬 Chat Inbox (Viral DM Pop)</option>
-                      <option value="orbital_glow">🪐 Quỹ Đạo AI (Glow Orbit)</option>
-                      <option value="math_grid">📈 Đồ Họa Vector (Math Grid)</option>
-                      <option value="radar_tech">📊 Radar / Biểu Đồ Sóng Âm</option>
-                      <option value="night_highway">🏎️ Xe Đua Cao Tốc Đêm (Speed)</option>
-                      <option value="airplane_takeoff">✈️ Máy Bay Cất Cánh (Sky Flight)</option>
-                      <option value="stock_chart">📈 Đồ Thị Cổ Phiếu (+320% Rally)</option>
-                      <option value="google_search">🔍 Google Tìm Kiếm Gõ Chữ</option>
-                      <option value="bank_notification">💵 Biến Động Số Dư (Ting Ting)</option>
-                      <option value="vs_battle">⚡ So Sánh Đối Đầu (VS Battle)</option>
-                      <option value="code_terminal">💻 Màn Hình Code Terminal</option>
+                      {visualStylesList.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.icon} {v.name}
+                        </option>
+                      ))}
                     </select>
 
                     {/* Visual Scale Slider (When visualType is not media) */}
@@ -2513,13 +2545,13 @@ export const StoryboardTimeline: React.FC<StoryboardTimelineProps> = ({
         );
       })()}
 
-      {/* Gesture & Depth Motion Editor Modal */}
-      <GestureMotionEditorModal
-        isOpen={Boolean(activeMotionEditorScene)}
-        onClose={() => setActiveMotionEditorScene(null)}
-        scene={activeMotionEditorScene}
-        onSave={(sceneId, config) => {
-          updateScene(sceneId, { motionEdit: config });
+      {/* Modal Thêm Kiểu Trình Diễn Mới Không Giới Hạn */}
+      <CreateCustomVisualModal
+        isOpen={isCreateVisualModalOpen}
+        onClose={() => setIsCreateVisualModalOpen(false)}
+        onCreated={(newVisual) => {
+          const updated = visualStylesService.getAll();
+          setVisualStylesList(updated);
         }}
       />
     </div>

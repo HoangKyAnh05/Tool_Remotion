@@ -18,7 +18,7 @@ import {
   VsBattleScene,
   CodeTerminalScene
 } from './visuals/AdvancedVisuals';
-import { GestureMotionLayer } from './GestureMotionLayer';
+import { ExtendedVisualOverlay } from './visuals/ExtendedVisualOverlay';
 
 interface SceneItemProps {
   scene: Scene;
@@ -167,36 +167,14 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       ) : (
         <div className="w-full h-full relative">
-          {/* A. Behind-Person Motion Layer (Chữ xuất hiện sau lưng người) */}
-          {scene.motionEdit?.enabled && (
-            <GestureMotionLayer
-              config={scene.motionEdit}
-              durationInFrames={durationInFrames}
-              narration={scene.narration}
-              isBehindLayer={true}
-            />
-          )}
-
-          {/* Media Player (Ảnh / Video gốc) */}
           {renderVisualContent()}
 
-          {/* Cutout Subject Layer (Nếu có ảnh/video đã tách nền người để đè lên chữ sau lưng) */}
-          {scene.motionEdit?.enabled && scene.motionEdit.layerOrder === 'behind_person' && scene.motionEdit.personCutoutUrl && (
-            <div className="absolute inset-0 z-15 pointer-events-none overflow-hidden">
-              <Img
-                src={scene.motionEdit.personCutoutUrl}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-          {/* B. In-Front Gesture & Motion Layer (Chữ bám ngón tay, chỉ tay xuất hiện) */}
-          {scene.motionEdit?.enabled && (
-            <GestureMotionLayer
-              config={scene.motionEdit}
-              durationInFrames={durationInFrames}
+          {/* Extended Custom Visual Overlays (Crown, Clocks, Glass, Pills, etc.) */}
+          {scene.visualType && (
+            <ExtendedVisualOverlay
+              visualType={scene.visualType}
+              badgeText={scene.headerBadge}
               narration={scene.narration}
-              isBehindLayer={false}
             />
           )}
 
@@ -209,8 +187,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Tự động ẩn nếu đang bật Motion Edit (tránh đè chữ), nếu tắt thì chạy chữ bình thường */}
-      {scene.visualType !== 'chat_bubble' && !scene.motionEdit?.enabled && (
+      {/* Synchronized Word-Level Subtitles */}
+      {scene.visualType !== 'chat_bubble' && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
