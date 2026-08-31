@@ -361,19 +361,14 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Chạy phụ đề theo từ với Text Template, Text Effect hoặc Mix Effects */}
+      {/* Synchronized Word-Level Subtitles: Khi Đang Hiện Chữ Ngang Dưới (hideSubtitles = false) -> Chạy chữ phụ đề chuẩn đẹp, không dùng kiểu chạy của tiktok studio */}
       {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}
           fallbackText={scene.narration}
           enableDynamicEmojis={enableDynamicEmojis}
-          textTemplate={scene.tiktokTextTemplate}
-          textEffect={scene.tiktokTextEffect}
-          textEffectsMix={scene.textEffectsMix}
           customPos={
-            scene.elementPositions?.['text_template'] ||
-            scene.elementPositions?.['text_effect'] ||
             scene.elementPositions?.['subtitles']
           }
         />
