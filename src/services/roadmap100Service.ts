@@ -159,18 +159,19 @@ Hãy viết chi tiết từng câu thoại, từng giây hành động của c�
   },
 
   /**
-   * Lưu trữ lộ trình vào localStorage
+   * Lưu trữ lộ trình hiện tại vào localStorage
    */
   saveRoadmap(data: Roadmap100Data): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      this.saveProjectToList(data);
     } catch (e) {
       console.error('Failed to save roadmap to localStorage', e);
     }
   },
 
   /**
-   * Lấy lộ trình từ localStorage hoặc nạp mặc định
+   * Lấy lộ trình hiện tại từ localStorage hoặc nạp mặc định
    */
   loadRoadmap(): Roadmap100Data {
     try {
@@ -184,9 +185,94 @@ Hãy viết chi tiết từng câu thoại, từng giây hành động của c�
     } catch (e) {
       console.warn('Could not parse stored roadmap, generating default', e);
     }
-    const defaultData = this.generateSample100Days('100 ngày xây dựng thương hiệu cá nhân & sáng tạo video triệu view');
+    const defaultData = this.generateSample100Days('100 ngày học bán hàng online từ số 0');
     this.saveRoadmap(defaultData);
     return defaultData;
+  },
+
+  /**
+   * Lấy danh sách tất cả các dự án 100 ngày đã lưu
+   */
+  getAllProjects(): Roadmap100Data[] {
+    const PROJECTS_LIST_KEY = 'remotion_roadmap_100_projects_v1';
+    try {
+      const raw = localStorage.getItem(PROJECTS_LIST_KEY);
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length > 0) {
+          return list;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load projects list', e);
+    }
+
+    // Nếu chưa có danh sách, đưa active project vào làm dự án đầu tiên
+    const current = this.loadRoadmap();
+    const initialList = [current];
+    try {
+      localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(initialList));
+    } catch {}
+    return initialList;
+  },
+
+  /**
+   * Lưu hoặc cập nhật một dự án vào kho danh sách
+   */
+  saveProjectToList(data: Roadmap100Data): Roadmap100Data[] {
+    const PROJECTS_LIST_KEY = 'remotion_roadmap_100_projects_v1';
+    const list = this.getAllProjects();
+    const index = list.findIndex((p) => p.id === data.id);
+
+    const updatedProject = {
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+
+    let nextList: Roadmap100Data[];
+    if (index >= 0) {
+      nextList = [...list];
+      nextList[index] = updatedProject;
+    } else {
+      nextList = [updatedProject, ...list];
+    }
+
+    try {
+      localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(nextList));
+    } catch (e) {
+      console.warn('LocalStorage limit reached while saving project list', e);
+    }
+    return nextList;
+  },
+
+  /**
+   * Xóa một dự án khỏi kho danh sách
+   */
+  deleteProject(id: string): Roadmap100Data[] {
+    const PROJECTS_LIST_KEY = 'remotion_roadmap_100_projects_v1';
+    const list = this.getAllProjects();
+    const nextList = list.filter((p) => p.id !== id);
+    try {
+      localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(nextList));
+    } catch (e) {
+      console.warn('Failed to save project list after delete', e);
+    }
+    return nextList;
+  },
+
+  /**
+   * Nhân bản một dự án
+   */
+  duplicateProject(project: Roadmap100Data): Roadmap100Data {
+    const cloned: Roadmap100Data = {
+      ...project,
+      id: `roadmap-${Date.now()}`,
+      topic: `${project.topic} (Bản sao)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    this.saveProjectToList(cloned);
+    return cloned;
   },
 
   /**

@@ -23,12 +23,14 @@ import {
   TrendingUp,
   Compass,
   Camera,
-  Film
+  Film,
+  FolderOpen
 } from 'lucide-react';
 import { RoadmapDayItem, Roadmap100Data } from '../types/roadmap100';
 import { roadmap100Service } from '../services/roadmap100Service';
 import { PasteRoadmapJsonModal } from './PasteRoadmapJsonModal';
 import { DayScriptPromptModal } from './DayScriptPromptModal';
+import { SavedRoadmapsModal } from './SavedRoadmapsModal';
 import { VideoProject, Scene } from '../types/video';
 
 interface Roadmap100CanvasProps {
@@ -56,6 +58,9 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
   const [activeMediaModal, setActiveMediaModal] = useState<{ url: string; type: 'image' | 'video'; title: string } | null>(null);
   const [activeScriptDay, setActiveScriptDay] = useState<RoadmapDayItem | null>(null);
   const [copiedStudioDay, setCopiedStudioDay] = useState<number | null>(null);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [savedProjectsCount, setSavedProjectsCount] = useState<number>(() => roadmap100Service.getAllProjects().length);
+  const [justSavedTopic, setJustSavedTopic] = useState(false);
 
   // Hidden File Inputs references
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -336,10 +341,23 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
               <span>Tạo Mẫu Tức Thì</span>
             </button>
 
+            {/* Kho Dự Án Đã Lưu */}
+            <button
+              onClick={() => {
+                setSavedProjectsCount(roadmap100Service.getAllProjects().length);
+                setIsSavedModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600/30 to-indigo-600/30 hover:from-purple-600/50 hover:to-indigo-600/50 border border-purple-500/50 text-purple-200 text-xs font-bold transition shadow-sm cursor-pointer"
+              title="Xem lại và quản lý các dự án 100 ngày đã lưu"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-purple-300" />
+              <span>📁 Kho Dự Án ({savedProjectsCount})</span>
+            </button>
+
             {/* Export JSON */}
             <button
               onClick={handleExportJson}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs font-bold transition shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs font-bold transition shadow-sm"
               title="Tải file JSON lộ trình về máy"
             >
               <Download className="w-3.5 h-3.5" />
@@ -360,16 +378,39 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
             placeholder="Nhập chủ đề công việc, video, ảnh cần làm trong 100 ngày..."
             className="flex-1 bg-transparent px-2 py-1 text-xs font-semibold text-white placeholder:text-gray-600 focus:outline-none"
           />
-          <button
-            onClick={() => {
-              const updated = { ...roadmapData, topic: topicInput };
-              setRoadmapData(updated);
-              roadmap100Service.saveRoadmap(updated);
-            }}
-            className="px-3 py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600 border border-cyan-500/50 text-cyan-200 hover:text-white text-xs font-bold transition"
-          >
-            Lưu Chủ Đề
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const updated = { ...roadmapData, topic: topicInput, updatedAt: new Date().toISOString() };
+                setRoadmapData(updated);
+                roadmap100Service.saveRoadmap(updated);
+                setSavedProjectsCount(roadmap100Service.getAllProjects().length);
+                setJustSavedTopic(true);
+                setTimeout(() => setJustSavedTopic(false), 2000);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                justSavedTopic
+                  ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-600/30'
+                  : 'bg-cyan-600/30 hover:bg-cyan-600 border-cyan-500/50 text-cyan-200 hover:text-white'
+              }`}
+            >
+              {justSavedTopic ? <Check className="w-3.5 h-3.5" /> : null}
+              <span>{justSavedTopic ? 'Đã Lưu Dự Án!' : 'Lưu Chủ Đề'}</span>
+            </button>
+
+            {/* Nút mở nhanh Kho Dự Án ngay trên thanh Chủ đề */}
+            <button
+              onClick={() => {
+                setSavedProjectsCount(roadmap100Service.getAllProjects().length);
+                setIsSavedModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900 border border-purple-700/60 text-purple-200 hover:text-white text-xs font-bold transition cursor-pointer shadow-sm"
+              title="Xem lại và chuyển đổi giữa các dự án 100 ngày đã lưu"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-purple-300" />
+              <span>Kho Đã Lưu ({savedProjectsCount})</span>
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar & Filter Tabs */}
@@ -768,6 +809,21 @@ export const Roadmap100Canvas: React.FC<Roadmap100CanvasProps> = ({
         dayItem={activeScriptDay}
         generalTopic={topicInput}
         onSendToStudio={(item) => handleSendToRemotionStudio(item)}
+      />
+
+      {/* ========================================================================= */}
+      {/* 6. SAVED ROADMAPS MODAL (Kho Dự Án 100 Ngày Đã Lưu)                      */}
+      {/* ========================================================================= */}
+      <SavedRoadmapsModal
+        isOpen={isSavedModalOpen}
+        onClose={() => setIsSavedModalOpen(false)}
+        currentProjectId={roadmapData.id}
+        onSelectProject={(selected) => {
+          setRoadmapData(selected);
+          setTopicInput(selected.topic);
+          roadmap100Service.saveRoadmap(selected);
+          setSavedProjectsCount(roadmap100Service.getAllProjects().length);
+        }}
       />
     </div>
   );
