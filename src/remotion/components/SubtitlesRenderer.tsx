@@ -228,59 +228,21 @@ export const SubtitlesRenderer: React.FC<SubtitlesRendererProps> = ({
                 </span>
               )}
 
-              {(() => {
-                // Ưu tiên 1: Text Template CapCut (Ví dụ: Năng động, Đi nào, Location, OMG...)
-                if (textTemplate) {
-                  const tpl = getTikTokTemplateById(textTemplate);
-                  if (tpl) {
-                    if (tpl.renderWord) {
-                      return (
-                        <div className="inline-block transform origin-center">
-                          {tpl.renderWord(displayText, isSpoken)}
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className={`inline-block transform origin-center ${isSpoken ? 'scale-110' : 'opacity-90'}`}>
-                        {tpl.render(displayText)}
-                      </div>
-                    );
-                  }
-                }
-
-                // Ưu tiên 2: Text Effect ART CapCut (mix hoặc đơn)
-                let effId = textEffect;
-                if (textEffectsMix && textEffectsMix.length > 0) {
-                  effId = textEffectsMix[index % textEffectsMix.length];
-                }
-                const effItem = effId ? getTikTokTextEffectById(effId) : null;
-
-                if (effItem) {
-                  return (
-                    <div className="inline-block transform origin-center">
-                      {effItem.applyStyle(displayText)}
-                    </div>
-                  );
-                }
-
-                return (
-                  <span
-                    className="font-black tracking-wide leading-none"
-                    style={{
-                      fontFamily: subtitleStyle.fontFamily,
-                      fontSize: `${subtitleStyle.fontSize}px`,
-                      color: textColor,
-                      WebkitTextStroke: `${subtitleStyle.strokeWidth}px ${subtitleStyle.strokeColor}`,
-                      paintOrder: 'stroke fill',
-                      textShadow: isSpoken
-                        ? `0 0 24px ${subtitleStyle.highlightColor}cc, 0 4px 14px rgba(0,0,0,0.95)`
-                        : '0 4px 12px rgba(0,0,0,0.9)'
-                    }}
-                  >
-                    {displayText}
-                  </span>
-                );
-              })()}
+              <span
+                className="font-black tracking-wide leading-none"
+                style={{
+                  fontFamily: subtitleStyle.fontFamily,
+                  fontSize: `${subtitleStyle.fontSize}px`,
+                  color: textColor,
+                  WebkitTextStroke: `${subtitleStyle.strokeWidth}px ${subtitleStyle.strokeColor}`,
+                  paintOrder: 'stroke fill',
+                  textShadow: isSpoken
+                    ? `0 0 24px ${subtitleStyle.highlightColor}cc, 0 4px 14px rgba(0,0,0,0.95)`
+                    : '0 4px 12px rgba(0,0,0,0.9)'
+                }}
+              >
+                {displayText}
+              </span>
             </div>
           );
         })}

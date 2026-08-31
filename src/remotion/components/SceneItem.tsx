@@ -129,8 +129,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           />
         );
       default:
-        // Kích hoạt engine xếp chữ Motion Typography khi bật phông xanh HOẶC khi chọn kiểu xếp chữ / chế độ lớp chữ
-        if (scene.isGreenScreenMotion || scene.motionTypographyLayout || scene.textLayerMode === 'front' || scene.textLayerMode === 'behind' || scene.textLayerMode === 'both_3d') {
+        // Kích hoạt engine xếp chữ Motion Typography 3D ĐỘC QUYỀN khi người dùng bấm Bật Phông Xanh / Motion 3D
+        if (scene.isGreenScreenMotion) {
           return (
             <GreenScreenDepthMotion
               scene={scene}
