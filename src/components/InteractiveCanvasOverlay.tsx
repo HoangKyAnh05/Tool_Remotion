@@ -13,7 +13,10 @@ import {
   Check,
   RotateCcw as ResetIcon,
   Type,
-  X
+  X,
+  Trash2,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface InteractiveCanvasOverlayProps {
@@ -249,6 +252,47 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
         rotate: newRotate
       }
     });
+  };
+
+  // Điều chỉnh dịch chuyển lên / xuống nhanh (Nudge Y)
+  const handleNudgeY = (itemId: string, deltaPercent: number) => {
+    const item = draggableItems.find((d) => d.id === itemId);
+    if (!item) return;
+    const current = getItemPos(item);
+    const newY = Math.max(5, Math.min(95, current.y + deltaPercent));
+    onUpdatePositions(scene.id, {
+      ...currentPositions,
+      [itemId]: {
+        ...current,
+        y: newY
+      }
+    });
+  };
+
+  // Xóa phần tử khỏi phân cảnh (Sticker, Mẫu chữ, Text Effect hoặc Phụ đề)
+  const handleDeleteItem = (itemId: string) => {
+    const item = draggableItems.find((d) => d.id === itemId);
+    if (!item || !onUpdateScene) return;
+
+    if (item.type === 'sticker') {
+      const realStkId = itemId.replace(/^stk_/, '');
+      const nextStickers = (scene.tiktokStickers || []).filter((s) => s !== realStkId && s !== itemId);
+      onUpdateScene(scene.id, { tiktokStickers: nextStickers });
+    } else if (item.type === 'text_template') {
+      onUpdateScene(scene.id, { tiktokTextTemplate: undefined });
+    } else if (item.type === 'text_effect') {
+      onUpdateScene(scene.id, { tiktokTextEffect: undefined, textEffectsMix: [] });
+    } else if (item.type === 'subtitles') {
+      onUpdateScene(scene.id, { hideSubtitles: true });
+    } else if (item.type === 'motion_text') {
+      onUpdateScene(scene.id, { isGreenScreenMotion: false });
+    }
+
+    // Xóa vị trí lưu trong elementPositions
+    const updated = { ...currentPositions };
+    delete updated[itemId];
+    onUpdatePositions(scene.id, updated);
+    setSelectedId(null);
   };
 
   // Đặt lại vị trí mặc định cho item được chọn
@@ -526,6 +570,36 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
                       <RotateCw className="w-3.5 h-3.5" />
                     </button>
 
+                    <div className="w-[1px] h-3 bg-gray-700 mx-0.5" />
+
+                    {/* Nút Đẩy Chữ Lên Cao (-3%) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNudgeY(item.id, -3);
+                      }}
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-cyan-900/60 text-cyan-300 hover:text-cyan-200 border border-cyan-500/40 text-[10px] font-bold transition"
+                      title="Nâng vị trí chữ lên cao hơn (-3%)"
+                    >
+                      <ArrowUp className="w-3 h-3" />
+                      <span>Lên</span>
+                    </button>
+
+                    {/* Nút Hạ Chữ Xuống Thấp (+3%) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNudgeY(item.id, 3);
+                      }}
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-cyan-900/60 text-cyan-300 hover:text-cyan-200 border border-cyan-500/40 text-[10px] font-bold transition"
+                      title="Hạ vị trí chữ xuống thấp hơn (+3%)"
+                    >
+                      <ArrowDown className="w-3 h-3" />
+                      <span>Xuống</span>
+                    </button>
+
                     {/* Nút Sửa Chữ Nhanh nếu là phần tử text */}
                     {(item.type === 'text_effect' ||
                       item.type === 'text_template' ||
@@ -557,10 +631,24 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
                         e.stopPropagation();
                         handleResetItem(item.id);
                       }}
-                      className="p-1 rounded hover:bg-rose-900/50 text-gray-400 hover:text-rose-400 transition"
+                      className="p-1 rounded hover:bg-gray-800 text-gray-400 hover:text-amber-400 transition"
                       title="Đặt lại vị trí ban đầu"
                     >
                       <ResetIcon className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Nút XÓA PHẦN TỬ (Delete) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteItem(item.id);
+                      }}
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-600/80 hover:bg-rose-500 text-white text-[10px] font-bold transition shadow-sm ml-0.5"
+                      title="Xóa phần tử này khỏi phân cảnh"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Xóa</span>
                     </button>
                   </div>
                 )}
