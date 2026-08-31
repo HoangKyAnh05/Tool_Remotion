@@ -3,20 +3,22 @@ import React from 'react';
 export interface TikTokTextTemplate {
   id: string;
   name: string;
-  category: 'trending' | 'neon' | 'cartoon' | 'minimal';
+  category: 'trending' | 'new_pop' | 'minimal' | 'cartoon';
   previewText: string;
   fontFamily: string;
   render: (text: string) => React.ReactNode;
 }
 
 export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
-  // 1. Đi nào
+  // ==========================================
+  // NHÓM 1: MẪU TRUYỀN THỐNG CAPCUT
+  // ==========================================
   {
     id: 'tpl_di_nao',
     name: 'Đi nào (Vàng Hào Quang Đen)',
     category: 'trending',
     previewText: 'Đi nào',
-    fontFamily: "'Bungee', 'Montserrat', sans-serif",
+    fontFamily: "'Montserrat', sans-serif",
     render: (text: string) => (
       <div className="relative inline-block select-none transform hover:scale-105 transition-transform">
         <span
@@ -34,12 +36,10 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
       </div>
     )
   },
-
-  // 2. NĂNG ĐỘNG
   {
     id: 'tpl_nang_dong',
     name: 'NĂNG ĐỘNG (Đỏ Rực Neon)',
-    category: 'neon',
+    category: 'trending',
     previewText: 'NĂNG ĐỘNG',
     fontFamily: "'Anton', sans-serif",
     render: (text: string) => (
@@ -58,8 +58,6 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
       </div>
     )
   },
-
-  // 3. LOCATION
   {
     id: 'tpl_location_pin',
     name: 'LOCATION (Ghim Bản Đồ Đỏ)',
@@ -68,9 +66,7 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
     fontFamily: "'Montserrat', sans-serif",
     render: (text: string) => (
       <div className="flex flex-col items-center gap-1 select-none animate-bounce-gentle">
-        <div className="text-5xl filter drop-shadow-[0_8px_15px_rgba(239,68,68,0.8)]">
-          📍
-        </div>
+        <div className="text-5xl filter drop-shadow-[0_8px_15px_rgba(239,68,68,0.8)]">📍</div>
         <div className="px-4 py-1 rounded-md bg-gradient-to-r from-red-600 to-rose-600 border-2 border-white shadow-[0_6px_20px_rgba(0,0,0,0.8)]">
           <span className="text-xl sm:text-2xl font-black uppercase tracking-wider text-white">
             {text || 'LOCATION'}
@@ -80,120 +76,198 @@ export const TIKTOK_TEXT_TEMPLATES: TikTokTextTemplate[] = [
     )
   },
 
-  // 4. CAFÉ TALK
+  // ==========================================
+  // NHÓM 2: MẪU NEW (Từ Ảnh 3 bạn vừa gửi)
+  // ==========================================
+  // 1. Chapter One
   {
-    id: 'tpl_cafe_talk',
-    name: 'CAFÉ TALK (Xanh Dương Viền Cam)',
-    category: 'cartoon',
-    previewText: 'CAFÉ TALK',
+    id: 'tpl_chapter_one',
+    name: 'Chapter One (Chương Mở Đầu Điện Ảnh)',
+    category: 'minimal',
+    previewText: 'Chapter One',
+    fontFamily: "'Cinzel', serif",
+    render: (text: string) => (
+      <div className="relative inline-block select-none text-center">
+        <span
+          className="text-4xl sm:text-5xl md:text-6xl font-serif tracking-widest block text-white"
+          style={{
+            fontFamily: "'Cinzel', serif",
+            textShadow: '0 2px 10px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.4)'
+          }}
+        >
+          {text || 'Chapter One'}
+        </span>
+      </div>
+    )
+  },
+
+  // 2. summer escape
+  {
+    id: 'tpl_summer_escape',
+    name: 'Summer Escape (Mùa Hè Vàng Xanh)',
+    category: 'new_pop',
+    previewText: 'summer escape',
     fontFamily: "'Bangers', cursive",
     render: (text: string) => (
-      <div className="relative inline-block select-none rotate-[-2deg]">
-        <span className="absolute -top-3 -right-3 text-2xl text-yellow-300">✨</span>
-        <span className="absolute -bottom-2 -left-2 text-xl text-yellow-300">★</span>
-        <span
-          className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-wider block"
-          style={{
-            fontFamily: "'Bangers', cursive",
-            color: '#38bdf8',
-            WebkitTextStroke: '3px #ea580c',
-            textShadow: '0 4px 0 #9a3412, 0 8px 15px rgba(0,0,0,0.9)'
-          }}
-        >
-          {text || 'CAFÉ TALK'}
-        </span>
-      </div>
+      <span
+        className="text-5xl sm:text-6xl md:text-7xl font-black italic tracking-wide block select-none"
+        style={{
+          fontFamily: "'Bangers', cursive",
+          color: '#fbbf24',
+          WebkitTextStroke: '2.5px #1d4ed8',
+          textShadow: '0 4px 0 #1e3a8a, 0 8px 15px rgba(0,0,0,0.8)'
+        }}
+      >
+        {text || 'summer escape'}
+      </span>
     )
   },
 
-  // 5. LAST EPISODE
+  // 3. MINI VLOG DAY
   {
-    id: 'tpl_last_episode',
-    name: 'LAST EPISODE (Hào Quang Trắng)',
+    id: 'tpl_mini_vlog',
+    name: 'MINI VLOG DAY (Nhật Ký Video Ngắn)',
     category: 'minimal',
-    previewText: 'LAST EPISODE',
+    previewText: 'MINI VLOG DAY',
     fontFamily: "'Montserrat', sans-serif",
     render: (text: string) => (
-      <div className="relative inline-block select-none">
-        <span
-          className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-widest block"
-          style={{
-            fontFamily: "'Montserrat', sans-serif",
-            fontWeight: 900,
-            color: '#ffffff',
-            WebkitTextStroke: '2px #333333',
-            textShadow: '0 0 15px rgba(255,255,255,0.8), 0 0 35px rgba(255,255,255,0.4), 0 6px 20px rgba(0,0,0,0.9)'
-          }}
-        >
-          {text || 'LAST EPISODE'}
+      <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-black/80 border border-white/40 shadow-2xl backdrop-blur-md">
+        <span className="text-white text-xs">●</span>
+        <span className="text-lg sm:text-xl font-black uppercase tracking-widest text-white">
+          {text || 'MINI VLOG DAY'}
         </span>
       </div>
     )
   },
 
-  // 6. Texto Simples
+  // 4. YEAH! (Truyện tranh bùng nổ)
   {
-    id: 'tpl_texto_simples',
-    name: 'Texto Simples (Hộp Tối Giản CapCut)',
-    category: 'minimal',
-    previewText: 'Texto Simples',
-    fontFamily: "'Inter', sans-serif",
+    id: 'tpl_yeah_comic',
+    name: 'YEAH! (Truyện Tranh Bùng Nổ)',
+    category: 'new_pop',
+    previewText: 'YEAH!',
+    fontFamily: "'Bangers', cursive",
     render: (text: string) => (
-      <div className="flex items-center gap-3 px-5 py-2.5 rounded-xl bg-black/85 border border-white/20 shadow-2xl backdrop-blur-md">
-        <div className="w-1.5 h-10 bg-yellow-400 rounded-full" />
-        <div className="flex flex-col text-left">
-          <span className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
-            {text || 'Texto'}
-          </span>
-          <span className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">
-            Simples
-          </span>
-        </div>
+      <div className="relative inline-block select-none rotate-[-4deg]">
+        <div className="absolute inset-0 -inset-x-4 -inset-y-2 bg-yellow-400 rounded-lg filter drop-shadow-[0_8px_0_#000]" />
+        <span
+          className="text-6xl sm:text-7xl font-black uppercase tracking-wider block relative z-10 text-white"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            WebkitTextStroke: '3.5px #ea580c',
+            textShadow: '3px 3px 0 #000'
+          }}
+        >
+          {text || 'YEAH!'}
+        </span>
       </div>
     )
   },
 
-  // 7. Thank You For Watching
+  // 5. wow! (Màu cam nổi khối)
   {
-    id: 'tpl_thank_watching',
-    name: 'Thank You For Watching (Chữ Phấn Trắng)',
-    category: 'cartoon',
-    previewText: 'Thank You For Watching',
-    fontFamily: "'Permanent Marker', cursive",
+    id: 'tpl_wow_orange',
+    name: 'wow! (Cam Đùn Khối Vui Nhộn)',
+    category: 'new_pop',
+    previewText: 'wow!',
+    fontFamily: "'Anton', sans-serif",
     render: (text: string) => (
-      <div className="px-6 py-3 rounded-2xl bg-black/75 border-2 border-dashed border-white/60 shadow-xl rotate-[-1deg]">
+      <span
+        className="text-6xl sm:text-7xl font-black tracking-tight block select-none"
+        style={{
+          fontFamily: "'Anton', sans-serif",
+          color: '#fb923c',
+          WebkitTextStroke: '3px #000',
+          textShadow: '0 6px 0 #000, 0 12px 25px rgba(0,0,0,0.8)'
+        }}
+      >
+        {text || 'wow!'}
+      </span>
+    )
+  },
+
+  // 6. EMERGENCY MEETING (Dải băng cam cảnh báo)
+  {
+    id: 'tpl_emergency_meeting',
+    name: 'EMERGENCY MEETING (Cảnh Báo Khẩn Cấp)',
+    category: 'new_pop',
+    previewText: 'EMERGENCY MEETING',
+    fontFamily: "'Anton', sans-serif",
+    render: (text: string) => (
+      <div className="inline-block select-none px-6 py-2 bg-amber-500 rounded-none shadow-2xl border-y-4 border-black">
         <span
-          className="text-3xl sm:text-4xl md:text-5xl font-black tracking-wide block"
+          className="text-3xl sm:text-4xl font-black uppercase tracking-wider block text-black"
+          style={{ fontFamily: "'Anton', sans-serif" }}
+        >
+          {text || 'EMERGENCY MEETING'}
+        </span>
+      </div>
+    )
+  },
+
+  // 7. OMG! (Bong bóng hội thoại truyện tranh)
+  {
+    id: 'tpl_omg_bubble',
+    name: 'OMG! (Bong Bóng Truyện Tranh)',
+    category: 'new_pop',
+    previewText: 'OMG!',
+    fontFamily: "'Bangers', cursive",
+    render: (text: string) => (
+      <div className="relative inline-block select-none px-8 py-3 bg-white rounded-[40px] shadow-2xl border-4 border-black rotate-[-2deg]">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block text-red-600"
           style={{
-            fontFamily: "'Permanent Marker', cursive",
-            color: '#ffffff',
+            fontFamily: "'Bangers', cursive",
+            WebkitTextStroke: '2px #000'
+          }}
+        >
+          {text || 'OMG!'}
+        </span>
+      </div>
+    )
+  },
+
+  // 8. MỚI! (Tia chớp cam Việt Nam)
+  {
+    id: 'tpl_moi_lightning',
+    name: 'MỚI! (Tia Chớp Cam Nổi Bật)',
+    category: 'new_pop',
+    previewText: 'MỚI!',
+    fontFamily: "'Anton', sans-serif",
+    render: (text: string) => (
+      <div className="relative inline-block select-none px-7 py-2 bg-orange-600 rounded-lg shadow-2xl border-2 border-black rotate-[3deg]">
+        <span
+          className="text-4xl sm:text-5xl font-black uppercase tracking-wider block text-white"
+          style={{
+            fontFamily: "'Anton', sans-serif",
             textShadow: '2px 2px 0 #000'
           }}
         >
-          {text || 'Thank You For Watching'}
+          {text || 'MỚI!'}
         </span>
       </div>
     )
   },
 
-  // 8. The Story Begins
+  // 9. VINTAGE VIBES
   {
-    id: 'tpl_story_begins',
-    name: 'The Story Begins (Gothic Điện Ảnh)',
-    category: 'minimal',
-    previewText: 'The Story Begins',
-    fontFamily: "'Cinzel', serif",
+    id: 'tpl_vintage_vibes',
+    name: 'VINTAGE VIBES (Cổ Điển Thập Niên 90)',
+    category: 'trending',
+    previewText: 'VINTAGE VIBES',
+    fontFamily: "'Anton', sans-serif",
     render: (text: string) => (
-      <div className="relative inline-block select-none">
+      <div className="relative inline-block select-none px-6 py-2 bg-black/90 rounded-xl border-2 border-amber-500 shadow-2xl">
         <span
-          className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest block"
+          className="text-4xl sm:text-5xl font-black uppercase tracking-widest block"
           style={{
-            fontFamily: "'Cinzel', serif",
-            color: '#e2e8f0',
-            textShadow: '0 4px 15px rgba(0,0,0,0.9), 0 0 25px rgba(255,255,255,0.3)'
+            fontFamily: "'Anton', sans-serif",
+            color: '#f59e0b',
+            WebkitTextStroke: '1px #000',
+            textShadow: '0 3px 0 #b45309'
           }}
         >
-          - {text || 'The Story Begins'} -
+          {text || 'VINTAGE VIBES'}
         </span>
       </div>
     )

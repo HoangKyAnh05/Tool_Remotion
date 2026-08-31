@@ -3,22 +3,23 @@ import React from 'react';
 export interface TikTokTextEffectItem {
   id: string;
   name: string;
-  category: 'trending' | 'neon' | 'metal' | 'cartoon' | 'retro';
-  previewText?: string;
+  category: 'trending' | 'hits' | 'manuscript' | 'neon' | 'metal' | 'cartoon';
   applyStyle: (text: string) => React.ReactNode;
 }
 
 export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
-  // 1. Golden Glow Particle (Chữ vàng cam gradient viền đỏ đun + hạt bụi vàng)
+  // ==========================================
+  // NHÓM 1: TRENDING (Ảnh 1 lần trước)
+  // ==========================================
   {
     id: 'tfx_golden_glow',
-    name: '1. Golden Glow (Vàng Cam Hạt Bụi)',
+    name: 'Golden Glow (Vàng Cam Hạt Bụi)',
     category: 'trending',
     applyStyle: (text) => (
       <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none relative"
+        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
         style={{
-          fontFamily: "'Anton', 'Montserrat', sans-serif",
+          fontFamily: "'Anton', sans-serif",
           background: 'linear-gradient(180deg, #fef08a 0%, #f59e0b 50%, #ea580c 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -29,11 +30,9 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
       </span>
     )
   },
-
-  // 2. Fire Burning Inferno (Chữ trắng viền đen bốc lửa rực cháy)
   {
     id: 'tfx_fire_inferno',
-    name: '2. Fire Inferno (Lửa Bốc Cháy)',
+    name: 'Fire Inferno (Lửa Bốc Cháy)',
     category: 'trending',
     applyStyle: (text) => (
       <span
@@ -42,24 +41,16 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
           fontFamily: "'Anton', sans-serif",
           color: '#ffffff',
           WebkitTextStroke: '3.5px #000000',
-          textShadow: `
-            0 0 10px #ffedd5,
-            0 0 20px #f97316,
-            0 0 35px #ef4444,
-            0 0 60px #b91c1c,
-            0 -8px 25px #ea580c
-          `
+          textShadow: '0 0 10px #ffedd5, 0 0 20px #f97316, 0 0 35px #ef4444, 0 0 60px #b91c1c, 0 -8px 25px #ea580c'
         }}
       >
         {text || 'ART'}
       </span>
     )
   },
-
-  // 3. Warm Gold Aura (Chữ đỏ viền kép trắng phát hào quang vàng ấm)
   {
     id: 'tfx_warm_gold_aura',
-    name: '3. Warm Gold Aura (Đỏ Hào Quang Vàng)',
+    name: 'Warm Gold Aura (Đỏ Hào Quang Vàng)',
     category: 'trending',
     applyStyle: (text) => (
       <span
@@ -68,27 +59,19 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
           fontFamily: "'Anton', sans-serif",
           color: '#881337',
           WebkitTextStroke: '3px #ffffff',
-          textShadow: `
-            0 0 15px #facc15,
-            0 0 30px #eab308,
-            0 0 50px #ca8a04,
-            0 6px 0 #000
-          `
+          textShadow: '0 0 15px #facc15, 0 0 30px #eab308, 0 0 50px #ca8a04, 0 6px 0 #000'
         }}
       >
         {text || 'ART'}
       </span>
     )
   },
-
-  // 4. Cute Pastel Cloud (Chữ xanh Cyan viền hồng trên nền đám mây vàng)
   {
     id: 'tfx_cute_pastel',
-    name: '4. Pastel Cloud (Mây Vàng Kèm Nơ)',
+    name: 'Pastel Cloud (Mây Vàng Kèm Nơ)',
     category: 'cartoon',
     applyStyle: (text) => (
       <div className="relative inline-block select-none">
-        {/* Nền đám mây vàng bo mềm */}
         <div className="absolute inset-0 -inset-x-3 -inset-y-1.5 bg-yellow-300 rounded-full border-4 border-yellow-200 shadow-md filter drop-shadow-[0_6px_0px_#000]" />
         <span
           className="text-5xl sm:text-6xl font-black uppercase tracking-wider block relative z-10"
@@ -106,24 +89,22 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 5. Ice Frozen Glitch (Chữ xanh băng tuyết có tia nước xé ngang)
+  // ==========================================
+  // NHÓM 2: HITS (Từ Ảnh 1 bạn vừa gửi)
+  // ==========================================
+  // 1. Chữ đen viền vàng phát quang tỏa sáng
   {
-    id: 'tfx_ice_frozen',
-    name: '5. Ice Frozen (Băng Tuyết Tia Xé)',
-    category: 'neon',
+    id: 'tfx_golden_aura_black',
+    name: 'Golden Aura Black (Chữ Đen Tỏa Sáng Vàng)',
+    category: 'hits',
     applyStyle: (text) => (
       <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-wider block select-none"
+        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
         style={{
-          fontFamily: "'Orbitron', sans-serif",
-          color: '#38bdf8',
-          WebkitTextStroke: '2px #0284c7',
-          textShadow: `
-            0 0 10px #7dd3fc,
-            0 0 25px #0284c7,
-            -15px 0 0 rgba(14,165,233,0.4),
-            15px 0 0 rgba(56,189,248,0.4)
-          `
+          fontFamily: "'Anton', sans-serif",
+          color: '#111827',
+          WebkitTextStroke: '2.5px #fef08a',
+          textShadow: '0 0 15px #facc15, 0 0 35px #eab308, 0 0 60px #ca8a04, 0 0 90px #a16207'
         }}
       >
         {text || 'ART'}
@@ -131,23 +112,128 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 6. 3D Block Extrusion (Chữ vàng cam đùn khối 3D)
+  // 2. Chữ trên vệt cọ sơn vàng rực
   {
-    id: 'tfx_3d_orange_block',
-    name: '6. 3D Orange Block (Đùn Khối 3D Cam Đỏ)',
-    category: 'metal',
+    id: 'tfx_yellow_paint_stroke',
+    name: 'Yellow Paint Stroke (Vệt Cọ Sơn Vàng)',
+    category: 'hits',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-6 py-2 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-lg shadow-xl border-2 border-yellow-300 transform rotate-[-2deg]">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-black"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            textShadow: '2px 2px 0px rgba(255,255,255,0.4)'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 3. Chữ trên vệt cọ sơn đỏ xước
+  {
+    id: 'tfx_red_brush_stroke',
+    name: 'Red Brush Stroke (Vệt Cọ Sơn Đỏ Xước)',
+    category: 'hits',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 rounded-md shadow-2xl border-y-2 border-black">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-white"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            WebkitTextStroke: '1.5px #000',
+            textShadow: '3px 3px 0 #000'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 4. Chữ xanh lá phát quang gai nhọn sấm sét
+  {
+    id: 'tfx_green_electric_spike',
+    name: 'Green Electric Spike (Tia Gai Xanh Lá)',
+    category: 'hits',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none">
+        <div className="absolute inset-0 -inset-x-2 -inset-y-1 bg-lime-500 rounded-xl filter blur-sm opacity-80 animate-pulse" />
+        <span
+          className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block relative z-10"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            color: '#111827',
+            WebkitTextStroke: '2.5px #86efac',
+            textShadow: '0 0 15px #4ade80, 0 0 35px #22c55e'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 5. Mảnh giấy xé trắng đen phong cách báo chí
+  {
+    id: 'tfx_torn_paper_mono',
+    name: 'Torn Paper Mono (Mảnh Giấy Xé Trắng)',
+    category: 'hits',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-6 py-2.5 bg-neutral-100 rounded-sm shadow-2xl border-x-4 border-dashed border-gray-400 rotate-[-1deg]">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-black font-mono"
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 900,
+            letterSpacing: '0.05em'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 6. Chữ trắng viền hồng kẹo ngọt bong bóng
+  {
+    id: 'tfx_pink_bubble_gum',
+    name: 'Pink Bubble Gum (Bong Bóng Kẹo Hồng)',
+    category: 'hits',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-6 py-2 bg-pink-400 rounded-full shadow-lg border-2 border-pink-200">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block text-white"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            WebkitTextStroke: '2px #db2777',
+            textShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 7. Chữ 3D nhiều tầng xanh dương - đỏ
+  {
+    id: 'tfx_layered_blue_red',
+    name: 'Layered Blue-Red 3D (Đùn 3D Xanh Đỏ)',
+    category: 'hits',
     applyStyle: (text) => (
       <span
         className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
         style={{
-          fontFamily: "'Anton', sans-serif",
-          color: '#fbbf24',
-          WebkitTextStroke: '2px #b45309',
+          fontFamily: "'Russo One', sans-serif",
+          color: '#38bdf8',
+          WebkitTextStroke: '2px #0284c7',
           textShadow: `
             0 2px 0 #ea580c,
             0 4px 0 #dc2626,
-            0 6px 0 #b91c1c,
-            0 8px 0 #991b1b,
+            0 7px 0 #991b1b,
             0 12px 25px rgba(0,0,0,0.95)
           `
         }}
@@ -157,45 +243,39 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 7. Layered Gold Red 3D (Chữ vàng kim tuyến viền đỏ 2 tầng 3D)
+  // 8. Chữ chữ nâu trên tấm gỗ mộc
   {
-    id: 'tfx_layered_gold_red',
-    name: '7. Layered Gold Red (Vàng Viền Đỏ 2 Tầng)',
-    category: 'metal',
+    id: 'tfx_wooden_board',
+    name: 'Wooden Board (Tấm Gỗ Cổ Điển)',
+    category: 'hits',
     applyStyle: (text) => (
-      <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
-        style={{
-          fontFamily: "'Russo One', sans-serif",
-          background: 'linear-gradient(180deg, #fef08a 0%, #ca8a04 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          filter: 'drop-shadow(0 2px 0 #dc2626) drop-shadow(0 4px 0 #991b1b) drop-shadow(0 8px 15px rgba(0,0,0,0.9))'
-        }}
-      >
-        {text || 'ART'}
-      </span>
+      <div className="relative inline-block select-none px-7 py-2 bg-amber-100 rounded-md border-4 border-amber-800 shadow-2xl">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block text-amber-950"
+          style={{
+            fontFamily: "'Anton', sans-serif",
+            textShadow: '1px 1px 0px #fff, 0 4px 8px rgba(0,0,0,0.5)'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
     )
   },
 
-  // 8. Purple Cyber Neon (Chữ trắng viền tím neon chói lòa)
+  // 9. Xanh neon phát sáng kép viền trắng
   {
-    id: 'tfx_purple_cyber_neon',
-    name: '8. Purple Cyber Neon (Tím Neon Phát Quang)',
-    category: 'neon',
+    id: 'tfx_cyan_double_glow',
+    name: 'Cyan Double Glow (Viền Trắng Neon Xanh)',
+    category: 'hits',
     applyStyle: (text) => (
       <span
         className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-wider block select-none"
         style={{
           fontFamily: "'Orbitron', sans-serif",
-          color: '#ffffff',
-          WebkitTextStroke: '2px #c084fc',
-          textShadow: `
-            0 0 10px #c084fc,
-            0 0 25px #a855f7,
-            0 0 45px #7e22ce,
-            0 0 70px #581c87
-          `
+          color: '#06b6d4',
+          WebkitTextStroke: '2.5px #ffffff',
+          textShadow: '0 0 15px #38bdf8, 0 0 35px #0284c7, 0 0 60px #0369a1'
         }}
       >
         {text || 'ART'}
@@ -203,94 +283,20 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 9. Star Sparkle Pastel (Chữ gradient cam-xanh có sao 4 cánh lấp lánh)
+  // 10. Chữ cháy nung đỏ than hồng
   {
-    id: 'tfx_star_sparkle_pastel',
-    name: '9. Star Sparkle (Cam Xanh Kèm Ngôi Sao)',
-    category: 'cartoon',
-    applyStyle: (text) => (
-      <div className="relative inline-block select-none">
-        <span className="absolute -top-3 -right-2 text-2xl text-yellow-300">✦</span>
-        <span
-          className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block"
-          style={{
-            fontFamily: "'Montserrat', sans-serif",
-            background: 'linear-gradient(180deg, #fdba74 0%, #38bdf8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 3px 0 #1e3a8a) drop-shadow(0 6px 15px rgba(0,0,0,0.8))'
-          }}
-        >
-          {text || 'ART'}
-        </span>
-      </div>
-    )
-  },
-
-  // 10. Oscar Metallic Gold (Chữ mạ vàng nguyên khối bóng loáng)
-  {
-    id: 'tfx_oscar_gold',
-    name: '10. Oscar Metallic Gold (Mạ Vàng Nguyên Khối)',
-    category: 'metal',
-    applyStyle: (text) => (
-      <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-wider block select-none"
-        style={{
-          fontFamily: "'Cinzel', serif",
-          background: 'linear-gradient(135deg, #fef08a 0%, #eab308 30%, #fef9c3 50%, #ca8a04 80%, #a16207 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          filter: 'drop-shadow(0 4px 0 #713f12) drop-shadow(0 10px 20px rgba(0,0,0,0.95))'
-        }}
-      >
-        {text || 'ART'}
-      </span>
-    )
-  },
-
-  // 11. RGB Paint Splatter (Vệt sơn Glitch RGB đỏ xanh)
-  {
-    id: 'tfx_rgb_splatter',
-    name: '11. RGB Paint Splatter (Vệt Sơn Glitch)',
-    category: 'retro',
-    applyStyle: (text) => (
-      <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
-        style={{
-          fontFamily: "'Permanent Marker', cursive",
-          color: '#ffffff',
-          WebkitTextStroke: '2px #000000',
-          textShadow: `
-            -4px 0 0 #ef4444,
-            4px 0 0 #22c55e,
-            0 4px 0 #3b82f6,
-            0 8px 15px rgba(0,0,0,0.9)
-          `
-        }}
-      >
-        {text || 'ART'}
-      </span>
-    )
-  },
-
-  // 12. Emerald Green Glow (Chữ ngọc lục bảo phát sáng dịu dàng)
-  {
-    id: 'tfx_emerald_glow',
-    name: '12. Emerald Green (Ngọc Lục Bảo Neon)',
-    category: 'neon',
+    id: 'tfx_burning_fire_coal',
+    name: 'Burning Fire Coal (Nung Đỏ Than Hồng)',
+    category: 'hits',
     applyStyle: (text) => (
       <span
         className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
         style={{
           fontFamily: "'Anton', sans-serif",
-          color: '#86efac',
-          WebkitTextStroke: '2.5px #15803d',
-          textShadow: `
-            0 0 10px #4ade80,
-            0 0 25px #22c55e,
-            0 0 45px #16a34a,
-            0 6px 15px rgba(0,0,0,0.9)
-          `
+          background: 'linear-gradient(180deg, #fef08a 0%, #ea580c 40%, #7f1d1d 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          filter: 'drop-shadow(0 0 20px #ef4444) drop-shadow(0 -5px 15px #f97316)'
         }}
       >
         {text || 'ART'}
@@ -298,42 +304,28 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 13. Lime Green Stardust (Xanh lá kèm sao lung linh)
+  // ==========================================
+  // NHÓM 3: MANUSCRIPT & SỔ TAY (Ảnh 2 bạn vừa gửi)
+  // ==========================================
+  // 11. Giấy xé ô ly học sinh
   {
-    id: 'tfx_lime_stardust',
-    name: '13. Lime Stardust (Sao Nhỏ Lung Linh)',
-    category: 'cartoon',
+    id: 'tfx_grid_notebook',
+    name: 'Grid Notebook Paper (Giấy Ô Ly Học Sinh)',
+    category: 'manuscript',
     applyStyle: (text) => (
-      <div className="relative inline-block select-none">
-        <span className="absolute -top-3 left-1 text-xl text-lime-300">✦</span>
-        <span className="absolute -top-2 right-1 text-lg text-lime-300">✦</span>
+      <div
+        className="relative inline-block select-none px-6 py-2 bg-white rounded shadow-2xl border-2 border-gray-300 rotate-[-1.5deg]"
+        style={{
+          backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px)',
+          backgroundSize: '15px 15px'
+        }}
+      >
         <span
-          className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block"
-          style={{
-            fontFamily: "'Bangers', cursive",
-            color: '#a3e635',
-            WebkitTextStroke: '3px #365314',
-            textShadow: '0 4px 0 #1a2e05, 0 8px 20px rgba(0,0,0,0.9)'
-          }}
-        >
-          {text || 'ART'}
-        </span>
-      </div>
-    )
-  },
-
-  // 14. Pink Watercolor Brush (Chữ trắng trên vệt cọ sơn hồng phấn)
-  {
-    id: 'tfx_pink_watercolor',
-    name: '14. Pink Watercolor (Vệt Cọ Sơn Hồng)',
-    category: 'trending',
-    applyStyle: (text) => (
-      <div className="relative inline-block select-none px-6 py-2 bg-pink-500 rounded-lg shadow-lg rotate-[-1deg] border-2 border-pink-400">
-        <span
-          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block text-white"
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block"
           style={{
             fontFamily: "'Permanent Marker', cursive",
-            textShadow: '2px 2px 0px rgba(0,0,0,0.4)'
+            color: '#dc2626',
+            textShadow: '2px 2px 0px rgba(0,0,0,0.2)'
           }}
         >
           {text || 'ART'}
@@ -342,18 +334,66 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 15. Graffiti Pink Splash (Vệt cọ sơn gai góc Graffiti)
+  // 12. Giấy Kraft có ghim vàng
   {
-    id: 'tfx_graffiti_splash',
-    name: '15. Graffiti Pink Splash (Sơn Gai Góc)',
-    category: 'retro',
+    id: 'tfx_pinned_kraft',
+    name: 'Pinned Kraft Paper (Giấy Xi Măng Ghim Vàng)',
+    category: 'manuscript',
     applyStyle: (text) => (
-      <div className="relative inline-block select-none px-6 py-1.5 bg-rose-600 rounded-md shadow-xl skew-x-[-10deg] border-b-4 border-black">
+      <div className="relative inline-block select-none px-7 py-2.5 bg-amber-200/90 rounded-sm shadow-xl border-x-4 border-amber-400">
+        <span className="absolute -top-2 left-2 text-sm text-yellow-600">📌</span>
+        <span className="absolute -top-2 right-2 text-sm text-yellow-600">📌</span>
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-neutral-900"
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 900
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 13. Hoa lá mùa xuân nở rộ
+  {
+    id: 'tfx_spring_floral',
+    name: 'Spring Floral Bloom (Hoa Lá Mùa Xuân)',
+    category: 'manuscript',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none">
+        <span className="absolute -top-3 left-0 text-xl">🌸</span>
+        <span className="absolute -bottom-2 right-1 text-xl">🌼</span>
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            color: '#38bdf8',
+            WebkitTextStroke: '2px #ec4899',
+            textShadow: '0 3px 0 #be185d'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 14. Vết sơn đen có trái tim đỏ
+  {
+    id: 'tfx_heart_paint_black',
+    name: 'Heart Paint Black (Vệt Sơn Đen Trái Tim Đỏ)',
+    category: 'manuscript',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-7 py-2 bg-black rounded-lg shadow-2xl border-2 border-red-500">
+        <span className="absolute -top-2 -left-2 text-xl">❤️</span>
+        <span className="absolute -bottom-2 -right-2 text-xl">❤️</span>
         <span
           className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-white"
           style={{
-            fontFamily: "'Archivo Black', sans-serif",
-            textShadow: '3px 3px 0px #000'
+            fontFamily: "'Anton', sans-serif",
+            letterSpacing: '0.04em'
           }}
         >
           {text || 'ART'}
@@ -362,23 +402,46 @@ export const TIKTOK_TEXT_EFFECTS: TikTokTextEffectItem[] = [
     )
   },
 
-  // 16. Ruby Glossy Red (Chữ đỏ mận viền trắng nổi khối)
+  // 15. Hoa Tulip nở rộ
   {
-    id: 'tfx_ruby_red',
-    name: '16. Ruby Glossy (Đỏ Mận Viền Trắng 3D)',
-    category: 'trending',
+    id: 'tfx_tulip_garden',
+    name: 'Tulip Flower Garden (Vườn Hoa Tulip)',
+    category: 'manuscript',
     applyStyle: (text) => (
-      <span
-        className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight block select-none"
-        style={{
-          fontFamily: "'Anton', sans-serif",
-          color: '#e11d48',
-          WebkitTextStroke: '3px #ffffff',
-          textShadow: '0 4px 0 #9f1239, 0 8px 0 #4c0519, 0 12px 25px rgba(0,0,0,0.9)'
-        }}
-      >
-        {text || 'ART'}
-      </span>
+      <div className="relative inline-block select-none px-6 py-2 bg-neutral-100 rounded-xl shadow-lg border-2 border-green-500">
+        <span className="absolute -top-3 left-1 text-xl">🌷</span>
+        <span className="absolute -bottom-3 right-1 text-xl">🌷</span>
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-tight block text-black"
+          style={{
+            fontFamily: "'Anton', sans-serif"
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
+    )
+  },
+
+  // 16. Kẹo mút cầu vồng ngọt ngào
+  {
+    id: 'tfx_rainbow_candy',
+    name: 'Rainbow Candy Pop (Kẹo Mút Cầu Vồng)',
+    category: 'manuscript',
+    applyStyle: (text) => (
+      <div className="relative inline-block select-none px-6 py-2 bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 rounded-full shadow-lg border-2 border-white">
+        <span
+          className="text-5xl sm:text-6xl font-black uppercase tracking-wider block"
+          style={{
+            fontFamily: "'Bangers', cursive",
+            color: '#a855f7',
+            WebkitTextStroke: '2px #ffffff',
+            textShadow: '0 3px 0 #7e22ce'
+          }}
+        >
+          {text || 'ART'}
+        </span>
+      </div>
     )
   }
 ];
