@@ -129,8 +129,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
           />
         );
       default:
-        // Kích hoạt engine xếp chữ Motion Typography 3D ĐỘC QUYỀN khi người dùng bấm Bật Phông Xanh / Motion 3D
-        if (scene.isGreenScreenMotion) {
+        // Kích hoạt engine xếp chữ Motion Typography khi bật phông xanh HOẶC khi chọn kiểu xếp chữ / chế độ lớp chữ
+        if (scene.isGreenScreenMotion || scene.motionTypographyLayout || scene.textLayerMode === 'front' || scene.textLayerMode === 'behind' || scene.textLayerMode === 'both_3d') {
           return (
             <GreenScreenDepthMotion
               scene={scene}
@@ -361,37 +361,22 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Typography & Subtitles:
-          1. Nếu có chọn Text Template / Text Effect của TikTok Studio -> Chạy chữ theo phong cách TikTok Studio.
-          2. Nếu không có Text Template / Text Effect và Đang Bật Chữ Ngang Dưới (!hideSubtitles) -> Chạy phụ đề chuẩn ở dưới.
-      */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && (
-        Boolean(scene.tiktokTextTemplate || scene.tiktokTextEffect || (scene.textEffectsMix && scene.textEffectsMix.length > 0)) ? (
-          <SubtitlesRenderer
-            words={scene.words}
-            subtitleStyle={subtitleStyle}
-            fallbackText={scene.narration}
-            enableDynamicEmojis={enableDynamicEmojis}
-            textTemplate={scene.tiktokTextTemplate}
-            textEffect={scene.tiktokTextEffect}
-            textEffectsMix={scene.textEffectsMix}
-            customPos={
-              scene.elementPositions?.['text_template'] ||
-              scene.elementPositions?.['text_effect'] ||
-              scene.elementPositions?.['subtitles']
-            }
-          />
-        ) : !scene.hideSubtitles ? (
-          <SubtitlesRenderer
-            words={scene.words}
-            subtitleStyle={subtitleStyle}
-            fallbackText={scene.narration}
-            enableDynamicEmojis={enableDynamicEmojis}
-            customPos={
-              scene.elementPositions?.['subtitles']
-            }
-          />
-        ) : null
+      {/* Synchronized Word-Level Subtitles: Chạy phụ đề theo từ với Text Template, Text Effect hoặc Mix Effects */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && (
+        <SubtitlesRenderer
+          words={scene.words}
+          subtitleStyle={subtitleStyle}
+          fallbackText={scene.narration}
+          enableDynamicEmojis={enableDynamicEmojis}
+          textTemplate={scene.tiktokTextTemplate}
+          textEffect={scene.tiktokTextEffect}
+          textEffectsMix={scene.textEffectsMix}
+          customPos={
+            scene.elementPositions?.['text_template'] ||
+            scene.elementPositions?.['text_effect'] ||
+            scene.elementPositions?.['subtitles']
+          }
+        />
       )}
 
       {/* Custom Scene Transition Sound FX */}
