@@ -11,6 +11,7 @@ import {
   FolderOpen,
   RotateCcw
 } from 'lucide-react';
+import { maxShowcaseProject } from '../remotion/sampleShowcaseProject';
 
 interface NavbarProps {
   project: VideoProject;
@@ -119,6 +120,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
         </div>
+
+        {/* Nút Nạp Mẫu Trình Diễn Đỉnh Cao (Max Showcase) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('Bạn có muốn nạp Mẫu Trình Diễn Đỉnh Cao (Showcase Max Level) để xem trọn bộ hiệu ứng, chữ 3D phông xanh, âm thanh SFX và meme triệu view không?')) {
+              setProject(maxShowcaseProject);
+              localStorage.setItem('CURRENT_PROJECT', JSON.stringify(maxShowcaseProject));
+              setActiveView('editor');
+            }
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white text-xs font-black shadow-lg shadow-rose-500/25 transition active:scale-95 cursor-pointer animate-pulse"
+          title="Nạp kịch bản 4 phân cảnh đỉnh cao phô diễn toàn bộ tính năng CapCut Motion"
+        >
+          <span>🔥</span>
+          <span>Mẫu Đỉnh Cao (Showcase)</span>
+        </button>
 
         {/* Aspect Ratio Toggle */}
         <div className="bg-gray-900/80 p-1 rounded-xl border border-gray-800 flex items-center">

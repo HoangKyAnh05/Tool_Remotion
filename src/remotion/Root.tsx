@@ -7,6 +7,7 @@ import {
   DEFAULT_WATERMARK,
   DEFAULT_SOUND_FX
 } from '../types/video';
+import { maxShowcaseProject } from './sampleShowcaseProject';
 
 export const defaultProject: VideoProject = {
   id: 'demo-project-1',
@@ -102,7 +103,7 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1920}
         defaultProps={{
-          project: defaultProject
+          project: maxShowcaseProject
         }}
       />
 
@@ -116,7 +117,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{
           project: {
-            ...defaultProject,
+            ...maxShowcaseProject,
             aspectRatio: '16:9'
           }
         }}

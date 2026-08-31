@@ -9,6 +9,7 @@ import { BatchVocabularyModal } from './components/BatchVocabularyModal';
 import { Roadmap100Canvas } from './components/Roadmap100Canvas';
 import { VideoProject } from './types/video';
 import { defaultProject } from './remotion/Root';
+import { maxShowcaseProject } from './remotion/sampleShowcaseProject';
 import { synthesizeEdgeTTS } from './services/edgeTtsService';
 
 export const App: React.FC = () => {
@@ -17,7 +18,6 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Migrate old Pixabay URLs or empty URLs to local reliable audio
         if (parsed.bgm && (!parsed.bgm.url || parsed.bgm.url.includes('pixabay.com') || parsed.bgm.url.includes('mixkit.co'))) {
           parsed.bgm.url = '/audio/bgm-lofi.wav';
         }
@@ -26,7 +26,7 @@ export const App: React.FC = () => {
         console.error('Failed to parse saved project', e);
       }
     }
-    return defaultProject;
+    return maxShowcaseProject;
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
