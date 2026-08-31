@@ -257,9 +257,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         );
       })()}
 
-      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) */}
-      {/* Khi bật Motion Phông Xanh, chỉ render nếu người dùng đã đặt vị trí riêng để tránh đè chữ */}
-      {scene.tiktokTextEffect && (!scene.isGreenScreenMotion || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
+      {/* B2. TikTok Text Effect (Kiểu Chữ Nghệ Thuật ART CapCut) - Chỉ hiện khi không dùng Text Template */}
+      {!scene.tiktokTextTemplate && scene.tiktokTextEffect && (!scene.isGreenScreenMotion || Boolean(scene.elementPositions?.['text_effect'])) && (() => {
         const customPos = scene.elementPositions?.['text_effect'];
         return (
           <div
@@ -317,8 +316,8 @@ export const SceneItem: React.FC<SceneItemProps> = ({
         </div>
       )}
 
-      {/* Synchronized Word-Level Subtitles: Tự động ẩn khi bật Motion Phông Xanh hoặc khi chọn ẩn phụ đề */}
-      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && (
+      {/* Synchronized Word-Level Subtitles: Tự động ẩn khi bật Motion Phông Xanh, khi dùng Template hoặc Text Effect */}
+      {scene.visualType !== 'chat_bubble' && !scene.isGreenScreenMotion && !scene.hideSubtitles && !scene.tiktokTextTemplate && !scene.tiktokTextEffect && (
         <SubtitlesRenderer
           words={scene.words}
           subtitleStyle={subtitleStyle}

@@ -58,22 +58,22 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
   // Xây dựng danh sách các phần tử có thể kéo thả trên phân cảnh hiện tại
   const draggableItems: DraggableItem[] = [];
 
-  // 1. Text Effect
-  if (scene.tiktokTextEffect) {
-    const eff = getTikTokTextEffectById(scene.tiktokTextEffect);
+  // A. Khối chữ chính duy nhất của phân cảnh (Tránh chồng chéo lặp 3 loại chữ)
+  if (scene.isGreenScreenMotion) {
     draggableItems.push({
-      id: 'text_effect',
-      type: 'text_effect',
-      name: eff ? eff.name : 'Chữ Nghệ Thuật (Text Effect)',
+      id: 'green_screen_text',
+      type: 'motion_text',
+      name: 'Chữ Motion 3D (Trước & Sau Người)',
       defaultX: 50,
-      defaultY: 24,
+      defaultY: 50,
       defaultScale: 1.0,
-      renderPreview: (txt) => eff ? eff.applyStyle(txt || 'ART') : <span>ART</span>
+      renderPreview: (txt) => (
+        <div className="px-4 py-1.5 rounded-lg bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-black text-xs uppercase tracking-wider backdrop-blur-sm shadow-lg shadow-yellow-500/20 whitespace-nowrap">
+          {txt ? txt.slice(0, 25) : 'Khối Chữ 3D Motion'}
+        </div>
+      )
     });
-  }
-
-  // 2. Text Template
-  if (scene.tiktokTextTemplate) {
+  } else if (scene.tiktokTextTemplate) {
     const tpl = getTikTokTemplateById(scene.tiktokTextTemplate);
     draggableItems.push({
       id: 'text_template',
@@ -84,9 +84,34 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
       defaultScale: 1.0,
       renderPreview: (txt) => tpl ? tpl.render(txt || 'TEXT') : <span>TEXT</span>
     });
+  } else if (scene.tiktokTextEffect) {
+    const eff = getTikTokTextEffectById(scene.tiktokTextEffect);
+    draggableItems.push({
+      id: 'text_effect',
+      type: 'text_effect',
+      name: eff ? eff.name : 'Chữ Nghệ Thuật (Text Effect)',
+      defaultX: 50,
+      defaultY: 24,
+      defaultScale: 1.0,
+      renderPreview: (txt) => eff ? eff.applyStyle(txt || 'ART') : <span>ART</span>
+    });
+  } else if (!scene.hideSubtitles) {
+    draggableItems.push({
+      id: 'subtitles',
+      type: 'subtitles',
+      name: 'Dòng Chữ Phụ Đề Ngang',
+      defaultX: 50,
+      defaultY: 84,
+      defaultScale: 1.0,
+      renderPreview: (txt) => (
+        <div className="px-4 py-1.5 rounded-lg bg-black/80 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wide shadow-lg whitespace-nowrap">
+          {txt ? txt.slice(0, 30) : 'Dòng Phụ Đề'}...
+        </div>
+      )
+    });
   }
 
-  // 3. Stickers
+  // B. Danh sách Stickers riêng biệt
   if (scene.tiktokStickers && scene.tiktokStickers.length > 0) {
     const defaultStickerCoords = [
       { x: 80, y: 18 },
@@ -106,37 +131,6 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
         defaultScale: 1.0,
         renderPreview: () => sticker ? sticker.render() : <span>Sticker</span>
       });
-    });
-  }
-
-  // 4. Motion Typography Text hoặc Subtitles Box
-  if (scene.isGreenScreenMotion) {
-    draggableItems.push({
-      id: 'green_screen_text',
-      type: 'motion_text',
-      name: 'Chữ Motion 3D (Trước & Sau Người)',
-      defaultX: 50,
-      defaultY: 50,
-      defaultScale: 1.0,
-      renderPreview: (txt) => (
-        <div className="px-4 py-1.5 rounded-lg bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-black text-xs uppercase tracking-wider backdrop-blur-sm shadow-lg shadow-yellow-500/20">
-          {txt ? txt.slice(0, 25) : 'Khối Chữ 3D Motion'}
-        </div>
-      )
-    });
-  } else if (!scene.hideSubtitles) {
-    draggableItems.push({
-      id: 'subtitles',
-      type: 'subtitles',
-      name: 'Dòng Chữ Phụ Đề Ngang',
-      defaultX: 50,
-      defaultY: 84,
-      defaultScale: 1.0,
-      renderPreview: (txt) => (
-        <div className="px-4 py-1.5 rounded-lg bg-black/80 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wide shadow-lg">
-          {txt ? txt.slice(0, 30) : 'Dòng Phụ Đề'}...
-        </div>
-      )
     });
   }
 
@@ -354,6 +348,37 @@ export const InteractiveCanvasOverlay: React.FC<InteractiveCanvasOverlayProps> =
           maxHeight: '520px'
         }}
       >
+        {/* Hình nền thực tế của phân cảnh (Live Scene Background Preview) */}
+        {scene.mediaUrl ? (
+          <img
+            src={scene.mediaUrl}
+            alt="Preview"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-60 select-none"
+          />
+        ) : scene.visualType === 'stock_chart' ? (
+          <div className="absolute inset-0 bg-[#080A12] flex flex-col items-center justify-center pointer-events-none opacity-60 p-4">
+            <span className="text-emerald-400 font-mono font-black text-2xl animate-pulse">+328% 📈</span>
+            <span className="text-gray-400 text-xs mt-1">Biểu Đồ Nến Tăng Vọt</span>
+          </div>
+        ) : scene.visualType === 'bank_notification' ? (
+          <div className="absolute inset-0 bg-[#0A0D1A] flex flex-col items-center justify-center pointer-events-none opacity-60 p-4">
+            <div className="p-3 rounded-2xl bg-indigo-950/80 border border-emerald-500/40 text-center">
+              <span className="text-emerald-400 font-black text-lg font-mono">+50.000.000 VND 💵</span>
+              <div className="text-[10px] text-gray-400 mt-1">MB Bank • Biến động số dư</div>
+            </div>
+          </div>
+        ) : scene.visualType === 'vs_battle' ? (
+          <div className="absolute inset-0 bg-[#12050A] flex flex-col items-center justify-center pointer-events-none opacity-60 p-4">
+            <span className="text-red-500 font-black text-3xl italic drop-shadow-[0_0_20px_#EF4444]">⚔️ VS ⚔️</span>
+            <span className="text-gray-400 text-xs mt-1">Đại Chiến Đối Đầu</span>
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/50 via-black to-slate-950 pointer-events-none opacity-80" />
+        )}
+
+        {/* Lớp phủ gradient tối mỏng để giữ độ tương phản cho thao tác kéo thả */}
+        <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+
         {/* Lưới tọa độ hướng dẫn (Grid lines) */}
         <div className="absolute inset-0 pointer-events-none opacity-20">
           <div className="absolute inset-x-0 top-1/4 border-b border-cyan-400 border-dashed" />

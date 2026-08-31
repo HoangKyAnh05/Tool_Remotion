@@ -53,7 +53,6 @@ export const maxShowcaseProject: VideoProject = {
         { word: 'CapCut', start: 3.75, end: 4.1 },
         { word: 'Motion!', start: 4.1, end: 4.5 }
       ],
-      tiktokTextTemplate: 'tpl_nang_dong',           // NĂNG ĐỘNG Neon rực lửa
       tiktokTextEffect: 'tfx_fire_inferno',          // Lửa bốc cháy bập bùng
       tiktokStickers: ['stk_shocked_cat', 'stk_red_arrow'], // Mèo ôm đầu hoảng hốt + Mũi tên đỏ ⬇️
       tiktokVideoEffect: 'fx_glitch_scan',           // Quét nhiễu sóng gián đoạn
@@ -132,7 +131,6 @@ export const maxShowcaseProject: VideoProject = {
         { word: 'hê!', start: 3.9, end: 4.6 }
       ],
       tiktokTextTemplate: 'tpl_wow_orange',          // wow! Cam đùn khối vui nhộn
-      tiktokTextEffect: 'tfx_yellow_paint_stroke',   // Chữ trên vệt cọ sơn vàng
       tiktokStickers: ['stk_screaming_chihuahua', 'stk_cat_pointing_laugh'], // Chó hét AAAAA + Mèo cười 🫵
       tiktokVideoEffect: 'fx_snapshot_3x',           // Chớp flash máy ảnh chụp 3 lần
       tiktokFilter: 'filter_retro_vhs',              // Băng từ thập niên 80
