@@ -354,20 +354,21 @@ export function getTikTokStickerById(id?: string): TikTokStickerItem | undefined
     const imageUrl = id.startsWith('custom_stk_') ? id.replace('custom_stk_', '') : id;
     return {
       id,
-      name: 'Sticker Ảnh Tùy Chỉnh (Tự động bo viền)',
+      name: 'Sticker Meme Nhân Vật (Đã Cắt Nền)',
       category: 'trending',
-      previewIcon: '🖼️',
+      previewIcon: '🐶',
       render: () => (
-        <div className="relative inline-block select-none filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] transform hover:scale-105 transition-transform">
-          {/* Lớp nền viền Sticker trắng phong cách Die-Cut TikTok CapCut */}
-          <div className="relative p-1 bg-white rounded-3xl shadow-2xl border-2 border-white/90">
-            <img
-              src={imageUrl}
-              alt="Custom Sticker"
-              className="max-w-[200px] max-h-[200px] object-contain rounded-2xl"
-              crossOrigin="anonymous"
-            />
-          </div>
+        <div className="relative inline-block select-none transform hover:scale-105 transition-transform">
+          {/* Lớp viền trắng Die-Cut Sticker bám sát đường cong viền nhân vật bằng CSS Drop Shadow đa hướng */}
+          <img
+            src={imageUrl}
+            alt="Custom Sticker Meme"
+            className="max-w-[220px] max-h-[220px] object-contain"
+            style={{
+              filter: 'drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white) drop-shadow(0 8px 16px rgba(0,0,0,0.65))'
+            }}
+            crossOrigin="anonymous"
+          />
         </div>
       )
     };

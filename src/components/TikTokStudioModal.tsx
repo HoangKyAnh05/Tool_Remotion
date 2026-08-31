@@ -444,10 +444,97 @@ export const TikTokStudioModal: React.FC<TikTokStudioModalProps> = ({
                         if (file) {
                           const reader = new FileReader();
                           reader.onload = (ev) => {
-                            const dataUrl = ev.target?.result as string;
-                            if (dataUrl) {
-                              const customStkId = dataUrl;
-                              setSelectedStickers((prev) => [...prev, customStkId]);
+                            const rawDataUrl = ev.target?.result as string;
+                            if (rawDataUrl) {
+                              // Xử lý tự động tách nền viền ngoài bằng Canvas (Auto-Matte Background Removal)
+                              const img = new Image();
+                              img.crossOrigin = 'anonymous';
+                              img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                if (!ctx) {
+                                  setSelectedStickers((prev) => [...prev, rawDataUrl]);
+                                  return;
+                                }
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.drawImage(img, 0, 0);
+
+                                try {
+                                  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                  const d = imgData.data;
+                                  const w = canvas.width;
+                                  const h = canvas.height;
+
+                                  // Lấy mẫu màu nền ở 4 góc
+                                  const cornerIndices = [0, (w - 1) * 4, ((h - 1) * w) * 4, ((h - 1) * w + (w - 1)) * 4];
+                                  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0;
+                                  cornerIndices.forEach((idx) => {
+                                    if (d[idx + 3] > 10) {
+                                      bgR += d[idx];
+                                      bgG += d[idx + 1];
+                                      bgB += d[idx + 2];
+                                      bgCount++;
+                                    }
+                                  });
+                                  if (bgCount > 0) {
+                                    bgR = Math.round(bgR / bgCount);
+                                    bgG = Math.round(bgG / bgCount);
+                                    bgB = Math.round(bgB / bgCount);
+                                  }
+
+                                  // Flood Fill / Edge Removal để xóa nền bao ngoài mà không làm mất màu bên trong nhân vật
+                                  const visited = new Uint8Array(w * h);
+                                  const queue: number[] = [];
+
+                                  // Thêm toàn bộ các pixel viền mép ngoài vào hàng đợi kiểm tra
+                                  for (let x = 0; x < w; x++) {
+                                    queue.push(x, (h - 1) * w + x);
+                                  }
+                                  for (let y = 0; y < h; y++) {
+                                    queue.push(y * w, y * w + (w - 1));
+                                  }
+
+                                  const colorDist = (r1: number, g1: number, b1: number, r2: number, g2: number, b2: number) => {
+                                    return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+                                  };
+
+                                  const TOLERANCE = 38; // Dung sai màu nền
+
+                                  while (queue.length > 0) {
+                                    const p = queue.pop()!;
+                                    if (visited[p]) continue;
+                                    visited[p] = 1;
+
+                                    const idx = p * 4;
+                                    const r = d[idx];
+                                    const g = d[idx + 1];
+                                    const b = d[idx + 2];
+                                    const a = d[idx + 3];
+
+                                    if (a === 0 || colorDist(r, g, b, bgR, bgG, bgB) <= TOLERANCE) {
+                                      d[idx + 3] = 0; // Xóa trong suốt pixel nền
+
+                                      const px = p % w;
+                                      const py = Math.floor(p / w);
+
+                                      // Lan sang 4 hướng lân cận
+                                      if (px > 0 && !visited[p - 1]) queue.push(p - 1);
+                                      if (px < w - 1 && !visited[p + 1]) queue.push(p + 1);
+                                      if (py > 0 && !visited[p - w]) queue.push(p - w);
+                                      if (py < h - 1 && !visited[p + w]) queue.push(p + w);
+                                    }
+                                  }
+
+                                  ctx.putImageData(imgData, 0, 0);
+                                  const transparentDataUrl = canvas.toDataURL('image/png');
+                                  setSelectedStickers((prev) => [...prev, transparentDataUrl]);
+                                } catch (err) {
+                                  console.warn('Lỗi xử lý tách nền canvas:', err);
+                                  setSelectedStickers((prev) => [...prev, rawDataUrl]);
+                                }
+                              };
+                              img.src = rawDataUrl;
                             }
                           };
                           reader.readAsDataURL(file);
